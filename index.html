@@ -7,11 +7,13 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#020617">
-    <title>Panel de Control - Despacho & Métricas Multitienda</title>
+    <title>CrocScale - Portal de Operaciones & Métricas</title>
+    <link rel="manifest" href="manifest.json">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         @media print {
             @page {
@@ -97,28 +99,100 @@
     </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased">
-    
-    <!-- Top Navigation Bar -->
-    <nav class="no-print bg-slate-900/90 backdrop-blur border-b border-slate-800 sticky top-0 z-50">
+
+    <!-- ========================================== -->
+    <!-- LOGIN OVERLAY / AUTH VIEW                  -->
+    <!-- ========================================== -->
+    <div id="view-login" class="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="max-w-md w-full bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+            <div class="absolute -right-12 -top-12 w-40 h-40 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute -left-12 -bottom-12 w-40 h-40 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div class="text-center mb-6">
+                <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 text-slate-950 text-2xl font-black shadow-lg shadow-emerald-500/20 mb-3">
+                    ⚡
+                </div>
+                <h1 class="text-2xl font-black text-white tracking-tight">CrocScale Portal</h1>
+                <p class="text-xs text-slate-400 mt-1">Ingresá tus credenciales para acceder a tus reportes y operaciones</p>
+            </div>
+
+            <form id="form-login" onsubmit="handleLogin(event)" class="space-y-4">
+                <div id="login-error" class="hidden p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-semibold text-center"></div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">Usuario / Empresa</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-building absolute left-3.5 top-3 text-slate-500 text-sm"></i>
+                        <input type="text" id="login-username" required placeholder="Ej: adar o admin" class="w-full bg-slate-950 text-white text-sm rounded-xl pl-10 pr-4 py-2.5 border border-slate-800 focus:outline-none focus:border-emerald-500 transition">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">Contraseña / DNI</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-lock absolute left-3.5 top-3 text-slate-500 text-sm"></i>
+                        <input type="password" id="login-password" required placeholder="••••••••" class="w-full bg-slate-950 text-white text-sm rounded-xl pl-10 pr-4 py-2.5 border border-slate-800 focus:outline-none focus:border-emerald-500 transition">
+                    </div>
+                </div>
+
+                <button type="submit" id="btn-login-submit" class="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-sm font-extrabold rounded-xl shadow-lg shadow-emerald-900/40 transition flex items-center justify-center gap-2">
+                    <span id="login-spinner" class="hidden"><i class="fa-solid fa-circle-notch fa-spin"></i></span>
+                    <span>Ingresar al Portal</span>
+                </button>
+            </form>
+
+            <div class="mt-6 text-center border-t border-slate-800/80 pt-4">
+                <p class="text-[11px] text-slate-500">
+                    Plataforma segura multi-tenant &bull; <span class="text-emerald-400 font-semibold">app.crocscale.com</span>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TOP NAVIGATION BAR (LOGGED IN)             -->
+    <!-- ========================================== -->
+    <nav id="main-navbar" class="no-print bg-slate-900/90 backdrop-blur border-b border-slate-800 sticky top-0 z-40">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
+                
+                <!-- Brand & Status -->
                 <div class="flex items-center gap-3">
                     <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-slate-950 font-black text-lg shadow-lg shadow-emerald-500/20">
                         ⚡
                     </div>
-                    <div>
-                        <span class="font-extrabold text-white text-lg tracking-tight">OPERACIONES</span>
-                        <span class="text-emerald-400 font-semibold text-xs ml-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">v2.4</span>
+                    <div class="flex flex-col">
+                        <div class="flex items-center gap-1.5">
+                            <span class="font-extrabold text-white text-base sm:text-lg tracking-tight">CROCSCALE</span>
+                            <span id="badge-user-role" class="text-emerald-400 font-bold text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">SuperAdmin</span>
+                        </div>
+                        <span id="label-active-company" class="text-[11px] text-slate-400 font-medium truncate max-w-[160px] sm:max-w-none">CrocScale SuperAdmin</span>
                     </div>
                 </div>
 
-                <!-- Main Module Tabs -->
-                <div class="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800">
-                    <button onclick="switchMainView('dispatch')" id="btn-nav-dispatch" class="px-3.5 sm:px-4 py-2 rounded-lg text-xs font-bold bg-emerald-600 text-white transition flex items-center gap-2 shadow">
-                        <i class="fa-solid fa-print"></i> <span>Despacho & Impresión</span>
+                <!-- Main Module Navigation Tabs -->
+                <div class="flex items-center gap-2">
+                    <div class="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800">
+                        <button onclick="switchMainView('dispatch')" id="btn-nav-dispatch" class="px-3 sm:px-4 py-2 rounded-lg text-xs font-bold bg-emerald-600 text-white transition flex items-center gap-1.5 shadow">
+                            <i class="fa-solid fa-print"></i> <span class="hidden sm:inline">Despacho</span>
+                        </button>
+                        <button onclick="switchMainView('analytics')" id="btn-nav-analytics" class="px-3 sm:px-4 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-chart-pie"></i> <span class="hidden sm:inline">Métricas</span>
+                        </button>
+                        <!-- Pestaña de SuperAdmin para gestionar clientes -->
+                        <button onclick="switchMainView('admin')" id="btn-nav-admin" class="px-3 sm:px-4 py-2 rounded-lg text-xs font-bold text-amber-400 hover:text-amber-300 transition flex items-center gap-1.5 hidden">
+                            <i class="fa-solid fa-users-gear"></i> <span class="hidden sm:inline">Clientes & Poderes</span>
+                        </button>
+                    </div>
+
+                    <!-- Botón Instalar App (PWA) -->
+                    <button id="btn-pwa-install" onclick="installPWA()" class="hidden px-2.5 sm:px-3 py-1.5 bg-indigo-600/20 hover:bg-indigo-600 text-indigo-300 hover:text-white rounded-xl text-xs font-bold border border-indigo-500/30 transition flex items-center gap-1.5" title="Instalar como App">
+                        <i class="fa-solid fa-download"></i> <span class="hidden md:inline">Instalar App</span>
                     </button>
-                    <button onclick="switchMainView('analytics')" id="btn-nav-analytics" class="px-3.5 sm:px-4 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-2">
-                        <i class="fa-solid fa-chart-pie"></i> <span>Métricas & Analytics</span>
+
+                    <!-- Botón Cerrar Sesión -->
+                    <button onclick="handleLogout()" class="p-2 text-slate-400 hover:text-rose-400 rounded-xl bg-slate-950 border border-slate-800 text-xs transition" title="Cerrar Sesión">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
                     </button>
                 </div>
             </div>
@@ -146,8 +220,8 @@
             </div>
 
             <div class="flex items-center gap-3 flex-wrap w-full md:w-auto">
-                <!-- Selector de Tienda Despacho -->
-                <div class="flex items-center bg-slate-900 rounded-xl p-1 border border-slate-800">
+                <!-- Selector de Tienda Despacho (Solo visible para SuperAdmin o multitienda) -->
+                <div id="dispatch-store-selector-wrap" class="flex items-center bg-slate-900 rounded-xl p-1 border border-slate-800">
                     <button onclick="switchDispatchStore('nnn')" id="btn-store-nnn" class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white transition flex items-center gap-1.5">
                         <i class="fa-solid fa-shirt"></i> NNN Tienda
                     </button>
@@ -247,8 +321,8 @@
             </div>
 
             <div class="flex items-center gap-3 flex-wrap w-full lg:w-auto">
-                <!-- Selector de Tienda en Analytics -->
-                <div class="flex items-center bg-slate-900 rounded-xl p-1 border border-slate-800">
+                <!-- Selector de Tienda en Analytics (Solo visible para SuperAdmin) -->
+                <div id="analytics-store-selector-wrap" class="flex items-center bg-slate-900 rounded-xl p-1 border border-slate-800">
                     <button onclick="switchAnalyticsStore('adar')" id="btn-ana-adar" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white transition flex items-center gap-1.5">
                         <i class="fa-solid fa-box-open"></i> Adar
                     </button>
@@ -447,7 +521,7 @@
                 </div>
             </div>
 
-            <!-- NUEVO: Top 7 Localidades con Más Ventas -->
+            <!-- Top 7 Localidades con Más Ventas -->
             <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col justify-between">
                 <div>
                     <div class="flex items-center justify-between mb-1">
@@ -504,10 +578,132 @@
         </div>
     </div>
 
+    <!-- ========================================== -->
+    <!-- MODULE 3: PANEL SUPERADMIN (CLIENTES)       -->
+    <!-- ========================================== -->
+    <div id="view-admin" class="no-print max-w-7xl mx-auto p-4 md:p-6 hidden">
+        <header class="flex flex-col md:flex-row items-start md:items-center justify-between pb-6 border-b border-slate-800 gap-4">
+            <div>
+                <h1 class="text-xl sm:text-2xl font-bold text-white flex items-center gap-2.5 flex-wrap">
+                    <span class="p-2 bg-amber-500/10 text-amber-400 rounded-xl border border-amber-500/20">
+                        <i class="fa-solid fa-users-gear"></i>
+                    </span>
+                    <span>Administración de Clientes & Poderes</span>
+                </h1>
+                <p class="text-slate-400 text-xs sm:text-sm mt-1">
+                    Control centralizado de accesos, contraseñas y permisos por empresa
+                </p>
+            </div>
+
+            <button onclick="openCreateUserModal()" class="px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 shadow-lg shadow-emerald-900/30 transition">
+                <i class="fa-solid fa-user-plus"></i> <span>Crear Nueva Cuenta</span>
+            </button>
+        </header>
+
+        <!-- Tabla de Clientes en Supabase -->
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl overflow-hidden shadow-xl my-6">
+            <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
+                <h3 class="font-bold text-white text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-address-book text-amber-400"></i> Cuentas Registradas en Base de Datos
+                </h3>
+                <button onclick="loadAdminUsersList()" class="text-xs text-slate-400 hover:text-white transition flex items-center gap-1">
+                    <i class="fa-solid fa-rotate" id="refresh-icon-admin"></i> Refrescar
+                </button>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs text-slate-300">
+                    <thead class="bg-slate-950 text-slate-400 uppercase font-semibold border-b border-slate-800">
+                        <tr>
+                            <th class="p-4">Empresa</th>
+                            <th class="p-4">Usuario</th>
+                            <th class="p-4">Rol</th>
+                            <th class="p-4">Tienda Vinculada</th>
+                            <th class="p-4">Módulos Activos</th>
+                            <th class="p-4 text-center">Estado</th>
+                            <th class="p-4 text-right">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-users-table-body" class="divide-y divide-slate-800/60">
+                        <tr>
+                            <td colspan="7" class="p-8 text-center text-slate-500">Cargando usuarios desde Supabase...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CREAR / EDITAR CLIENTE -->
+    <div id="modal-user" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="max-w-md w-full bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl relative">
+            <div class="flex justify-between items-center pb-4 border-b border-slate-800 mb-4">
+                <h3 class="font-bold text-white text-base flex items-center gap-2" id="modal-user-title">
+                    <i class="fa-solid fa-user-plus text-emerald-400"></i> Nueva Cuenta de Cliente
+                </h3>
+                <button onclick="closeUserModal()" class="text-slate-400 hover:text-white text-sm p-1">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form id="form-user-save" onsubmit="handleSaveUser(event)" class="space-y-3.5">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Nombre Comercial de la Empresa</label>
+                    <input type="text" id="modal-input-company" required placeholder="Ej: Adar Import" class="w-full bg-slate-950 text-white text-xs rounded-xl px-3 py-2.5 border border-slate-800 focus:outline-none focus:border-emerald-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Nombre de Usuario para Login</label>
+                    <input type="text" id="modal-input-username" required placeholder="Ej: adar" class="w-full bg-slate-950 text-white text-xs rounded-xl px-3 py-2.5 border border-slate-800 focus:outline-none focus:border-emerald-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Contraseña o DNI Inicial</label>
+                    <input type="text" id="modal-input-password" required placeholder="Ej: 12345678" class="w-full bg-slate-950 text-white text-xs rounded-xl px-3 py-2.5 border border-slate-800 focus:outline-none focus:border-emerald-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Tienda Asignada</label>
+                    <select id="modal-select-store" class="w-full bg-slate-950 text-white text-xs rounded-xl px-3 py-2.5 border border-slate-800 focus:outline-none focus:border-emerald-500">
+                        <option value="adar">Adar Import (Ventas Adar)</option>
+                        <option value="nacha">NachaHome (Ventas NachaHome)</option>
+                        <option value="nnn">NNN Tienda (Ventas NNN)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1.5">Módulos Habilitados</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <label class="flex items-center gap-2 p-2.5 bg-slate-950 rounded-xl border border-slate-800 cursor-pointer text-xs">
+                            <input type="checkbox" id="modal-check-dispatch" class="rounded bg-slate-900 text-emerald-500 focus:ring-0">
+                            <span>📦 Despacho</span>
+                        </label>
+                        <label class="flex items-center gap-2 p-2.5 bg-slate-950 rounded-xl border border-slate-800 cursor-pointer text-xs">
+                            <input type="checkbox" id="modal-check-analytics" checked class="rounded bg-slate-900 text-emerald-500 focus:ring-0">
+                            <span>📈 Métricas</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeUserModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold">Cancelar</button>
+                    <button type="submit" id="modal-btn-submit" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold shadow">Guardar Cuenta</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Hidden Print Area -->
     <div id="print-area" class="hidden"></div>
 
     <script>
+        /* ====================================================== */
+        /* SUPABASE TOTODRILO CONFIGURATION                       */
+        /* ====================================================== */
+        const SUPABASE_URL = 'https://jsbkzlgjnwfqbjkkgqbe.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpzYmt6bGdqbndmcWJqa2tncWJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ3OTc1NzcsImV4cCI6MjA4MDM3MzU3N30.QXK8ulyAckDhfnYB8iuBs-MTW8v0Q8irbaRTgbgqAdk';
+        const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
         const STORES_CONFIG = {
             adar: { 
                 name: 'Adar Import', 
@@ -532,6 +728,8 @@
             }
         };
 
+        // Estado global de sesión y navegación
+        let currentUser = null; // { username, company_name, role, store_key, modules_allowed, is_active }
         let currentMainView = 'dispatch';
         let currentDispatchStore = 'nnn';
         let currentAnalyticsStore = 'adar';
@@ -552,6 +750,349 @@
         let chartStatusInstance = null;
         let chartDeliveryInstance = null;
 
+        // PWA Install Prompt Deferred
+        let deferredPrompt = null;
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            const btn = document.getElementById('btn-pwa-install');
+            if (btn) btn.classList.remove('hidden');
+        });
+
+        function installPWA() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choice) => {
+                    if (choice.outcome === 'accepted') {
+                        document.getElementById('btn-pwa-install').classList.add('hidden');
+                    }
+                    deferredPrompt = null;
+                });
+            }
+        }
+
+        // Registro de Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registration skipped:', err));
+            });
+        }
+
+        /* ====================================================== */
+        /* AUTH & SESSION MANAGEMENT (SUPABASE)                   */
+        /* ====================================================== */
+        async function sha256(str) {
+            const buffer = new TextEncoder().encode(str);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        async function initAuth() {
+            const savedSession = localStorage.getItem('crocscale_session');
+            if (savedSession) {
+                try {
+                    const sessionData = JSON.parse(savedSession);
+                    if (sessionData && sessionData.username) {
+                        // Re-verificar contra Supabase
+                        if (supabaseClient) {
+                            const { data, error } = await supabaseClient
+                                .from('portal_users')
+                                .select('*')
+                                .eq('username', sessionData.username)
+                                .single();
+                            
+                            if (data && data.is_active) {
+                                currentUser = data;
+                                applyUserPermissions();
+                                document.getElementById('view-login').classList.add('hidden');
+                                return;
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error al restaurar sesión:", e);
+                }
+            }
+
+            // Si no hay sesión válida, mostrar pantalla de login
+            document.getElementById('view-login').classList.remove('hidden');
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const usernameInput = document.getElementById('login-username').value.trim().toLowerCase();
+            const passwordInput = document.getElementById('login-password').value.trim();
+            const errorDiv = document.getElementById('login-error');
+            const spinner = document.getElementById('login-spinner');
+            const submitBtn = document.getElementById('btn-login-submit');
+
+            errorDiv.classList.add('hidden');
+            spinner.classList.remove('hidden');
+            submitBtn.disabled = true;
+
+            try {
+                const passHash = await sha256(passwordInput);
+
+                if (supabaseClient) {
+                    const { data, error } = await supabaseClient
+                        .from('portal_users')
+                        .select('*')
+                        .eq('username', usernameInput)
+                        .single();
+
+                    if (error || !data) {
+                        throw new Error('Usuario o empresa no encontrados.');
+                    }
+
+                    if (!data.is_active) {
+                        throw new Error('Esta cuenta está pausada o inactiva. Contactá al administrador.');
+                    }
+
+                    if (data.password_hash !== passHash) {
+                        throw new Error('Contraseña o DNI incorrectos.');
+                    }
+
+                    // Actualizar último login
+                    await supabaseClient
+                        .from('portal_users')
+                        .update({ last_login: new Date().toISOString() })
+                        .eq('id', data.id);
+
+                    currentUser = data;
+                    localStorage.setItem('crocscale_session', JSON.stringify({
+                        username: data.username,
+                        company_name: data.company_name,
+                        role: data.role
+                    }));
+
+                    applyUserPermissions();
+                    document.getElementById('view-login').classList.add('hidden');
+                } else {
+                    throw new Error('Error al conectar con la base de datos de autenticación.');
+                }
+            } catch (err) {
+                errorDiv.innerText = err.message;
+                errorDiv.classList.remove('hidden');
+            } finally {
+                spinner.classList.add('hidden');
+                submitBtn.disabled = false;
+            }
+        }
+
+        function handleLogout() {
+            if (confirm('¿Deseas cerrar sesión en el portal?')) {
+                localStorage.removeItem('crocscale_session');
+                currentUser = null;
+                location.reload();
+            }
+        }
+
+        function applyUserPermissions() {
+            if (!currentUser) return;
+
+            document.getElementById('badge-user-role').innerText = currentUser.role === 'superadmin' ? '👑 SuperAdmin' : '🏢 Cliente';
+            document.getElementById('label-active-company').innerText = currentUser.company_name;
+
+            const btnAdmin = document.getElementById('btn-nav-admin');
+            const btnDispatch = document.getElementById('btn-nav-dispatch');
+            const btnAnalytics = document.getElementById('btn-nav-analytics');
+            const dispatchStoreWrap = document.getElementById('dispatch-store-selector-wrap');
+            const analyticsStoreWrap = document.getElementById('analytics-store-selector-wrap');
+
+            const isSuperAdmin = currentUser.role === 'superadmin';
+            const allowedModules = currentUser.modules_allowed || ['analytics'];
+
+            // Botón Admin
+            if (isSuperAdmin) {
+                btnAdmin.classList.remove('hidden');
+                if (dispatchStoreWrap) dispatchStoreWrap.classList.remove('hidden');
+                if (analyticsStoreWrap) analyticsStoreWrap.classList.remove('hidden');
+            } else {
+                btnAdmin.classList.add('hidden');
+                // En modo cliente: ocultar selectores de otras tiendas
+                if (dispatchStoreWrap) dispatchStoreWrap.classList.add('hidden');
+                if (analyticsStoreWrap) analyticsStoreWrap.classList.add('hidden');
+                
+                // Fijar la tienda asignada
+                if (currentUser.store_key) {
+                    currentDispatchStore = currentUser.store_key;
+                    currentAnalyticsStore = currentUser.store_key;
+                }
+            }
+
+            // Control de módulos visibles
+            const canDispatch = isSuperAdmin || allowedModules.includes('dispatch');
+            const canAnalytics = isSuperAdmin || allowedModules.includes('analytics');
+
+            if (!canDispatch) btnDispatch.classList.add('hidden');
+            else btnDispatch.classList.remove('hidden');
+
+            if (!canAnalytics) btnAnalytics.classList.add('hidden');
+            else btnAnalytics.classList.remove('hidden');
+
+            // Abrir vista inicial disponible
+            if (canAnalytics && !canDispatch) {
+                switchMainView('analytics');
+            } else {
+                switchMainView('dispatch');
+            }
+        }
+
+        /* ====================================================== */
+        /* SUPERADMIN CLIENT MANAGER (SUPABASE)                   */
+        /* ====================================================== */
+        async function loadAdminUsersList() {
+            const icon = document.getElementById('refresh-icon-admin');
+            if (icon) icon.classList.add('fa-spin');
+
+            const tbody = document.getElementById('admin-users-table-body');
+
+            try {
+                if (!supabaseClient) throw new Error('Supabase client no disponible.');
+                const { data, error } = await supabaseClient
+                    .from('portal_users')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                if (!data || data.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-500">No hay cuentas de clientes registradas.</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = data.map(u => {
+                    const isSuper = u.role === 'superadmin';
+                    const activeBadge = u.is_active
+                        ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Activo</span>`
+                        : `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">Inactivo</span>`;
+                    
+                    const roleBadge = isSuper
+                        ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">👑 SuperAdmin</span>`
+                        : `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700">🏢 Cliente</span>`;
+
+                    const modulesStr = (u.modules_allowed || []).map(m => m === 'dispatch' ? '📦 Despacho' : '📈 Métricas').join(', ') || 'Ninguno';
+
+                    return `
+                    <tr class="hover:bg-slate-800/40 transition">
+                        <td class="p-4 font-bold text-white">${u.company_name}</td>
+                        <td class="p-4 font-mono text-slate-300">${u.username}</td>
+                        <td class="p-4">${roleBadge}</td>
+                        <td class="p-4 text-slate-300">${u.store_key ? (STORES_CONFIG[u.store_key]?.name || u.store_key) : 'Todas'}</td>
+                        <td class="p-4 text-slate-400 text-[11px]">${modulesStr}</td>
+                        <td class="p-4 text-center">${activeBadge}</td>
+                        <td class="p-4 text-right space-x-1 whitespace-nowrap">
+                            ${!isSuper ? `
+                                <button onclick="toggleUserActiveState('${u.id}', ${!u.is_active})" class="px-2.5 py-1 text-[11px] font-bold rounded-lg ${u.is_active ? 'bg-rose-900/40 text-rose-300 hover:bg-rose-800' : 'bg-emerald-900/40 text-emerald-300 hover:bg-emerald-800'} transition">
+                                    ${u.is_active ? 'Pausar' : 'Activar'}
+                                </button>
+                                <button onclick="promptChangePassword('${u.id}', '${u.username}')" class="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs transition" title="Cambiar Contraseña">
+                                    <i class="fa-solid fa-key"></i>
+                                </button>
+                            ` : `<span class="text-slate-500 text-[11px]">Principal</span>`}
+                        </td>
+                    </tr>`;
+                }).join('');
+            } catch (err) {
+                console.error("Error al listar usuarios:", err);
+                tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-rose-400">Error: ${err.message}</td></tr>`;
+            } finally {
+                if (icon) icon.classList.remove('fa-spin');
+            }
+        }
+
+        async function toggleUserActiveState(userId, nextState) {
+            try {
+                const { error } = await supabaseClient
+                    .from('portal_users')
+                    .update({ is_active: nextState })
+                    .eq('id', userId);
+                if (error) throw error;
+                loadAdminUsersList();
+            } catch (err) {
+                alert('Error al modificar estado: ' + err.message);
+            }
+        }
+
+        async function promptChangePassword(userId, username) {
+            const newPass = prompt(`Ingresá la nueva contraseña o DNI para '${username}':`);
+            if (!newPass || newPass.trim().length < 4) {
+                if (newPass !== null) alert('La contraseña debe tener al menos 4 caracteres.');
+                return;
+            }
+            try {
+                const newHash = await sha256(newPass.trim());
+                const { error } = await supabaseClient
+                    .from('portal_users')
+                    .update({ password_hash: newHash })
+                    .eq('id', userId);
+                if (error) throw error;
+                alert(`¡Contraseña actualizada con éxito para '${username}'!`);
+            } catch (err) {
+                alert('Error al cambiar contraseña: ' + err.message);
+            }
+        }
+
+        function openCreateUserModal() {
+            document.getElementById('modal-input-company').value = '';
+            document.getElementById('modal-input-username').value = '';
+            document.getElementById('modal-input-password').value = '';
+            document.getElementById('modal-check-dispatch').checked = true;
+            document.getElementById('modal-check-analytics').checked = true;
+            document.getElementById('modal-user').classList.remove('hidden');
+        }
+
+        function closeUserModal() {
+            document.getElementById('modal-user').classList.add('hidden');
+        }
+
+        async function handleSaveUser(e) {
+            e.preventDefault();
+            const company = document.getElementById('modal-input-company').value.trim();
+            const username = document.getElementById('modal-input-username').value.trim().toLowerCase();
+            const password = document.getElementById('modal-input-password').value.trim();
+            const storeKey = document.getElementById('modal-select-store').value;
+            const canDispatch = document.getElementById('modal-check-dispatch').checked;
+            const canAnalytics = document.getElementById('modal-check-analytics').checked;
+
+            const modules = [];
+            if (canDispatch) modules.push('dispatch');
+            if (canAnalytics) modules.push('analytics');
+
+            const btnSubmit = document.getElementById('modal-btn-submit');
+            btnSubmit.disabled = true;
+
+            try {
+                const passHash = await sha256(password);
+                const { error } = await supabaseClient
+                    .from('portal_users')
+                    .insert([{
+                        company_name: company,
+                        username: username,
+                        password_hash: passHash,
+                        role: 'client',
+                        store_key: storeKey,
+                        modules_allowed: modules,
+                        is_active: true
+                    }]);
+
+                if (error) throw error;
+
+                closeUserModal();
+                loadAdminUsersList();
+                alert(`¡Cuenta creada con éxito para ${company}! Ya puede ingresar con usuario '${username}'.`);
+            } catch (err) {
+                alert('Error al crear usuario: ' + err.message);
+            } finally {
+                btnSubmit.disabled = false;
+            }
+        }
+
+        /* ====================================================== */
+        /* PARSERS, TICKET GENERATION & DISPATCH LOGIC            */
+        /* ====================================================== */
         function parseGoogleDate(raw) {
             if (!raw) return new Date();
             const str = String(raw);
@@ -569,41 +1110,28 @@
             return new Date();
         }
 
-        // Extractor de cantidad de unidades (ej: 2x, x 3, 4 unidades, 1 Termo...)
         function extractItemQuantity(rawItem) {
             if (!rawItem) return 1;
             const str = String(rawItem).trim();
-            
-            // Caso '2x', '3 x' al inicio
             const mLead = str.match(/^\s*(\d+)\s*x\b/i);
             if (mLead) return parseInt(mLead[1], 10) || 1;
-
-            // Caso 'x 2', 'x2', 'x 5' en el texto
             const mTrailX = str.match(/\bx\s*(\d+)\b/i);
             if (mTrailX) return parseInt(mTrailX[1], 10) || 1;
-
-            // Caso '2 unidades', '3 u'
             const mUnits = str.match(/\b(\d+)\s*(?:unidades?|unidad|u)\b/i);
             if (mUnits) return parseInt(mUnits[1], 10) || 1;
-
-            // Caso número al inicio seguido de texto: '2 Termos...'
             const mLeadNum = str.match(/^\s*(\d+)\s+(?=[A-Za-z])/);
             if (mLeadNum) {
                 const n = parseInt(mLeadNum[1], 10);
                 if (n > 0 && n < 100) return n;
             }
-
             return 1;
         }
 
         function formatProductWithCode(rawItem) {
             if (!rawItem) return '';
             let str = String(rawItem).trim();
-
-            // Detectar Código de Artículo (ej: DH-B36, MM93B, GL199-80, TX-V226, TX-204, FLK-1679, GL80468-1, etc.)
             let foundCode = '';
             
-            // Buscar entre paréntesis o corchetes: (DH-B36), (MM93B)
             const parenMatches = str.match(/\(([^\)]+)\)/g) || [];
             for (const pm of parenMatches) {
                 const inside = pm.replace(/[\(\)]/g, '').trim();
@@ -620,7 +1148,6 @@
                 }
             }
 
-            // Si no estaba entre paréntesis, buscar tokens sueltos
             if (!foundCode) {
                 const tokens = str.match(/\b([A-Za-z]{1,5}-?[A-Za-z0-9]{2,8}(?:-[0-9]+)?)\b/g) || [];
                 for (const t of tokens) {
@@ -635,46 +1162,34 @@
                 }
             }
 
-            // Limpiar la descripción del producto
             let desc = str;
             if (foundCode) {
-                desc = desc.replace(new RegExp('\\(\\s*' + foundCode + '\\s*\\)', 'gi'), '');
+                desc = desc.replace(new RegExp('\\(' + foundCode + '\\)', 'gi'), '');
                 desc = desc.replace(new RegExp('\\b' + foundCode + '\\b', 'gi'), '');
             }
 
-            // Eliminar precios: ($15.600), $15.600 c/u, etc.
             desc = desc.replace(/\(\s*\$?[0-9\.,]+[^\)]*\)/gi, '');
             desc = desc.replace(/\$?[0-9\.,]+(?:\s*c\/u)?/gi, '');
-            
-            // Eliminar cantidades: 1x, x 1, x1, 2 unidades, etc.
             desc = desc.replace(/\b\d+\s*x\b/gi, '');
             desc = desc.replace(/\bx\s*\d+\s*(?:unidades?|unidad|u)?\b/gi, '');
             desc = desc.replace(/^\s*\d+\s+(?=[A-Za-z])/, '');
             desc = desc.replace(/cantidad\s+no\s+especificada/gi, '');
-
-            // Eliminar signos y espacios residuales
             desc = desc.replace(/[\(\)\[\]]+/g, ' ');
             desc = desc.replace(/\s*-\s*/g, ' ');
             desc = desc.replace(/,\s*,/g, ',');
             desc = desc.replace(/^[\s,;:\-]+|[\s,;:\-]+$/g, '');
             desc = desc.replace(/\s+/g, ' ').trim();
 
-            if (foundCode && desc) {
-                return `${foundCode} ,${desc}`;
-            } else if (foundCode) {
-                return foundCode;
-            } else if (desc) {
-                return desc;
-            }
+            if (foundCode && desc) return `${foundCode} ,${desc}`;
+            if (foundCode) return foundCode;
+            if (desc) return desc;
             return str;
         }
 
-        // Extractor y normalizador de localidades según la tienda
         function extractLocalityName(storeKey, direccionRaw, costoEnvioRaw) {
             const envio = String(costoEnvioRaw || '').trim();
             const dir = String(direccionRaw || '').trim();
 
-            // Descartar retiros en depósito
             const combined = (envio + ' ' + dir).toLowerCase();
             if (combined.includes('retira') || combined.includes('deposito') || combined.includes('depósito') || (combined.includes('once') && combined.includes('retiro')) || envio.toUpperCase() === 'NO') {
                 return null;
@@ -683,10 +1198,7 @@
             let loc = '';
 
             if (storeKey === 'adar') {
-                // En Adar la localidad está en Costo_envio
                 let raw = envio;
-                
-                // 1. Paréntesis: $4.500 (Isla Maciel), $5.800 (Berazategui), (motomensajería a José C. Paz, ...)
                 const mParen = raw.match(/\(([^)]+)\)/);
                 if (mParen) {
                     let inside = mParen[1];
@@ -695,8 +1207,6 @@
                     inside = inside.replace(/[\$0-9\.,]/g, '').trim();
                     if (inside.length >= 3) loc = inside;
                 }
-
-                // 2. Si no, buscar 'a Localidad': $5.800 a Ministro Rivadavia, $4.500 a Banfield, a González Catán
                 if (!loc) {
                     const mA = raw.match(/\ba\s+([A-Za-zÁÉÍÓÚáéíóúñÑ\s]+)/i);
                     if (mA) {
@@ -705,19 +1215,13 @@
                         if (l.length >= 3) loc = l;
                     }
                 }
-
-                // 3. Fallback: limpiar precio
                 if (!loc) {
                     let cleaned = raw.replace(/\$[\d\.,\s]+/g, '').replace(/[\(\)]/g, '').trim();
                     cleaned = cleaned.replace(/^(?:a\s+|en\s+|de\s+)/i, '').trim();
-                    if (cleaned.length >= 3 && !cleaned.toLowerCase().startsWith('no')) {
-                        loc = cleaned;
-                    }
+                    if (cleaned.length >= 3 && !cleaned.toLowerCase().startsWith('no')) loc = cleaned;
                 }
             } else {
-                // En Nacha y NNN la localidad está al final de Direccion (separada por comas)
                 let raw = (dir && dir.toLowerCase() !== 'true' && dir.toLowerCase() !== 'false') ? dir : envio;
-
                 const parts = raw.split(',').map(p => p.trim()).filter(p => p.length > 0);
                 if (parts.length > 1) {
                     let last = parts[parts.length - 1];
@@ -737,12 +1241,10 @@
             }
 
             if (!loc) return null;
-
             loc = loc.replace(/\s+/g, ' ').trim();
             if (loc.toUpperCase() === 'CABA' || loc.toUpperCase() === 'CAPITAL FEDERAL' || loc.toUpperCase() === 'CAPITAL') {
                 return 'CABA (Capital)';
             }
-
             return loc.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
         }
 
@@ -750,21 +1252,32 @@
             currentMainView = view;
             const btnDispatch = document.getElementById('btn-nav-dispatch');
             const btnAnalytics = document.getElementById('btn-nav-analytics');
+            const btnAdmin = document.getElementById('btn-nav-admin');
+
             const viewDispatch = document.getElementById('view-dispatch');
             const viewAnalytics = document.getElementById('view-analytics');
+            const viewAdmin = document.getElementById('view-admin');
+
+            [btnDispatch, btnAnalytics, btnAdmin].forEach(b => {
+                if (b) b.className = "px-3 sm:px-4 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5";
+            });
+
+            viewDispatch.classList.add('hidden');
+            viewAnalytics.classList.add('hidden');
+            viewAdmin.classList.add('hidden');
 
             if (view === 'dispatch') {
-                btnDispatch.className = "px-3.5 sm:px-4 py-2 rounded-lg text-xs font-bold bg-emerald-600 text-white transition flex items-center gap-2 shadow";
-                btnAnalytics.className = "px-3.5 sm:px-4 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-2";
+                btnDispatch.className = "px-3 sm:px-4 py-2 rounded-lg text-xs font-bold bg-emerald-600 text-white transition flex items-center gap-1.5 shadow";
                 viewDispatch.classList.remove('hidden');
-                viewAnalytics.classList.add('hidden');
                 if (dispatchOrders.length === 0) fetchDispatchOrders();
-            } else {
-                btnAnalytics.className = "px-3.5 sm:px-4 py-2 rounded-lg text-xs font-bold bg-indigo-600 text-white transition flex items-center gap-2 shadow";
-                btnDispatch.className = "px-3.5 sm:px-4 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-2";
+            } else if (view === 'analytics') {
+                btnAnalytics.className = "px-3 sm:px-4 py-2 rounded-lg text-xs font-bold bg-indigo-600 text-white transition flex items-center gap-1.5 shadow";
                 viewAnalytics.classList.remove('hidden');
-                viewDispatch.classList.add('hidden');
                 fetchAnalyticsData();
+            } else if (view === 'admin') {
+                btnAdmin.className = "px-3 sm:px-4 py-2 rounded-lg text-xs font-bold bg-amber-600 text-white transition flex items-center gap-1.5 shadow";
+                viewAdmin.classList.remove('hidden');
+                loadAdminUsersList();
             }
         }
 
@@ -793,10 +1306,12 @@
 
             ['adar', 'nacha', 'nnn'].forEach(k => {
                 const btn = document.getElementById(`btn-ana-${k}`);
-                if (k === storeKey) {
-                    btn.className = "px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white transition flex items-center gap-1.5";
-                } else {
-                    btn.className = "px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5";
+                if (btn) {
+                    if (k === storeKey) {
+                        btn.className = "px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white transition flex items-center gap-1.5";
+                    } else {
+                        btn.className = "px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5";
+                    }
                 }
             });
 
@@ -1045,10 +1560,12 @@
             currentDispatchTab = tab;
             ['today', 'tomorrow', 'history'].forEach(t => {
                 const card = document.getElementById(`tab-${t}-card`);
-                if (t === tab) {
-                    card.className = "cursor-pointer p-4 rounded-xl border-2 border-emerald-500 bg-slate-900/90 shadow-md transition";
-                } else {
-                    card.className = "cursor-pointer p-4 rounded-xl border border-slate-800 bg-slate-900/40 hover:bg-slate-900 transition";
+                if (card) {
+                    if (t === tab) {
+                        card.className = "cursor-pointer p-4 rounded-xl border-2 border-emerald-500 bg-slate-900/90 shadow-md transition";
+                    } else {
+                        card.className = "cursor-pointer p-4 rounded-xl border border-slate-800 bg-slate-900/40 hover:bg-slate-900 transition";
+                    }
                 }
             });
             renderDispatchList();
@@ -1430,7 +1947,6 @@
                     const totalMonto = parseMonto(totalStr);
                     const locality = extractLocalityName(currentAnalyticsStore, direccionRaw, costoEnvio);
 
-                    // Calcular unidades totales dentro de este pedido
                     let orderUnitsCount = 0;
                     if (productos) {
                         const items = productos.split(/,|\n/);
@@ -1461,7 +1977,6 @@
 
                 analyticsRawOrders.sort((a, b) => b.fecha - a.fecha);
 
-                // Inicializar fechas límites de los inputs
                 if (analyticsRawOrders.length > 0) {
                     const minDate = analyticsRawOrders[analyticsRawOrders.length - 1].fecha;
                     const maxDate = analyticsRawOrders[0].fecha;
@@ -1571,10 +2086,10 @@
                 document.getElementById('input-date-to').value = now.toISOString().split('T')[0];
             } else if (selectedPeriodKey === 'thisMonth') {
                 const now = new Date();
-                const start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
-                const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
-                document.getElementById('input-date-from').value = start.toISOString().split('T')[0];
-                document.getElementById('input-date-to').value = end.toISOString().split('T')[0];
+                const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+                const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+                document.getElementById('input-date-from').value = firstDay.toISOString().split('T')[0];
+                document.getElementById('input-date-to').value = lastDay.toISOString().split('T')[0];
             } else if (selectedPeriodKey === 'all') {
                 if (analyticsRawOrders.length > 0) {
                     const minDate = analyticsRawOrders[analyticsRawOrders.length - 1].fecha;
@@ -1795,7 +2310,6 @@
             const ctx = document.getElementById('chart-products').getContext('2d');
             if (chartProductsInstance) chartProductsInstance.destroy();
 
-            // Mapa para registrar { totalUnits, ticketCount } por producto
             const productStats = new Map();
 
             orders.forEach(o => {
@@ -1815,7 +2329,6 @@
                 });
             });
 
-            // Ordenar por unidades vendidas desc y tomar el límite seleccionado (Top 5, 10, 15, 20)
             const sortedProds = Array.from(productStats.entries())
                                      .sort((a, b) => b[1].units - a[1].units)
                                      .slice(0, currentTopNLimit);
@@ -1843,9 +2356,7 @@
                     indexAxis: 'y',
                     responsive: true,
                     maintainAspectRatio: false,
-                    layout: {
-                        padding: { left: 5, right: 10 }
-                    },
+                    layout: { padding: { left: 5, right: 10 } },
                     plugins: {
                         legend: { display: false },
                         tooltip: {
@@ -1936,7 +2447,6 @@
             });
         }
 
-        // Renderizado del Top 7 Localidades con más ventas
         function renderLocalitiesList(orders) {
             const container = document.getElementById('localities-container');
             if (!container) return;
@@ -2029,8 +2539,8 @@
             renderAnalyticsTable(filtered);
         }
 
-        fetchDispatchOrders();
-        setInterval(fetchDispatchOrders, 30000);
+        // Inicializar aplicación
+        initAuth();
     </script>
 </body>
 </html>
