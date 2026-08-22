@@ -84,6 +84,11 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #475569;
         }
+
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            cursor: pointer;
+        }
     </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen font-sans">
@@ -98,7 +103,7 @@
                     </div>
                     <div>
                         <span class="font-extrabold text-white text-lg tracking-tight">OPERACIONES</span>
-                        <span class="text-emerald-400 font-semibold text-xs ml-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">v2.1</span>
+                        <span class="text-emerald-400 font-semibold text-xs ml-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">v2.2</span>
                     </div>
                 </div>
 
@@ -219,7 +224,7 @@
     <!-- ========================================== -->
     <div id="view-analytics" class="no-print max-w-7xl mx-auto p-4 md:p-6 hidden">
         <!-- Header Analytics -->
-        <header class="flex flex-col md:flex-row items-start md:items-center justify-between pb-6 border-b border-slate-800 gap-4">
+        <header class="flex flex-col lg:flex-row items-start lg:items-center justify-between pb-6 border-b border-slate-800 gap-4">
             <div>
                 <h1 class="text-2xl font-bold text-white flex items-center gap-3">
                     <span class="p-2 bg-indigo-500/10 text-indigo-400 rounded-xl border border-indigo-500/20">
@@ -246,25 +251,64 @@
                     </button>
                 </div>
 
-                <!-- Selector de Ciclo Mensual (16 al 16) -->
-                <div class="flex items-center bg-slate-900 rounded-xl px-3 py-1.5 border border-slate-800">
-                    <label for="select-cycle" class="text-xs font-semibold text-slate-400 mr-2 flex items-center gap-1.5">
-                        <i class="fa-regular fa-calendar-days text-indigo-400"></i> Período:
-                    </label>
-                    <select id="select-cycle" onchange="onCycleChange()" class="bg-slate-950 text-white text-xs font-bold rounded-lg px-2.5 py-1 border border-slate-700 focus:outline-none focus:border-indigo-500">
-                        <option value="current">Ciclo Actual (16 al 16)</option>
-                        <option value="all">🌐 Todos los datos (Histórico)</option>
-                    </select>
-                </div>
-
                 <button onclick="fetchAnalyticsData()" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl font-medium text-sm flex items-center gap-2 border border-slate-800 transition">
-                    <i class="fa-solid fa-rotate" id="refresh-icon-analytics"></i> Actualizar Métricas
+                    <i class="fa-solid fa-rotate" id="refresh-icon-analytics"></i> Actualizar
                 </button>
             </div>
         </header>
 
+        <!-- Filtros de Fecha: Presets + Rango Libre -->
+        <div class="my-6 p-4 rounded-2xl bg-slate-900/60 border border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div class="flex items-center gap-3 flex-wrap flex-1">
+                <!-- Dropdown de Períodos Rápidos -->
+                <div class="flex items-center bg-slate-950 rounded-xl px-3 py-2 border border-slate-800 shadow-inner">
+                    <label for="select-cycle" class="text-xs font-semibold text-slate-400 mr-2 flex items-center gap-1.5">
+                        <i class="fa-regular fa-calendar-days text-indigo-400"></i> Período:
+                    </label>
+                    <select id="select-cycle" onchange="onPeriodChange()" class="bg-transparent text-white text-xs font-bold focus:outline-none cursor-pointer">
+                        <optgroup label="🌐 Filtro General">
+                            <option value="all">🌐 Todos los datos (Histórico total)</option>
+                        </optgroup>
+                        <optgroup label="📅 Ciclos de Facturación (16 al 16)" id="optgroup-cycles">
+                            <!-- Inyectado dinámicamente -->
+                        </optgroup>
+                        <optgroup label="⏱️ Períodos Rápidos">
+                            <option value="today">⚡ Hoy</option>
+                            <option value="last7">📆 Últimos 7 días</option>
+                            <option value="last30">📆 Últimos 30 días</option>
+                            <option value="thisMonth">🗓️ Mes Calendario Actual (1 al fin de mes)</option>
+                        </optgroup>
+                        <optgroup label="🎯 Personalizado">
+                            <option value="custom">🎯 Elegir Rango de Fechas Libre...</option>
+                        </optgroup>
+                    </select>
+                </div>
+
+                <!-- Controles de Rango de Fecha Personalizada -->
+                <div id="custom-date-container" class="flex items-center gap-2 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800 shadow-inner flex-wrap">
+                    <div class="flex items-center gap-1.5 text-xs text-slate-400">
+                        <span>Desde:</span>
+                        <input type="date" id="input-date-from" onchange="onCustomDateChange()" class="bg-slate-900 text-white text-xs font-bold rounded-lg px-2 py-1 border border-slate-700 focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div class="flex items-center gap-1.5 text-xs text-slate-400">
+                        <span>Hasta:</span>
+                        <input type="date" id="input-date-to" onchange="onCustomDateChange()" class="bg-slate-900 text-white text-xs font-bold rounded-lg px-2 py-1 border border-slate-700 focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <button onclick="applyCustomDateFilter()" class="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg transition shadow">
+                        Filtrar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Resumen del rango activo -->
+            <div class="text-xs text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 px-3 py-1.5 rounded-xl font-medium flex items-center gap-2 self-stretch md:self-auto justify-center">
+                <i class="fa-solid fa-filter"></i>
+                <span id="label-active-range">Cargando rango...</span>
+            </div>
+        </div>
+
         <!-- KPI Scorecards Grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 my-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <!-- Facturación Confirmada -->
             <div class="p-5 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-900/60 border border-slate-800/80 shadow-lg relative overflow-hidden">
                 <div class="absolute -right-2 -bottom-2 opacity-5 text-6xl text-emerald-400">
@@ -464,7 +508,7 @@
 
         let analyticsRawOrders = [];
         let availableCycles = [];
-        let selectedCycleKey = 'current';
+        let selectedPeriodKey = 'all';
 
         let chartEvolutionInstance = null;
         let chartProductsInstance = null;
@@ -1189,6 +1233,17 @@
 
                 analyticsRawOrders.sort((a, b) => b.fecha - a.fecha);
 
+                // Inicializar fechas límites de los inputs
+                if (analyticsRawOrders.length > 0) {
+                    const minDate = analyticsRawOrders[analyticsRawOrders.length - 1].fecha;
+                    const maxDate = analyticsRawOrders[0].fecha;
+                    
+                    const elFrom = document.getElementById('input-date-from');
+                    const elTo = document.getElementById('input-date-to');
+                    if (elFrom && !elFrom.value) elFrom.value = minDate.toISOString().split('T')[0];
+                    if (elTo && !elTo.value) elTo.value = maxDate.toISOString().split('T')[0];
+                }
+
                 buildCycleOptions();
                 renderAnalyticsDashboard();
             } catch (err) {
@@ -1222,7 +1277,7 @@
             const start = new Date(startYear, startMonth, 16, 0, 0, 0);
             const end = new Date(endYear, endMonth, 16, 0, 0, 0);
             const label = `16 ${MESES_ES[startMonth]} ${startYear} - 15 ${MESES_ES[endMonth]} ${endYear}`;
-            const key = `${startYear}-${String(startMonth + 1).padStart(2, '0')}-16`;
+            const key = `cycle_${startYear}_${String(startMonth + 1).padStart(2, '0')}`;
 
             return { key, label, start, end };
         }
@@ -1239,40 +1294,137 @@
 
             availableCycles = Array.from(cyclesMap.values()).sort((a, b) => b.start - a.start);
 
-            const select = document.getElementById('select-cycle');
+            const optgroup = document.getElementById('optgroup-cycles');
             let optionsHtml = '';
 
             if (availableCycles.length > 0) {
                 availableCycles.forEach((c, idx) => {
                     const isLatest = idx === 0;
-                    optionsHtml += `<option value="${c.key}" ${isLatest ? 'selected' : ''}>📅 ${c.label} ${isLatest ? '(Actual)' : ''}</option>`;
+                    optionsHtml += `<option value="${c.key}">📅 ${c.label} ${isLatest ? '(Actual)' : ''}</option>`;
                 });
-            }
-
-            optionsHtml += `<option value="all">🌐 Todos los datos (Histórico total: ${analyticsRawOrders.length} pedidos)</option>`;
-            select.innerHTML = optionsHtml;
-
-            if (availableCycles.length > 0) {
-                selectedCycleKey = availableCycles[0].key;
             } else {
-                selectedCycleKey = 'all';
+                optionsHtml = `<option disabled>Sin ciclos detectados</option>`;
             }
+
+            optgroup.innerHTML = optionsHtml;
         }
 
-        function onCycleChange() {
+        function onPeriodChange() {
             const select = document.getElementById('select-cycle');
-            selectedCycleKey = select.value;
+            selectedPeriodKey = select.value;
+            
+            // Si eligen un ciclo o preset, actualizar los date pickers visualmente
+            if (selectedPeriodKey.startsWith('cycle_')) {
+                const cycle = availableCycles.find(c => c.key === selectedPeriodKey);
+                if (cycle) {
+                    const toDateObj = new Date(cycle.end.getTime() - 24 * 60 * 60 * 1000);
+                    document.getElementById('input-date-from').value = cycle.start.toISOString().split('T')[0];
+                    document.getElementById('input-date-to').value = toDateObj.toISOString().split('T')[0];
+                }
+            } else if (selectedPeriodKey === 'today') {
+                const todayStr = new Date().toISOString().split('T')[0];
+                document.getElementById('input-date-from').value = todayStr;
+                document.getElementById('input-date-to').value = todayStr;
+            } else if (selectedPeriodKey === 'last7') {
+                const now = new Date();
+                const past7 = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                document.getElementById('input-date-from').value = past7.toISOString().split('T')[0];
+                document.getElementById('input-date-to').value = now.toISOString().split('T')[0];
+            } else if (selectedPeriodKey === 'last30') {
+                const now = new Date();
+                const past30 = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                document.getElementById('input-date-from').value = past30.toISOString().split('T')[0];
+                document.getElementById('input-date-to').value = now.toISOString().split('T')[0];
+            } else if (selectedPeriodKey === 'thisMonth') {
+                const now = new Date();
+                const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+                const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+                document.getElementById('input-date-from').value = firstDay.toISOString().split('T')[0];
+                document.getElementById('input-date-to').value = lastDay.toISOString().split('T')[0];
+            } else if (selectedPeriodKey === 'all') {
+                if (analyticsRawOrders.length > 0) {
+                    const minDate = analyticsRawOrders[analyticsRawOrders.length - 1].fecha;
+                    const maxDate = analyticsRawOrders[0].fecha;
+                    document.getElementById('input-date-from').value = minDate.toISOString().split('T')[0];
+                    document.getElementById('input-date-to').value = maxDate.toISOString().split('T')[0];
+                }
+            }
+
+            renderAnalyticsDashboard();
+        }
+
+        function onCustomDateChange() {
+            document.getElementById('select-cycle').value = 'custom';
+            selectedPeriodKey = 'custom';
+            renderAnalyticsDashboard();
+        }
+
+        function applyCustomDateFilter() {
+            document.getElementById('select-cycle').value = 'custom';
+            selectedPeriodKey = 'custom';
             renderAnalyticsDashboard();
         }
 
         function getFilteredAnalyticsOrders() {
-            if (selectedCycleKey === 'all') {
-                return analyticsRawOrders;
-            }
-            const cycle = availableCycles.find(c => c.key === selectedCycleKey);
-            if (!cycle) return analyticsRawOrders;
+            let filtered = [];
+            let rangeDescription = '';
 
-            return analyticsRawOrders.filter(o => o.fecha >= cycle.start && o.fecha < cycle.end);
+            if (selectedPeriodKey === 'all') {
+                filtered = analyticsRawOrders;
+                rangeDescription = `Histórico total (${analyticsRawOrders.length} pedidos)`;
+            } else if (selectedPeriodKey === 'today') {
+                const now = new Date();
+                const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+                const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+                filtered = analyticsRawOrders.filter(o => o.fecha >= start && o.fecha <= end);
+                rangeDescription = `Hoy (${now.toLocaleDateString('es-AR')})`;
+            } else if (selectedPeriodKey === 'last7') {
+                const now = new Date();
+                const start = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                start.setHours(0, 0, 0, 0);
+                filtered = analyticsRawOrders.filter(o => o.fecha >= start && o.fecha <= now);
+                rangeDescription = `Últimos 7 días (${start.toLocaleDateString('es-AR')} al ${now.toLocaleDateString('es-AR')})`;
+            } else if (selectedPeriodKey === 'last30') {
+                const now = new Date();
+                const start = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                start.setHours(0, 0, 0, 0);
+                filtered = analyticsRawOrders.filter(o => o.fecha >= start && o.fecha <= now);
+                rangeDescription = `Últimos 30 días (${start.toLocaleDateString('es-AR')} al ${now.toLocaleDateString('es-AR')})`;
+            } else if (selectedPeriodKey === 'thisMonth') {
+                const now = new Date();
+                const start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
+                const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+                filtered = analyticsRawOrders.filter(o => o.fecha >= start && o.fecha <= end);
+                rangeDescription = `Mes Actual (${MESES_ES[now.getMonth()]} ${now.getFullYear()})`;
+            } else if (selectedPeriodKey === 'custom') {
+                const fromVal = document.getElementById('input-date-from').value;
+                const toVal = document.getElementById('input-date-to').value;
+
+                let start = fromVal ? new Date(fromVal + 'T00:00:00') : new Date(2000, 0, 1);
+                let end = toVal ? new Date(toVal + 'T23:59:59') : new Date(2100, 0, 1);
+
+                filtered = analyticsRawOrders.filter(o => o.fecha >= start && o.fecha <= end);
+                rangeDescription = `Personalizado: ${start.toLocaleDateString('es-AR')} al ${end.toLocaleDateString('es-AR')}`;
+            } else if (selectedPeriodKey.startsWith('cycle_')) {
+                const cycle = availableCycles.find(c => c.key === selectedPeriodKey);
+                if (cycle) {
+                    filtered = analyticsRawOrders.filter(o => o.fecha >= cycle.start && o.fecha < cycle.end);
+                    rangeDescription = `Ciclo: ${cycle.label}`;
+                } else {
+                    filtered = analyticsRawOrders;
+                    rangeDescription = 'Histórico total';
+                }
+            } else {
+                filtered = analyticsRawOrders;
+                rangeDescription = 'Histórico total';
+            }
+
+            const labelActive = document.getElementById('label-active-range');
+            if (labelActive) {
+                labelActive.innerText = `${rangeDescription} (${filtered.length} pedidos)`;
+            }
+
+            return filtered;
         }
 
         function renderAnalyticsDashboard() {
