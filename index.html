@@ -83,7 +83,9 @@
                     </span>
                     <span id="title-store">NNN Tienda</span> | Despacho & Impresión
                 </h1>
-                <p class="text-slate-400 text-sm mt-1">Sincronizado en vivo con Google Sheets | Corte diario a las 13:00 hs</p>
+                <p class="text-slate-400 text-sm mt-1">
+                    Sincronizado en vivo con Google Sheets | Corte 13:00 hs (Viernes 13hs a Lunes 13hs acumulado)
+                </p>
             </div>
 
             <div class="flex items-center gap-3 flex-wrap">
@@ -118,24 +120,24 @@
 
         <!-- Stats & Tabs -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 my-6">
-            <!-- Tab Hoy (Hasta 13hs) -->
+            <!-- Tab Lote Activo -->
             <div onclick="switchTab('today')" id="tab-today-card" class="cursor-pointer p-4 rounded-xl border-2 border-emerald-500 bg-slate-800/80 hover:bg-slate-800 transition">
                 <div class="flex justify-between items-center">
-                    <span class="text-xs font-semibold uppercase tracking-wider text-emerald-400">Lote de Hoy (Corte 13:00 hs)</span>
+                    <span class="text-xs font-semibold uppercase tracking-wider text-emerald-400" id="label-tab-today">Lote de Despacho</span>
                     <span id="badge-today" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500 text-slate-900">0</span>
                 </div>
                 <div class="text-2xl font-bold text-white mt-2" id="total-today">$0</div>
-                <div class="text-xs text-slate-400 mt-1">Pedidos para despachar hoy</div>
+                <div class="text-xs text-slate-400 mt-1" id="desc-tab-today">Pedidos para preparar y despachar</div>
             </div>
 
-            <!-- Tab Mañana (Posteriores a 13hs) -->
+            <!-- Tab Siguiente Día Hábil -->
             <div onclick="switchTab('tomorrow')" id="tab-tomorrow-card" class="cursor-pointer p-4 rounded-xl border border-slate-800 bg-slate-800/40 hover:bg-slate-800 transition">
                 <div class="flex justify-between items-center">
-                    <span class="text-xs font-semibold uppercase tracking-wider text-amber-400">Lote de Mañana (Entraron tarde)</span>
+                    <span class="text-xs font-semibold uppercase tracking-wider text-amber-400" id="label-tab-tomorrow">Lote Siguiente</span>
                     <span id="badge-tomorrow" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300">0</span>
                 </div>
                 <div class="text-2xl font-bold text-white mt-2" id="total-tomorrow">$0</div>
-                <div class="text-xs text-slate-400 mt-1">Pedidos entrados después de las 13:00 hs</div>
+                <div class="text-xs text-slate-400 mt-1" id="desc-tab-tomorrow">Pedidos entrados después de las 13:00 hs</div>
             </div>
 
             <!-- Tab Historial -->
@@ -235,6 +237,14 @@
                 const jsonText = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
                 const data = JSON.parse(jsonText);
                 
+                const cols = data.table.cols || [];
+                const colMap = {};
+                cols.forEach((col, idx) => {
+                    if (col && col.label) {
+                        colMap[col.label.trim().toLowerCase()] = idx;
+                    }
+                });
+
                 const rows = data.table.rows || [];
                 allOrders = [];
 
@@ -252,11 +262,28 @@
                     const costoEnvio = String(c[5]?.v || '');
                     const subtotal = String(c[6]?.v || '');
                     const total = String(c[7]?.v || '');
-                    const colI = String(c[8]?.v || '');
+                    const metodoPagoCol = String(c[8]?.v || '');
+                    
+                    // Búsqueda inteligente de Dirección (Columna Direccion, Col J index 9, o dentro de otros campos)
+                    let direccion = '';
+                    const dirColIdx = colMap['direccion'] ?? colMap['dirección'] ?? colMap['direccion_envio'] ?? colMap['entrega'] ?? 9;
+                    if (c[dirColIdx] && c[dirColIdx].v && String(c[dirColIdx].v).trim() !== '' && !String(c[dirColIdx].v).toLowerCase().includes('ticket')) {
+                        direccion = String(c[dirColIdx].v).trim();
+                    }
+
+                    // Si no está en columna separada, intentar extraer de costoEnvio o del texto
+                    if (!direccion || direccion.toLowerCase() === 'true' || direccion.toLowerCase() === 'false') {
+                        const cleanedEnvio = costoEnvio.replace(/^\$[\d\.,\s]+/, '').replace(/^a\s+/i, '').replace(/[\(\)]/g, '').trim();
+                        if (cleanedEnvio && cleanedEnvio.length > 2 && !cleanedEnvio.toLowerCase().includes('retiro')) {
+                            direccion = cleanedEnvio;
+                        } else {
+                            direccion = 'Dirección coordinada por WhatsApp';
+                        }
+                    }
 
                     let fechaParsed = new Date();
                     if (String(rawFecha).includes('Date(')) {
-                        const m = String(rawFecha).match(/Date\((\d+),(\\d+),(\\d+),?(\\d+)?,?(\\d+)?/);
+                        const m = String(rawFecha).match(/Date\((\d+),(\d+),(\d+),?(\d+)?,?(\d+)?/);
                         if (m) {
                             fechaParsed = new Date(parseInt(m[1]), parseInt(m[2]), parseInt(m[3]), parseInt(m[4] || 12), parseInt(m[5] || 0));
                         }
@@ -272,7 +299,7 @@
                     // Detección de Método de Pago
                     let metodo = customPaymentMethods[ticketId];
                     if (!metodo) {
-                        const combinedText = (colI + ' ' + productos + ' ' + costoEnvio).toLowerCase();
+                        const combinedText = (metodoPagoCol + ' ' + productos + ' ' + costoEnvio).toLowerCase();
                         if (combinedText.includes('transf') || combinedText.includes('alias') || combinedText.includes('cbu') || combinedText.includes('mp')) {
                             metodo = 'Transferencia';
                         } else {
@@ -285,7 +312,7 @@
                         tienda: STORES[currentStore].name,
                         cliente_nombre: nombre,
                         celular: tel,
-                        direccion: isEnvio ? (costoEnvio.replace(/^\$[\d\.,\s]+/, '').replace(/^a\s+/i, '').replace(/[\(\)]/g, '') || 'Dirección de entrega') : 'Retiro en Depósito Once',
+                        direccion: isEnvio ? direccion : 'Retiro en Depósito Once',
                         envio: isEnvio,
                         costo_envio: costoEnvio,
                         metodo_pago: metodo,
@@ -312,10 +339,81 @@
             }
         }
 
+        /* LÓGICA DE CORTE INTELIGENTE: VIERNES 13:00 HS A LUNES 13:00 HS ACUMULADO */
+        function getBatchConfig(now = new Date()) {
+            const day = now.getDay(); // 0: Dom, 1: Lun, 2: Mar, 3: Mie, 4: Jue, 5: Vie, 6: Sab
+            const hour = now.getHours();
+            const minute = now.getMinutes();
+            const isPast13 = (hour > 13) || (hour === 13 && minute >= 0);
+
+            let currentBatchStart, currentBatchEnd, tabTodayLabel, tabTodayDesc, tabTomorrowLabel, tabTomorrowDesc;
+
+            if (day === 1) { 
+                // LUNES
+                currentBatchStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 3, 13, 0, 0); // Viernes 13hs
+                currentBatchEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 13, 0, 0); // Lunes 13hs
+                tabTodayLabel = "Lote de Hoy Lunes (Corte 13hs)";
+                tabTodayDesc = "Acumulado Fin de Semana (Viernes 13hs a Lunes 13hs)";
+                tabTomorrowLabel = "Lote de Mañana (Martes)";
+                tabTomorrowDesc = "Pedidos entrados el lunes después de las 13:00 hs";
+            } else if (day === 5) {
+                // VIERNES
+                if (!isPast13) {
+                    currentBatchStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 13, 0, 0); // Jueves 13hs
+                    currentBatchEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 13, 0, 0); // Viernes 13hs
+                    tabTodayLabel = "Lote de Hoy Viernes (Corte 13hs)";
+                    tabTodayDesc = "Pedidos para despachar hoy viernes a la tarde";
+                    tabTomorrowLabel = "Lote del Lunes (Fin de Semana)";
+                    tabTomorrowDesc = "Pedidos entrados después de las 13:00 hs";
+                } else {
+                    currentBatchStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 13, 0, 0); // Viernes 13hs
+                    currentBatchEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 3, 13, 0, 0); // Lunes 13hs
+                    tabTodayLabel = "Lote del Lunes (Acumulado Finde)";
+                    tabTodayDesc = "Todo lo que entra desde hoy 13hs hasta el Lunes 13hs";
+                    tabTomorrowLabel = "Lote del Martes";
+                    tabTomorrowDesc = "Pedidos posteriores al corte del Lunes";
+                }
+            } else if (day === 6) {
+                // SÁBADO
+                currentBatchStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 13, 0, 0); // Viernes 13hs
+                currentBatchEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2, 13, 0, 0); // Lunes 13hs
+                tabTodayLabel = "Lote del Lunes (Acumulado Finde)";
+                tabTodayDesc = "Viernes 13hs a Lunes 13hs (Se despacha el Lunes)";
+                tabTomorrowLabel = "Lote del Martes";
+                tabTomorrowDesc = "Pedidos posteriores al corte del Lunes";
+            } else if (day === 0) {
+                // DOMINGO
+                currentBatchStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 2, 13, 0, 0); // Viernes 13hs
+                currentBatchEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 13, 0, 0); // Lunes 13hs
+                tabTodayLabel = "Lote del Lunes (Acumulado Finde)";
+                tabTodayDesc = "Viernes 13hs a Lunes 13hs (Se despacha mañana Lunes)";
+                tabTomorrowLabel = "Lote del Martes";
+                tabTomorrowDesc = "Pedidos posteriores al corte del Lunes";
+            } else {
+                // MARTES, MIÉRCOLES, JUEVES
+                currentBatchStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 13, 0, 0);
+                currentBatchEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 13, 0, 0);
+                tabTodayLabel = "Lote de Hoy (Corte 13:00 hs)";
+                tabTodayDesc = "Pedidos para preparar y despachar hoy";
+                tabTomorrowLabel = "Lote de Mañana (Entraron tarde)";
+                tabTomorrowDesc = "Pedidos entrados después de las 13:00 hs";
+            }
+
+            return { currentBatchStart, currentBatchEnd, tabTodayLabel, tabTodayDesc, tabTomorrowLabel, tabTomorrowDesc };
+        }
+
         function categorizeOrders(orders) {
-            const now = new Date();
-            const todayCutoff = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 13, 0, 0);
-            const yesterdayCutoff = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 13, 0, 0);
+            const { currentBatchStart, currentBatchEnd, tabTodayLabel, tabTodayDesc, tabTomorrowLabel, tabTomorrowDesc } = getBatchConfig();
+
+            const elTodayLabel = document.getElementById('label-tab-today');
+            const elTodayDesc = document.getElementById('desc-tab-today');
+            const elTomorrowLabel = document.getElementById('label-tab-tomorrow');
+            const elTomorrowDesc = document.getElementById('desc-tab-tomorrow');
+
+            if (elTodayLabel) elTodayLabel.innerText = tabTodayLabel;
+            if (elTodayDesc) elTodayDesc.innerText = tabTodayDesc;
+            if (elTomorrowLabel) elTomorrowLabel.innerText = tabTomorrowLabel;
+            if (elTomorrowDesc) elTomorrowDesc.innerText = tabTomorrowDesc;
 
             const todayBatch = [];
             const tomorrowBatch = [];
@@ -323,18 +421,10 @@
 
             orders.forEach(order => {
                 const orderDate = new Date(order.fecha_hora);
-                if (now < todayCutoff) {
-                    if (orderDate >= yesterdayCutoff && orderDate < todayCutoff) {
-                        todayBatch.push(order);
-                    } else if (orderDate >= todayCutoff) {
-                        tomorrowBatch.push(order);
-                    }
-                } else {
-                    if (orderDate >= todayCutoff) {
-                        tomorrowBatch.push(order);
-                    } else if (orderDate >= yesterdayCutoff && orderDate < todayCutoff) {
-                        todayBatch.push(order);
-                    }
+                if (orderDate >= currentBatchStart && orderDate < currentBatchEnd) {
+                    todayBatch.push(order);
+                } else if (orderDate >= currentBatchEnd) {
+                    tomorrowBatch.push(order);
                 }
             });
 
@@ -428,9 +518,9 @@
                             <span class="text-xs text-slate-500">${new Date(order.fecha_hora).toLocaleDateString('es-AR')} ${dateStr}</span>
                         </div>
 
-                        <div class="text-sm text-slate-300 flex items-center gap-2">
-                            <i class="fa-solid fa-location-dot text-rose-400 text-xs"></i>
-                            <span>${order.direccion}</span>
+                        <div class="text-sm text-slate-200 font-medium flex items-center gap-2 mt-1">
+                            <i class="fa-solid fa-location-dot text-rose-400 text-sm"></i>
+                            <span class="text-amber-300 font-bold bg-slate-950/80 px-2 py-0.5 rounded border border-slate-700">${order.direccion}</span>
                             <span class="text-xs font-semibold ${order.envio ? 'text-blue-400' : 'text-purple-400'}">
                                 (${order.costo_envio})
                             </span>
@@ -476,7 +566,7 @@
             const isTransfer = order.metodo_pago.toLowerCase().includes('transf');
             const pagoTexto = isTransfer ? 'TRANSFERENCIA BANCARIA' : 'EFECTIVO (CONTRAENTREGA)';
 
-            // Si el modo es Remito Grande A4
+            // Remito Grande A4
             if (printMode === 'a4') {
                 return `
                 <div class="ticket-a4 ticket-break">
@@ -499,7 +589,7 @@
                         </div>
                         <div>
                             <div style="font-size:11px; text-transform:uppercase; color:#666; font-weight:bold;">Destino / Entrega</div>
-                            <div style="font-size:16px; font-weight:bold; color:#000;">📍 ${order.direccion}</div>
+                            <div style="font-size:16px; font-weight:900; color:#000;">📍 ${order.direccion}</div>
                             <div style="font-size:13px; color:#444; margin-top:2px;">🚚 ${order.costo_envio}</div>
                         </div>
                     </div>
@@ -561,10 +651,10 @@
                     <div style="font-size:15px; font-weight:bold; margin-bottom:3px;">
                         📱 ${order.celular}
                     </div>
-                    <div style="font-size:15px; font-weight:bold; margin-top:4px;">
+                    <div style="font-size:16px; font-weight:900; margin-top:5px; background:#f0f0f0; padding:4px 6px; border:1px solid #000; border-radius:4px;">
                         📍 ${order.direccion}
                     </div>
-                    <div style="font-size:13px; color:#333; margin-top:2px;">
+                    <div style="font-size:13px; color:#333; margin-top:3px;">
                         🚚 ${order.costo_envio}
                     </div>
                 </div>
