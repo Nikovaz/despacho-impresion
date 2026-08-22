@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Impresión de Pedidos - NNN & NachaHome</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @media print {
+            @page {
+                margin: 4mm;
+                size: auto;
+            }
+            body {
+                background: #fff !important;
+                color: #000 !important;
+            }
+            body * {
+                visibility: hidden;
+            }
+            #print-area, #print-area * {
+                visibility: visible;
+            }
+            #print-area {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                margin: 0;
+                padding: 0;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .ticket-break {
+                page-break-after: always;
+                break-after: page;
+                margin-bottom: 20px;
+                padding-bottom: 20px;
+            }
+        }
+
+        /* Estilo Térmico 80mm - Grande, Negrita y Alto Contraste */
+        .ticket-thermal {
+            max-width: 95mm;
+            width: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-size: 15px;
+            line-height: 1.35;
+            color: #000;
+            background: #fff;
+            padding: 12px;
+            margin: 0 auto;
+            border: 2px solid #000;
+            border-radius: 6px;
+        }
+
+        /* Estilo Hoja A4 / Remito Despacho */
+        .ticket-a4 {
+            max-width: 180mm;
+            width: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-size: 16px;
+            line-height: 1.5;
+            color: #000;
+            background: #fff;
+            padding: 20px;
+            margin: 0 auto;
+            border: 2px solid #000;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen">
+    <div class="no-print max-w-7xl mx-auto p-4 md:p-6">
+        <!-- Header -->
+        <header class="flex flex-col md:flex-row items-start md:items-center justify-between pb-6 border-b border-slate-800 gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-white flex items-center gap-3">
+                    <span class="p-2 bg-emerald-500/10 text-emerald-400 rounded-xl border border-emerald-500/20">
+                        <i class="fa-solid fa-print"></i>
+                    </span>
+                    <span id="title-store">NNN Tienda</span> | Despacho & Impresión
+                </h1>
+                <p class="text-slate-400 text-sm mt-1">Sincronizado en vivo con Google Sheets | Corte diario a las 13:00 hs</p>
+            </div>
+
+            <div class="flex items-center gap-3 flex-wrap">
+                <!-- Selector de Tienda (NNN vs NachaHome) -->
+                <div class="flex items-center bg-slate-800 rounded-xl p-1 border border-slate-700">
+                    <button onclick="switchStore('nnn')" id="btn-store-nnn" class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-shirt"></i> NNN Tienda
+                    </button>
+                    <button onclick="switchStore('nacha')" id="btn-store-nacha" class="px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-house"></i> NachaHome
+                    </button>
+                </div>
+
+                <!-- Selector de Formato de Impresión -->
+                <div class="flex items-center bg-slate-800 rounded-xl p-1 border border-slate-700">
+                    <button onclick="setPrintMode('thermal')" id="btn-mode-thermal" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white transition">
+                        🖨️ Térmica 80mm
+                    </button>
+                    <button onclick="setPrintMode('a4')" id="btn-mode-a4" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition">
+                        📄 Remito A4
+                    </button>
+                </div>
+
+                <button onclick="fetchOrders()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-medium text-sm flex items-center gap-2 border border-slate-700 transition">
+                    <i class="fa-solid fa-rotate" id="refresh-icon"></i> Sincronizar
+                </button>
+                <button onclick="printCurrentBatch()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg shadow-emerald-900/30 transition">
+                    <i class="fa-solid fa-print"></i> Imprimir Lote (<span id="count-selected">0</span>)
+                </button>
+            </div>
+        </header>
+
+        <!-- Stats & Tabs -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 my-6">
+            <!-- Tab Hoy (Hasta 13hs) -->
+            <div onclick="switchTab('today')" id="tab-today-card" class="cursor-pointer p-4 rounded-xl border-2 border-emerald-500 bg-slate-800/80 hover:bg-slate-800 transition">
+                <div class="flex justify-between items-center">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-emerald-400">Lote de Hoy (Corte 13:00 hs)</span>
+                    <span id="badge-today" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500 text-slate-900">0</span>
+                </div>
+                <div class="text-2xl font-bold text-white mt-2" id="total-today">$0</div>
+                <div class="text-xs text-slate-400 mt-1">Pedidos para despachar hoy</div>
+            </div>
+
+            <!-- Tab Mañana (Posteriores a 13hs) -->
+            <div onclick="switchTab('tomorrow')" id="tab-tomorrow-card" class="cursor-pointer p-4 rounded-xl border border-slate-800 bg-slate-800/40 hover:bg-slate-800 transition">
+                <div class="flex justify-between items-center">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-amber-400">Lote de Mañana (Entraron tarde)</span>
+                    <span id="badge-tomorrow" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300">0</span>
+                </div>
+                <div class="text-2xl font-bold text-white mt-2" id="total-tomorrow">$0</div>
+                <div class="text-xs text-slate-400 mt-1">Pedidos entrados después de las 13:00 hs</div>
+            </div>
+
+            <!-- Tab Historial -->
+            <div onclick="switchTab('history')" id="tab-history-card" class="cursor-pointer p-4 rounded-xl border border-slate-800 bg-slate-800/40 hover:bg-slate-800 transition">
+                <div class="flex justify-between items-center">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-indigo-400">Historial Completo</span>
+                    <span id="badge-history" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-500/20 text-indigo-300">0</span>
+                </div>
+                <div class="text-2xl font-bold text-white mt-2" id="total-history">$0</div>
+                <div class="text-xs text-slate-400 mt-1">Todos los pedidos registrados</div>
+            </div>
+        </div>
+
+        <!-- Orders Table / Grid -->
+        <div class="bg-slate-800/60 border border-slate-800 rounded-xl overflow-hidden">
+            <div class="p-4 border-b border-slate-800 flex justify-between items-center">
+                <h2 class="font-semibold text-white text-base flex items-center gap-2" id="current-tab-title">
+                    <i class="fa-solid fa-box text-emerald-400"></i> Pedidos en Lista
+                </h2>
+                <div class="text-xs text-slate-400 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    Hoja activa: <span id="label-active-sheet" class="text-emerald-400 font-semibold">Ventas NNN</span>
+                </div>
+            </div>
+
+            <div id="orders-container" class="divide-y divide-slate-800">
+                <div class="p-8 text-center text-slate-500">Cargando pedidos...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden Print Area -->
+    <div id="print-area" class="hidden"></div>
+
+    <script>
+        const SHEET_ID = '13OZcCBHrVufQSB4HcZu1Vgnu6uYAGLFpWrwW-x347aw';
+        
+        const STORES = {
+            nnn: { name: 'NNN Tienda', gid: '1354054217', sheetLabel: 'Ventas NNN' },
+            nacha: { name: 'NachaHome', gid: '1810697795', sheetLabel: 'Ventas NachaHome' }
+        };
+
+        let currentStore = 'nnn';
+        let allOrders = [];
+        let printedOrderIds = JSON.parse(localStorage.getItem('nnn_printed_orders') || '[]');
+        let customPaymentMethods = JSON.parse(localStorage.getItem('nnn_payment_methods') || '{}');
+        let currentTab = 'today';
+        let printMode = 'thermal';
+
+        function switchStore(storeKey) {
+            currentStore = storeKey;
+            document.getElementById('title-store').innerText = STORES[storeKey].name;
+            document.getElementById('label-active-sheet').innerText = STORES[storeKey].sheetLabel;
+
+            if (storeKey === 'nnn') {
+                document.getElementById('btn-store-nnn').className = "px-3.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white transition flex items-center gap-1.5";
+                document.getElementById('btn-store-nacha').className = "px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5";
+            } else {
+                document.getElementById('btn-store-nacha').className = "px-3.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white transition flex items-center gap-1.5";
+                document.getElementById('btn-store-nnn').className = "px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5";
+            }
+
+            fetchOrders();
+        }
+
+        function setPrintMode(mode) {
+            printMode = mode;
+            if (mode === 'thermal') {
+                document.getElementById('btn-mode-thermal').className = "px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white transition";
+                document.getElementById('btn-mode-a4').className = "px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition";
+            } else {
+                document.getElementById('btn-mode-a4').className = "px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white transition";
+                document.getElementById('btn-mode-thermal').className = "px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition";
+            }
+        }
+
+        function setPaymentMethod(id, method) {
+            customPaymentMethods[id] = method;
+            localStorage.setItem('nnn_payment_methods', JSON.stringify(customPaymentMethods));
+            const o = allOrders.find(x => x.id === id);
+            if (o) o.metodo_pago = method;
+            renderList();
+        }
+
+        async function fetchOrders() {
+            const icon = document.getElementById('refresh-icon');
+            if (icon) icon.classList.add('fa-spin');
+            
+            const gid = STORES[currentStore].gid;
+            const sheetUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&gid=${gid}`;
+
+            try {
+                const res = await fetch(sheetUrl);
+                if (!res.ok) throw new Error('Error al conectar con Google Sheets');
+                const text = await res.text();
+                
+                const jsonText = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
+                const data = JSON.parse(jsonText);
+                
+                const rows = data.table.rows || [];
+                allOrders = [];
+
+                rows.forEach((r) => {
+                    const c = r.c;
+                    if (!c || !c[0] || !c[0].v) return;
+
+                    const ticketId = String(c[0]?.v || '');
+                    if (ticketId.toLowerCase() === 'ticket_id') return;
+
+                    const rawFecha = c[1]?.f || c[1]?.v || '';
+                    const tel = String(c[2]?.f || c[2]?.v || '');
+                    const nombre = String(c[3]?.v || 'Cliente');
+                    const productos = String(c[4]?.v || '');
+                    const costoEnvio = String(c[5]?.v || '');
+                    const subtotal = String(c[6]?.v || '');
+                    const total = String(c[7]?.v || '');
+                    const colI = String(c[8]?.v || '');
+
+                    let fechaParsed = new Date();
+                    if (String(rawFecha).includes('Date(')) {
+                        const m = String(rawFecha).match(/Date\((\d+),(\\d+),(\\d+),?(\\d+)?,?(\\d+)?/);
+                        if (m) {
+                            fechaParsed = new Date(parseInt(m[1]), parseInt(m[2]), parseInt(m[3]), parseInt(m[4] || 12), parseInt(m[5] || 0));
+                        }
+                    } else if (String(rawFecha).includes('-')) {
+                        const parts = String(rawFecha).split(' ');
+                        const dateParts = parts[0].split('-');
+                        const timeParts = (parts[1] || '12:00').split(':');
+                        fechaParsed = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], timeParts[0] || 12, timeParts[1] || 0);
+                    }
+
+                    const isEnvio = !costoEnvio.toUpperCase().includes('NO') && !costoEnvio.toUpperCase().includes('RETIRA');
+
+                    // Detección de Método de Pago
+                    let metodo = customPaymentMethods[ticketId];
+                    if (!metodo) {
+                        const combinedText = (colI + ' ' + productos + ' ' + costoEnvio).toLowerCase();
+                        if (combinedText.includes('transf') || combinedText.includes('alias') || combinedText.includes('cbu') || combinedText.includes('mp')) {
+                            metodo = 'Transferencia';
+                        } else {
+                            metodo = 'Efectivo';
+                        }
+                    }
+
+                    allOrders.push({
+                        id: ticketId,
+                        tienda: STORES[currentStore].name,
+                        cliente_nombre: nombre,
+                        celular: tel,
+                        direccion: isEnvio ? (costoEnvio.replace(/^\$[\d\.,\s]+/, '').replace(/^a\s+/i, '').replace(/[\(\)]/g, '') || 'Dirección de entrega') : 'Retiro en Depósito Once',
+                        envio: isEnvio,
+                        costo_envio: costoEnvio,
+                        metodo_pago: metodo,
+                        detalles: productos,
+                        subtotal: subtotal,
+                        total: total,
+                        fecha_hora: fechaParsed.toISOString(),
+                        estado: printedOrderIds.includes(ticketId) ? 'impreso' : 'pendiente'
+                    });
+                });
+
+                allOrders.sort((a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora));
+                renderDashboard();
+            } catch (err) {
+                console.error(err);
+                document.getElementById('orders-container').innerHTML = `
+                    <div class="p-8 text-center text-rose-400">
+                        <i class="fa-solid fa-triangle-exclamation text-3xl mb-3 block"></i>
+                        <p class="font-bold text-base text-white">Error al cargar pedidos</p>
+                        <p class="text-sm text-slate-400 mt-1">${err.message}</p>
+                    </div>`;
+            } finally {
+                if (icon) icon.classList.remove('fa-spin');
+            }
+        }
+
+        function categorizeOrders(orders) {
+            const now = new Date();
+            const todayCutoff = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 13, 0, 0);
+            const yesterdayCutoff = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 13, 0, 0);
+
+            const todayBatch = [];
+            const tomorrowBatch = [];
+            const historyBatch = [...orders];
+
+            orders.forEach(order => {
+                const orderDate = new Date(order.fecha_hora);
+                if (now < todayCutoff) {
+                    if (orderDate >= yesterdayCutoff && orderDate < todayCutoff) {
+                        todayBatch.push(order);
+                    } else if (orderDate >= todayCutoff) {
+                        tomorrowBatch.push(order);
+                    }
+                } else {
+                    if (orderDate >= todayCutoff) {
+                        tomorrowBatch.push(order);
+                    } else if (orderDate >= yesterdayCutoff && orderDate < todayCutoff) {
+                        todayBatch.push(order);
+                    }
+                }
+            });
+
+            if (todayBatch.length === 0 && orders.length > 0) {
+                return { todayBatch: orders.slice(0, 15), tomorrowBatch, historyBatch };
+            }
+
+            return { todayBatch, tomorrowBatch, historyBatch };
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            ['today', 'tomorrow', 'history'].forEach(t => {
+                const card = document.getElementById(`tab-${t}-card`);
+                if (t === tab) {
+                    card.className = "cursor-pointer p-4 rounded-xl border-2 border-emerald-500 bg-slate-800 shadow-md transition";
+                } else {
+                    card.className = "cursor-pointer p-4 rounded-xl border border-slate-800 bg-slate-800/40 hover:bg-slate-800 transition";
+                }
+            });
+            renderList();
+        }
+
+        function parseMonto(val) {
+            if (!val) return 0;
+            const num = String(val).replace(/[^0-9]/g, '');
+            return parseInt(num, 10) || 0;
+        }
+
+        function renderDashboard() {
+            const { todayBatch, tomorrowBatch, historyBatch } = categorizeOrders(allOrders);
+
+            document.getElementById('badge-today').innerText = todayBatch.length;
+            document.getElementById('badge-tomorrow').innerText = tomorrowBatch.length;
+            document.getElementById('badge-history').innerText = historyBatch.length;
+
+            const sumToday = todayBatch.reduce((acc, o) => acc + parseMonto(o.total), 0);
+            const sumTomorrow = tomorrowBatch.reduce((acc, o) => acc + parseMonto(o.total), 0);
+            const sumHistory = historyBatch.reduce((acc, o) => acc + parseMonto(o.total), 0);
+
+            document.getElementById('total-today').innerText = `$${sumToday.toLocaleString('es-AR')}`;
+            document.getElementById('total-tomorrow').innerText = `$${sumTomorrow.toLocaleString('es-AR')}`;
+            document.getElementById('total-history').innerText = `$${sumHistory.toLocaleString('es-AR')}`;
+
+            renderList();
+        }
+
+        function getActiveList() {
+            const { todayBatch, tomorrowBatch, historyBatch } = categorizeOrders(allOrders);
+            if (currentTab === 'today') return todayBatch;
+            if (currentTab === 'tomorrow') return tomorrowBatch;
+            return historyBatch;
+        }
+
+        function renderList() {
+            const list = getActiveList();
+            document.getElementById('count-selected').innerText = list.length;
+
+            const container = document.getElementById('orders-container');
+            if (list.length === 0) {
+                container.innerHTML = `
+                    <div class="p-12 text-center text-slate-500">
+                        <i class="fa-solid fa-inbox text-3xl mb-3 block text-slate-600"></i>
+                        No hay pedidos en esta tienda para este lote.
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = list.map(order => {
+                const dateStr = new Date(order.fecha_hora).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) + ' hs';
+                const isImpreso = printedOrderIds.includes(order.id);
+                const isTransfer = order.metodo_pago.toLowerCase().includes('transf');
+                
+                return `
+                <div class="p-4 md:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 hover:bg-slate-800/40 transition">
+                    <div class="space-y-1 flex-1">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="font-bold text-white text-base">${order.cliente_nombre}</span>
+                            <span class="text-xs text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-700">
+                                <i class="fa-brands fa-whatsapp text-emerald-400"></i> ${order.celular}
+                            </span>
+                            <span class="text-xs px-2 py-0.5 rounded-full font-medium ${isImpreso ? 'bg-indigo-500/20 text-indigo-300' : 'bg-amber-500/20 text-amber-300'}">
+                                ${isImpreso ? '🖨️ Impreso' : '⏳ Pendiente'}
+                            </span>
+                            
+                            <!-- Selector Rápido de Pago -->
+                            <span class="text-xs px-2 py-0.5 rounded font-bold ${isTransfer ? 'bg-sky-500/20 text-sky-300 border border-sky-500/30' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'}">
+                                ${isTransfer ? '💳 Transferencia' : '💵 Efectivo'}
+                            </span>
+
+                            <span class="text-xs text-slate-500">${new Date(order.fecha_hora).toLocaleDateString('es-AR')} ${dateStr}</span>
+                        </div>
+
+                        <div class="text-sm text-slate-300 flex items-center gap-2">
+                            <i class="fa-solid fa-location-dot text-rose-400 text-xs"></i>
+                            <span>${order.direccion}</span>
+                            <span class="text-xs font-semibold ${order.envio ? 'text-blue-400' : 'text-purple-400'}">
+                                (${order.costo_envio})
+                            </span>
+                        </div>
+
+                        <div class="text-xs text-slate-400 bg-slate-950/60 p-2.5 rounded-lg border border-slate-800/80 mt-2 font-mono">
+                            ${order.detalles}
+                        </div>
+
+                        <div class="text-xs text-slate-400 flex items-center justify-between pt-1 flex-wrap gap-2">
+                            <div class="flex items-center gap-4">
+                                <span>Subtotal: <b class="text-slate-200">${order.subtotal || '$0'}</b></span>
+                                <span>Envío: <b class="text-slate-200">${order.costo_envio}</b></span>
+                            </div>
+                            <div class="flex items-center gap-1.5 text-xs">
+                                <span class="text-slate-500">Cambiar pago:</span>
+                                <button onclick="setPaymentMethod('${order.id}', 'Efectivo')" class="px-2 py-0.5 rounded text-[11px] font-bold ${!isTransfer ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'} transition">💵 Efvo</button>
+                                <button onclick="setPaymentMethod('${order.id}', 'Transferencia')" class="px-2 py-0.5 rounded text-[11px] font-bold ${isTransfer ? 'bg-sky-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'} transition">💳 Transf</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex md:flex-col items-end justify-between w-full md:w-auto gap-3 pt-2 md:pt-0 border-t md:border-t-0 border-slate-800">
+                        <div class="text-lg font-extrabold text-emerald-400">
+                            ${order.total}
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="printSingleOrder('${order.id}')" class="px-3.5 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition shadow">
+                                <i class="fa-solid fa-print"></i> Imprimir
+                            </button>
+                            <button onclick="toggleOrderStatus('${order.id}')" class="p-2 text-slate-400 hover:text-white rounded-lg bg-slate-800 border border-slate-700 text-xs transition" title="Marcar Impreso/Pendiente">
+                                <i class="fa-solid ${isImpreso ? 'fa-arrow-rotate-left' : 'fa-check'}"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        function generateTicketHTML(order) {
+            const fechaStr = new Date(order.fecha_hora).toLocaleDateString('es-AR') + ' ' + new Date(order.fecha_hora).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+            const isTransfer = order.metodo_pago.toLowerCase().includes('transf');
+            const pagoTexto = isTransfer ? 'TRANSFERENCIA BANCARIA' : 'EFECTIVO (CONTRAENTREGA)';
+
+            // Si el modo es Remito Grande A4
+            if (printMode === 'a4') {
+                return `
+                <div class="ticket-a4 ticket-break">
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:3px solid #000; padding-bottom:10px; margin-bottom:12px;">
+                        <div>
+                            <h1 style="font-size:24px; font-weight:900; margin:0; letter-spacing:1px;">${order.tienda.toUpperCase()}</h1>
+                            <div style="font-size:13px; color:#555; margin-top:2px;">Comanda de Preparación & Remito de Entrega</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-size:14px; font-weight:bold;">TICKET: <span style="font-family:monospace;">${order.id}</span></div>
+                            <div style="font-size:13px; color:#333;">${fechaStr} hs</div>
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: 1.2fr 1fr; gap:15px; background:#f4f4f5; border:1px solid #ddd; padding:12px; border-radius:6px; margin-bottom:15px;">
+                        <div>
+                            <div style="font-size:11px; text-transform:uppercase; color:#666; font-weight:bold;">Destinatario / Cliente</div>
+                            <div style="font-size:18px; font-weight:bold; color:#000;">👤 ${order.cliente_nombre}</div>
+                            <div style="font-size:15px; margin-top:3px;">📱 Tel: <b>${order.celular}</b></div>
+                        </div>
+                        <div>
+                            <div style="font-size:11px; text-transform:uppercase; color:#666; font-weight:bold;">Destino / Entrega</div>
+                            <div style="font-size:16px; font-weight:bold; color:#000;">📍 ${order.direccion}</div>
+                            <div style="font-size:13px; color:#444; margin-top:2px;">🚚 ${order.costo_envio}</div>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom:15px;">
+                        <div style="font-size:14px; font-weight:bold; text-transform:uppercase; border-bottom:2px solid #000; padding-bottom:4px; margin-bottom:8px;">
+                            Detalle de Productos a Preparar:
+                        </div>
+                        <div style="font-size:16px; font-weight:500; line-height:1.6; background:#fafafa; border:1px dashed #ccc; padding:12px; border-radius:6px;">
+                            ${order.detalles.split(',').map(item => `
+                                <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                                    <span style="font-size:18px;">[  ]</span>
+                                    <span>${item.trim()}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <div style="border-top:1px dashed #000; padding-top:8px; margin-bottom:10px; font-size:14px; display:flex; justify-content:space-between;">
+                        <span>Subtotal Productos: <b>${order.subtotal || '$0'}</b></span>
+                        <span>Costo Envío: <b>${order.costo_envio}</b></span>
+                    </div>
+
+                    <div style="background:#f9fafb; border:1px solid #000; padding:8px 12px; border-radius:4px; margin-bottom:12px; font-size:15px; font-weight:bold; display:flex; justify-content:space-between; align-items:center;">
+                        <span>FORMA DE PAGO:</span>
+                        <span style="font-size:16px; text-decoration:underline;">${pagoTexto}</span>
+                    </div>
+
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-top:3px solid #000; padding-top:10px; margin-top:10px;">
+                        <div>
+                            <div style="font-size:13px; color:#555;">Franja horaria moto: <b>17:00 a 22:00 hs</b></div>
+                            <div style="font-size:13px; color:#555;">Firma receptor: _______________________</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-size:12px; text-transform:uppercase; color:#666;">Total a Cobrar</div>
+                            <div style="font-size:26px; font-weight:900; color:#000;">${order.total}</div>
+                        </div>
+                    </div>
+                </div>
+                `;
+            }
+
+            // Formato Térmico 80mm
+            return `
+            <div class="ticket-thermal ticket-break">
+                <div style="text-align:center; font-weight:900; font-size:20px; letter-spacing:0.5px; border-bottom:2px solid #000; padding-bottom:6px; margin-bottom:8px;">
+                    ${order.tienda.toUpperCase()}
+                </div>
+                
+                <div style="font-size:13px; border-bottom:1px dashed #000; padding-bottom:6px; margin-bottom:8px;">
+                    <div><b>TICKET:</b> ${order.id}</div>
+                    <div><b>FECHA:</b> ${fechaStr} hs</div>
+                </div>
+
+                <div style="margin-bottom:10px; border-bottom:1px solid #000; padding-bottom:8px;">
+                    <div style="font-size:18px; font-weight:900; margin-bottom:3px;">
+                        👤 ${order.cliente_nombre}
+                    </div>
+                    <div style="font-size:15px; font-weight:bold; margin-bottom:3px;">
+                        📱 ${order.celular}
+                    </div>
+                    <div style="font-size:15px; font-weight:bold; margin-top:4px;">
+                        📍 ${order.direccion}
+                    </div>
+                    <div style="font-size:13px; color:#333; margin-top:2px;">
+                        🚚 ${order.costo_envio}
+                    </div>
+                </div>
+
+                <div style="margin-bottom:10px; border-bottom:2px solid #000; padding-bottom:8px;">
+                    <div style="font-weight:900; font-size:14px; text-transform:uppercase; margin-bottom:6px;">
+                        PRODUCTOS:
+                    </div>
+                    <div style="font-size:15px; font-weight:bold; line-height:1.4;">
+                        ${order.detalles.split(',').map(item => `
+                            <div style="margin-bottom:4px;">• ${item.trim()}</div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <div style="border-bottom:1px dashed #000; padding-bottom:6px; margin-bottom:6px; font-size:14px;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
+                        <span>Subtotal:</span>
+                        <span><b>${order.subtotal || '$0'}</b></span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between;">
+                        <span>Envío:</span>
+                        <span><b>${order.costo_envio}</b></span>
+                    </div>
+                </div>
+
+                <!-- Método de Pago Destacado -->
+                <div style="border-bottom:2px solid #000; padding:6px 0; margin-bottom:6px; font-size:15px; font-weight:900; display:flex; justify-content:space-between; align-items:center;">
+                    <span>PAGO:</span>
+                    <span style="font-size:16px;">${pagoTexto}</span>
+                </div>
+
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0;">
+                    <span style="font-size:16px; font-weight:bold;">TOTAL A COBRAR:</span>
+                    <span style="font-size:22px; font-weight:900;">${order.total}</span>
+                </div>
+
+                <div style="text-align:center; font-size:11px; margin-top:8px; border-top:1px dashed #000; padding-top:6px; color:#333;">
+                    ¡Despacho ${order.tienda}!
+                </div>
+            </div>
+            `;
+        }
+
+        function printCurrentBatch() {
+            const list = getActiveList();
+            if (list.length === 0) {
+                alert('No hay pedidos para imprimir en este lote.');
+                return;
+            }
+
+            const printArea = document.getElementById('print-area');
+            printArea.innerHTML = list.map(order => generateTicketHTML(order)).join('');
+            printArea.classList.remove('hidden');
+
+            window.print();
+
+            list.forEach(o => {
+                if (!printedOrderIds.includes(o.id)) printedOrderIds.push(o.id);
+            });
+            localStorage.setItem('nnn_printed_orders', JSON.stringify(printedOrderIds));
+            renderDashboard();
+        }
+
+        function printSingleOrder(id) {
+            const order = allOrders.find(o => o.id === id);
+            if (!order) return;
+
+            const printArea = document.getElementById('print-area');
+            printArea.innerHTML = generateTicketHTML(order);
+            printArea.classList.remove('hidden');
+
+            window.print();
+
+            if (!printedOrderIds.includes(order.id)) {
+                printedOrderIds.push(order.id);
+                localStorage.setItem('nnn_printed_orders', JSON.stringify(printedOrderIds));
+            }
+            renderDashboard();
+        }
+
+        function toggleOrderStatus(id) {
+            if (printedOrderIds.includes(id)) {
+                printedOrderIds = printedOrderIds.filter(x => x !== id);
+            } else {
+                printedOrderIds.push(id);
+            }
+            localStorage.setItem('nnn_printed_orders', JSON.stringify(printedOrderIds));
+            renderDashboard();
+        }
+
+        fetchOrders();
+        setInterval(fetchOrders, 30000);
+    </script>
+</body>
+</html>
