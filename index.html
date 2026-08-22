@@ -70,7 +70,6 @@
             border-radius: 8px;
         }
 
-        /* Custom scrollbar */
         ::-webkit-scrollbar {
             width: 6px;
             height: 6px;
@@ -416,9 +415,6 @@
     <div id="print-area" class="hidden"></div>
 
     <script>
-        /* ====================================================== */
-        /* CONSTANTES & CONFIGURACIÓN                             */
-        /* ====================================================== */
         const SHEET_ID_DISPATCH = '13OZcCBHrVufQSB4HcZu1Vgnu6uYAGLFpWrwW-x347aw';
         const SHEET_ID_ADAR = '1iZ2jlTKNypQDuRC-mVWZaJvFHN1UaI75oRUg1hTfuEY';
 
@@ -427,7 +423,7 @@
             nacha: { name: 'NachaHome', gid: '1810697795', sheetLabel: 'Ventas NachaHome' }
         };
 
-        let currentMainView = 'dispatch'; // 'dispatch' o 'adar'
+        let currentMainView = 'dispatch';
         let currentStore = 'nnn';
         let dispatchOrders = [];
         let printedOrderIds = JSON.parse(localStorage.getItem('nnn_printed_orders') || '[]');
@@ -435,20 +431,32 @@
         let currentDispatchTab = 'today';
         let printMode = 'thermal';
 
-        // Variables de Adar Analytics
         let adarRawOrders = [];
         let availableCycles = [];
         let selectedCycleKey = 'current';
 
-        // Instancias de Chart.js
         let chartEvolutionInstance = null;
         let chartProductsInstance = null;
         let chartStatusInstance = null;
         let chartDeliveryInstance = null;
 
-        /* ====================================================== */
-        /* NAVEGACIÓN PRINCIPAL (DESPACHO vs ADAR)                */
-        /* ====================================================== */
+        function parseGoogleDate(raw) {
+            if (!raw) return new Date();
+            const str = String(raw);
+            if (str.includes('Date(')) {
+                const nums = str.replace(/[^0-9,]/g, '').split(',').map(n => parseInt(n, 10));
+                if (nums.length >= 3) {
+                    return new Date(nums[0], nums[1], nums[2], nums[3] || 12, nums[4] || 0);
+                }
+            } else if (str.includes('-')) {
+                const parts = str.split(' ');
+                const dateParts = parts[0].split('-');
+                const timeParts = (parts[1] || '12:00').split(':');
+                return new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]), parseInt(timeParts[0] || 12), parseInt(timeParts[1] || 0));
+            }
+            return new Date();
+        }
+
         function switchMainView(view) {
             currentMainView = view;
             const btnDispatch = document.getElementById('btn-nav-dispatch');
@@ -471,9 +479,6 @@
             }
         }
 
-        /* ====================================================== */
-        /* MÓDULO 1: DESPACHO & IMPRESIÓN                         */
-        /* ====================================================== */
         function switchStore(storeKey) {
             currentStore = storeKey;
             document.getElementById('title-store').innerText = STORES[storeKey].name;
@@ -528,7 +533,7 @@
                 const cols = data.table.cols || [];
                 cols.forEach((col, idx) => {
                     if (col && col.label) {
-                        const key = col.label.trim().toLowerCase().replace(/\\s+/g, '').replace(/_/g, '').replace(/\\?/g, '');
+                        const key = col.label.trim().toLowerCase().replace(/\s+/g, '').replace(/_/g, '').replace(/\?/g, '');
                         colMap[key] = idx;
                     }
                 });
@@ -540,7 +545,7 @@
                     const firstRow = rows[0].c || [];
                     firstRow.forEach((c, idx) => {
                         if (c && c.v) {
-                            const key = String(c.v).trim().toLowerCase().replace(/\\s+/g, '').replace(/_/g, '').replace(/\\?/g, '');
+                            const key = String(c.v).trim().toLowerCase().replace(/\s+/g, '').replace(/_/g, '').replace(/\?/g, '');
                             colMap[key] = idx;
                         }
                     });
@@ -550,7 +555,7 @@
                 function getVal(row, keys, fallbackIdx) {
                     const c = row.c || [];
                     for (const k of keys) {
-                        const normK = k.toLowerCase().replace(/\\s+/g, '').replace(/_/g, '').replace(/\\?/g, '');
+                        const normK = k.toLowerCase().replace(/\s+/g, '').replace(/_/g, '').replace(/\?/g, '');
                         if (colMap[normK] !== undefined) {
                             const idx = colMap[normK];
                             if (idx < c.length && c[idx] !== null && c[idx] !== undefined) {
@@ -593,19 +598,7 @@
                         }
                     }
 
-                    let fechaParsed = new Date();
-                    if (String(rawFecha).includes('Date(')) {
-                        const m = String(rawFecha).match(/Date\((\d+),(\d+),(\d+),?(\d+)?,?(\d+)?/);
-                        if (m) {
-                            fechaParsed = new Date(parseInt(m[1]), parseInt(m[2]), parseInt(m[3]), parseInt(m[4] || 12), parseInt(m[5] || 0));
-                        }
-                    } else if (String(rawFecha).includes('-')) {
-                        const parts = String(rawFecha).split(' ');
-                        const dateParts = parts[0].split('-');
-                        const timeParts = (parts[1] || '12:00').split(':');
-                        fechaParsed = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], timeParts[0] || 12, timeParts[1] || 0);
-                    }
-
+                    const fechaParsed = parseGoogleDate(rawFecha);
                     const isEnvio = !costoEnvio.toUpperCase().includes('NO') && !costoEnvio.toUpperCase().includes('RETIRA');
 
                     let metodo = customPaymentMethods[ticketId];
@@ -1067,7 +1060,7 @@
                 const cols = data.table.cols || [];
                 cols.forEach((col, idx) => {
                     if (col && col.label) {
-                        const key = col.label.trim().toLowerCase().replace(/\\s+/g, '').replace(/_/g, '').replace(/\\?/g, '');
+                        const key = col.label.trim().toLowerCase().replace(/\s+/g, '').replace(/_/g, '').replace(/\?/g, '');
                         colMap[key] = idx;
                     }
                 });
@@ -1078,7 +1071,7 @@
                     const firstRow = rows[0].c || [];
                     firstRow.forEach((c, idx) => {
                         if (c && c.v) {
-                            const key = String(c.v).trim().toLowerCase().replace(/\\s+/g, '').replace(/_/g, '').replace(/\\?/g, '');
+                            const key = String(c.v).trim().toLowerCase().replace(/\s+/g, '').replace(/_/g, '').replace(/\?/g, '');
                             colMap[key] = idx;
                         }
                     });
@@ -1088,7 +1081,7 @@
                 function getVal(row, keys, fallbackIdx) {
                     const c = row.c || [];
                     for (const k of keys) {
-                        const normK = k.toLowerCase().replace(/\\s+/g, '').replace(/_/g, '').replace(/\\?/g, '');
+                        const normK = k.toLowerCase().replace(/\s+/g, '').replace(/_/g, '').replace(/\?/g, '');
                         if (colMap[normK] !== undefined) {
                             const idx = colMap[normK];
                             if (idx < c.length && c[idx] !== null && c[idx] !== undefined) {
@@ -1120,22 +1113,9 @@
                     const totalStr = getVal(r, ['total', 'totalfinal', 'monto'], 7);
                     const confirmoStr = getVal(r, ['confirmo', 'confirmado', 'metododepago', 'pago'], 8).trim().toUpperCase();
 
-                    let fechaParsed = new Date();
-                    if (String(rawFecha).includes('Date(')) {
-                        const m = String(rawFecha).match(/Date\\((\\d+),(\\d+),(\\d+),?(\\d+)?,?(\\d+)?/);
-                        if (m) {
-                            fechaParsed = new Date(parseInt(m[1]), parseInt(m[2]), parseInt(m[3]), parseInt(m[4] || 12), parseInt(m[5] || 0));
-                        }
-                    } else if (String(rawFecha).includes('-')) {
-                        const parts = String(rawFecha).split(' ');
-                        const dateParts = parts[0].split('-');
-                        const timeParts = (parts[1] || '12:00').split(':');
-                        fechaParsed = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], timeParts[0] || 12, timeParts[1] || 0);
-                    }
-
+                    const fechaParsed = parseGoogleDate(rawFecha);
                     const isConfirmed = confirmoStr === 'SI' || confirmoStr === 'S' || confirmoStr === 'CONFIRMADO' || confirmoStr === 'TRUE' || confirmoStr === 'EFECTIVO' || confirmoStr === 'TRANSFERENCIA';
                     const isEnvio = !costoEnvio.toUpperCase().includes('NO') && !costoEnvio.toUpperCase().includes('RETIRA');
-
                     const totalMonto = parseMonto(totalStr);
 
                     adarRawOrders.push({
@@ -1156,10 +1136,7 @@
 
                 adarRawOrders.sort((a, b) => b.fecha - a.fecha);
 
-                // Construir lista de ciclos disponibles (16 al 16)
                 buildCycleOptions();
-
-                // Renderizar Analytics
                 renderAdarAnalytics();
             } catch (err) {
                 console.error(err);
@@ -1169,7 +1146,6 @@
             }
         }
 
-        /* LÓGICA DE CICLOS DEL 16 AL 16 */
         const MESES_ES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
         function getCycleKeyForDate(d) {
@@ -1208,7 +1184,6 @@
                 }
             });
 
-            // Ordenar de más reciente a más antiguo
             availableCycles = Array.from(cyclesMap.values()).sort((a, b) => b.start - a.start);
 
             const select = document.getElementById('select-cycle');
@@ -1250,7 +1225,6 @@
         function renderAdarAnalytics() {
             const orders = getFilteredAdarOrders();
 
-            // 1. Cálculos de KPIs
             let confirmedRevenue = 0;
             let confirmedCount = 0;
             let totalRegistered = orders.length;
@@ -1269,28 +1243,19 @@
             const conversionRate = totalRegistered > 0 ? ((confirmedCount / totalRegistered) * 100).toFixed(1) : 0;
             const avgTicket = confirmedCount > 0 ? Math.round(confirmedRevenue / confirmedCount) : 0;
 
-            // Actualizar Tarjetas KPI
             document.getElementById('kpi-revenue').innerText = `$${confirmedRevenue.toLocaleString('es-AR')}`;
             document.getElementById('kpi-orders').innerText = confirmedCount;
             document.getElementById('kpi-total-registered').innerText = totalRegistered;
             document.getElementById('kpi-rate').innerText = `${conversionRate}%`;
             document.getElementById('kpi-avg-ticket').innerText = `$${avgTicket.toLocaleString('es-AR')}`;
 
-            // 2. Renderizar Gráfico de Evolución Diaria
             renderEvolutionChart(orders);
-
-            // 3. Renderizar Gráfico Top Productos
             renderTopProductsChart(orders);
-
-            // 4. Renderizar Gráficos Donut
             renderStatusDonutChart(orders, confirmedCount, totalRegistered);
             renderDeliveryDonutChart(totalEnvios, totalRetiros);
-
-            // 5. Renderizar Tabla Detallada
             renderAdarTable(orders);
         }
 
-        /* GRÁFICO 1: EVOLUCIÓN DIARIA */
         function renderEvolutionChart(orders) {
             const ctx = document.getElementById('chart-evolution').getContext('2d');
             if (chartEvolutionInstance) chartEvolutionInstance.destroy();
@@ -1383,7 +1348,6 @@
             });
         }
 
-        /* GRÁFICO 2: TOP 10 PRODUCTOS */
         function renderTopProductsChart(orders) {
             const ctx = document.getElementById('chart-products').getContext('2d');
             if (chartProductsInstance) chartProductsInstance.destroy();
@@ -1394,12 +1358,12 @@
                 if (!o.productos) return;
                 const items = o.productos.split(/,|\n/);
                 items.forEach(rawItem => {
-                    let cleaned = rawItem.replace(/\\b\\d+\\s*x\\b/gi, '')
-                                         .replace(/\\bx\\s*\\d+\\b/gi, '')
-                                         .replace(/\\(\\$\\d+[\\d\\.,]*\\)/gi, '')
-                                         .replace(/\\(DH-[^\\)]+\\)/gi, '')
-                                         .replace(/\\(TX-[^\\)]+\\)/gi, '')
-                                         .replace(/\\s+/g, ' ')
+                    let cleaned = rawItem.replace(/\b\d+\s*x\b/gi, '')
+                                         .replace(/\bx\s*\d+\b/gi, '')
+                                         .replace(/\(\$\d+[\d\.,]*\)/gi, '')
+                                         .replace(/\(DH-[^\)]+\)/gi, '')
+                                         .replace(/\(TX-[^\)]+\)/gi, '')
+                                         .replace(/\s+/g, ' ')
                                          .trim();
                     if (cleaned.length < 3) cleaned = rawItem.trim();
                     if (cleaned.length < 3) return;
@@ -1449,7 +1413,6 @@
             });
         }
 
-        /* GRÁFICO 3: DONUT ESTADO */
         function renderStatusDonutChart(orders, confirmedCount, totalRegistered) {
             const ctx = document.getElementById('chart-status').getContext('2d');
             if (chartStatusInstance) chartStatusInstance.destroy();
@@ -1481,7 +1444,6 @@
             });
         }
 
-        /* GRÁFICO 4: DONUT ENVÍOS */
         function renderDeliveryDonutChart(totalEnvios, totalRetiros) {
             const ctx = document.getElementById('chart-delivery').getContext('2d');
             if (chartDeliveryInstance) chartDeliveryInstance.destroy();
@@ -1511,7 +1473,6 @@
             });
         }
 
-        /* TABLA DE VENTAS ADAR */
         function renderAdarTable(orders) {
             const tbody = document.getElementById('adar-table-body');
             if (orders.length === 0) {
@@ -1557,7 +1518,6 @@
             renderAdarTable(filtered);
         }
 
-        // Inicio por defecto
         fetchDispatchOrders();
         setInterval(fetchDispatchOrders, 30000);
     </script>
