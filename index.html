@@ -2,8 +2,13 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#020617">
     <title>Panel de Control - Despacho & Métricas Multitienda</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -91,7 +96,7 @@
         }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen font-sans">
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased">
     
     <!-- Top Navigation Bar -->
     <nav class="no-print bg-slate-900/90 backdrop-blur border-b border-slate-800 sticky top-0 z-50">
@@ -103,17 +108,17 @@
                     </div>
                     <div>
                         <span class="font-extrabold text-white text-lg tracking-tight">OPERACIONES</span>
-                        <span class="text-emerald-400 font-semibold text-xs ml-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">v2.3</span>
+                        <span class="text-emerald-400 font-semibold text-xs ml-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">v2.4</span>
                     </div>
                 </div>
 
                 <!-- Main Module Tabs -->
                 <div class="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800">
-                    <button onclick="switchMainView('dispatch')" id="btn-nav-dispatch" class="px-4 py-2 rounded-lg text-xs font-bold bg-emerald-600 text-white transition flex items-center gap-2 shadow">
-                        <i class="fa-solid fa-print"></i> Despacho & Impresión
+                    <button onclick="switchMainView('dispatch')" id="btn-nav-dispatch" class="px-3.5 sm:px-4 py-2 rounded-lg text-xs font-bold bg-emerald-600 text-white transition flex items-center gap-2 shadow">
+                        <i class="fa-solid fa-print"></i> <span>Despacho & Impresión</span>
                     </button>
-                    <button onclick="switchMainView('analytics')" id="btn-nav-analytics" class="px-4 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-2">
-                        <i class="fa-solid fa-chart-pie"></i> Métricas & Analytics
+                    <button onclick="switchMainView('analytics')" id="btn-nav-analytics" class="px-3.5 sm:px-4 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-2">
+                        <i class="fa-solid fa-chart-pie"></i> <span>Métricas & Analytics</span>
                     </button>
                 </div>
             </div>
@@ -127,18 +132,20 @@
         <!-- Header -->
         <header class="flex flex-col md:flex-row items-start md:items-center justify-between pb-6 border-b border-slate-800 gap-4">
             <div>
-                <h1 class="text-2xl font-bold text-white flex items-center gap-3">
+                <h1 class="text-xl sm:text-2xl font-bold text-white flex items-center gap-2.5 flex-wrap">
                     <span class="p-2 bg-emerald-500/10 text-emerald-400 rounded-xl border border-emerald-500/20">
                         <i class="fa-solid fa-truck-fast"></i>
                     </span>
-                    <span id="title-store">NNN Tienda</span> | Despacho Diario
+                    <span id="title-store" class="text-white">NNN Tienda</span>
+                    <span class="text-slate-500 font-light">|</span>
+                    <span class="text-slate-300 font-semibold">Despacho Diario</span>
                 </h1>
-                <p class="text-slate-400 text-sm mt-1">
+                <p class="text-slate-400 text-xs sm:text-sm mt-1">
                     Corte diario a las 13:00 hs | Fin de semana acumulado (Viernes 13hs a Lunes 13hs)
                 </p>
             </div>
 
-            <div class="flex items-center gap-3 flex-wrap">
+            <div class="flex items-center gap-3 flex-wrap w-full md:w-auto">
                 <!-- Selector de Tienda Despacho -->
                 <div class="flex items-center bg-slate-900 rounded-xl p-1 border border-slate-800">
                     <button onclick="switchDispatchStore('nnn')" id="btn-store-nnn" class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white transition flex items-center gap-1.5">
@@ -159,10 +166,10 @@
                     </button>
                 </div>
 
-                <button onclick="fetchDispatchOrders()" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl font-medium text-sm flex items-center gap-2 border border-slate-800 transition">
+                <button onclick="fetchDispatchOrders()" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl font-medium text-xs sm:text-sm flex items-center gap-2 border border-slate-800 transition">
                     <i class="fa-solid fa-rotate" id="refresh-icon-dispatch"></i> Sincronizar
                 </button>
-                <button onclick="printCurrentBatch()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg shadow-emerald-900/30 transition">
+                <button onclick="printCurrentBatch()" class="px-4 sm:px-5 py-2 sm:py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 shadow-lg shadow-emerald-900/30 transition">
                     <i class="fa-solid fa-print"></i> Imprimir Lote (<span id="count-selected">0</span>)
                 </button>
             </div>
@@ -226,32 +233,34 @@
         <!-- Header Analytics -->
         <header class="flex flex-col lg:flex-row items-start lg:items-center justify-between pb-6 border-b border-slate-800 gap-4">
             <div>
-                <h1 class="text-2xl font-bold text-white flex items-center gap-3">
+                <h1 class="text-xl sm:text-2xl font-bold text-white flex items-center gap-2.5 flex-wrap">
                     <span class="p-2 bg-indigo-500/10 text-indigo-400 rounded-xl border border-indigo-500/20">
                         <i class="fa-solid fa-chart-line"></i>
                     </span>
-                    <span id="title-analytics-store">Adar Import</span> | Inteligencia de Ventas & Reportes
+                    <span id="title-analytics-store" class="text-white">Adar Import</span>
+                    <span class="text-slate-500 font-light">|</span>
+                    <span class="text-slate-300 font-semibold">Inteligencia de Ventas & Reportes</span>
                 </h1>
-                <p class="text-slate-400 text-sm mt-1">
+                <p class="text-slate-400 text-xs sm:text-sm mt-1">
                     Cálculo directo en tiempo real desde la hoja <span id="label-analytics-sheet" class="text-indigo-400 font-mono font-semibold">Ventas Adar</span>
                 </p>
             </div>
 
-            <div class="flex items-center gap-3 flex-wrap">
+            <div class="flex items-center gap-3 flex-wrap w-full lg:w-auto">
                 <!-- Selector de Tienda en Analytics -->
                 <div class="flex items-center bg-slate-900 rounded-xl p-1 border border-slate-800">
-                    <button onclick="switchAnalyticsStore('adar')" id="btn-ana-adar" class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white transition flex items-center gap-1.5">
-                        <i class="fa-solid fa-box-open"></i> Adar Import
+                    <button onclick="switchAnalyticsStore('adar')" id="btn-ana-adar" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-box-open"></i> Adar
                     </button>
-                    <button onclick="switchAnalyticsStore('nacha')" id="btn-ana-nacha" class="px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5">
+                    <button onclick="switchAnalyticsStore('nacha')" id="btn-ana-nacha" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5">
                         <i class="fa-solid fa-house"></i> NachaHome
                     </button>
-                    <button onclick="switchAnalyticsStore('nnn')" id="btn-ana-nnn" class="px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5">
-                        <i class="fa-solid fa-shirt"></i> NNN Tienda
+                    <button onclick="switchAnalyticsStore('nnn')" id="btn-ana-nnn" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-shirt"></i> NNN
                     </button>
                 </div>
 
-                <button onclick="fetchAnalyticsData()" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl font-medium text-sm flex items-center gap-2 border border-slate-800 transition">
+                <button onclick="fetchAnalyticsData()" class="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl font-medium text-xs sm:text-sm flex items-center gap-2 border border-slate-800 transition">
                     <i class="fa-solid fa-rotate" id="refresh-icon-analytics"></i> Actualizar
                 </button>
             </div>
@@ -335,7 +344,7 @@
                 </div>
                 <div class="text-3xl font-black text-white mt-2" id="kpi-orders">0</div>
                 <div class="text-xs text-slate-400 mt-1" id="kpi-orders-sub">
-                    de <span id="kpi-total-registered">0</span> registrados totales
+                    de <span id="kpi-total-registered">0</span> registrados (<span id="kpi-total-units">0</span> unids)
                 </div>
             </div>
 
@@ -383,33 +392,44 @@
                 </div>
             </div>
 
-            <!-- Top 10 Productos Más Vendidos (5 cols) -->
-            <div class="lg:col-span-5 bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl">
-                <div class="flex items-center justify-between mb-4">
+            <!-- Top N Productos Más Vendidos (5 cols) con Selector de Top 5, 10, 15, 20 -->
+            <div class="lg:col-span-5 bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
                     <div>
                         <h3 class="font-bold text-white text-base flex items-center gap-2">
-                            <i class="fa-solid fa-trophy text-amber-400"></i> Top 10 Productos Más Elegidos
+                            <i class="fa-solid fa-trophy text-amber-400"></i> <span id="title-top-products">Top 10 Productos Más Elegidos</span>
                         </h3>
-                        <p class="text-xs text-slate-400 mt-0.5">Ranking de rendimiento de catálogo (Artículo , Producto)</p>
+                        <p class="text-xs text-slate-400 mt-0.5" id="desc-top-products">Ranking por cantidad de unidades vendidas</p>
+                    </div>
+
+                    <!-- Selector de Cantidad Top -->
+                    <div class="flex items-center bg-slate-950 px-2.5 py-1 rounded-xl border border-slate-800">
+                        <label for="select-top-n" class="text-[11px] font-semibold text-slate-400 mr-1.5">Mostrar:</label>
+                        <select id="select-top-n" onchange="onTopNChange()" class="bg-transparent text-amber-300 text-xs font-bold focus:outline-none cursor-pointer">
+                            <option value="5">Top 5</option>
+                            <option value="10" selected>Top 10 (Predet.)</option>
+                            <option value="15">Top 15</option>
+                            <option value="20">Top 20</option>
+                        </select>
                     </div>
                 </div>
-                <div class="h-72 w-full">
+                <div class="h-80 w-full">
                     <canvas id="chart-products"></canvas>
                 </div>
             </div>
         </div>
 
-        <!-- Charts Grid 2: Donut Status & Donut Envíos -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <!-- Charts Grid 2: Donut Status & Donut Envíos & Top Localidades -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
             <!-- Donut Estado Confirmación -->
             <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col justify-between">
                 <div>
                     <h3 class="font-bold text-white text-base flex items-center gap-2 mb-1">
-                        <i class="fa-solid fa-chart-pie text-cyan-400"></i> Estado de Pedidos (Confirmados vs Cancelados)
+                        <i class="fa-solid fa-chart-pie text-cyan-400"></i> Conversión de Pedidos
                     </h3>
-                    <p class="text-xs text-slate-400">Distribución de conversión de los leads en ventas reales</p>
+                    <p class="text-xs text-slate-400">Confirmados vs No confirmados / Cancelados</p>
                 </div>
-                <div class="h-60 w-full my-auto flex items-center justify-center">
+                <div class="h-56 w-full my-auto flex items-center justify-center">
                     <canvas id="chart-status"></canvas>
                 </div>
             </div>
@@ -418,12 +438,28 @@
             <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col justify-between">
                 <div>
                     <h3 class="font-bold text-white text-base flex items-center gap-2 mb-1">
-                        <i class="fa-solid fa-motorcycle text-indigo-400"></i> Métodos de Entrega (Envíos vs Retiros)
+                        <i class="fa-solid fa-motorcycle text-indigo-400"></i> Métodos de Entrega
                     </h3>
-                    <p class="text-xs text-slate-400">Proporción de envíos a domicilio vs retiro en Depósito Once</p>
+                    <p class="text-xs text-slate-400">Proporción de envíos a domicilio vs retiro Once</p>
                 </div>
-                <div class="h-60 w-full my-auto flex items-center justify-center">
+                <div class="h-56 w-full my-auto flex items-center justify-center">
                     <canvas id="chart-delivery"></canvas>
+                </div>
+            </div>
+
+            <!-- NUEVO: Top 7 Localidades con Más Ventas -->
+            <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between mb-1">
+                        <h3 class="font-bold text-white text-base flex items-center gap-2">
+                            <i class="fa-solid fa-location-dot text-rose-400"></i> Top 7 Localidades
+                        </h3>
+                        <span class="text-[11px] font-bold text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded-full border border-rose-500/20">Destinos</span>
+                    </div>
+                    <p class="text-xs text-slate-400">Zonas y localidades con mayor volumen de entregas</p>
+                </div>
+                <div id="localities-container" class="mt-3 space-y-2.5 max-h-64 overflow-y-auto pr-1">
+                    <div class="text-center text-xs text-slate-500 py-6">Cargando localidades...</div>
                 </div>
             </div>
         </div>
@@ -509,6 +545,7 @@
         let analyticsRawOrders = [];
         let availableCycles = [];
         let selectedPeriodKey = 'all';
+        let currentTopNLimit = 10;
 
         let chartEvolutionInstance = null;
         let chartProductsInstance = null;
@@ -530,6 +567,33 @@
                 return new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]), parseInt(timeParts[0] || 12), parseInt(timeParts[1] || 0));
             }
             return new Date();
+        }
+
+        // Extractor de cantidad de unidades (ej: 2x, x 3, 4 unidades, 1 Termo...)
+        function extractItemQuantity(rawItem) {
+            if (!rawItem) return 1;
+            const str = String(rawItem).trim();
+            
+            // Caso '2x', '3 x' al inicio
+            const mLead = str.match(/^\s*(\d+)\s*x\b/i);
+            if (mLead) return parseInt(mLead[1], 10) || 1;
+
+            // Caso 'x 2', 'x2', 'x 5' en el texto
+            const mTrailX = str.match(/\bx\s*(\d+)\b/i);
+            if (mTrailX) return parseInt(mTrailX[1], 10) || 1;
+
+            // Caso '2 unidades', '3 u'
+            const mUnits = str.match(/\b(\d+)\s*(?:unidades?|unidad|u)\b/i);
+            if (mUnits) return parseInt(mUnits[1], 10) || 1;
+
+            // Caso número al inicio seguido de texto: '2 Termos...'
+            const mLeadNum = str.match(/^\s*(\d+)\s+(?=[A-Za-z])/);
+            if (mLeadNum) {
+                const n = parseInt(mLeadNum[1], 10);
+                if (n > 0 && n < 100) return n;
+            }
+
+            return 1;
         }
 
         function formatProductWithCode(rawItem) {
@@ -605,6 +669,49 @@
             return str;
         }
 
+        // Extractor y normalizador de localidades / destinos
+        function extractLocalityName(direccionRaw, costoEnvioRaw) {
+            const combined = (direccionRaw + ' ' + costoEnvioRaw).toLowerCase();
+            
+            if (combined.includes('retira') || combined.includes('depósito') || combined.includes('deposito') || (combined.includes('once') && combined.includes('retiro'))) {
+                return 'Depósito Once (Retiro)';
+            }
+
+            let text = (direccionRaw || costoEnvioRaw || '').trim();
+            
+            // Limpiar precios: $3.500, $4500
+            text = text.replace(/\$[\d\.,\s]+/g, '');
+            // Limpiar preposiciones al inicio
+            text = text.replace(/^(?:a\s+|en\s+|de\s+|hacia\s+)/i, '');
+            text = text.replace(/[\(\)\[\]]/g, ' ');
+            
+            // Quitar CABA o Bs As genérico si viene con coma
+            const parts = text.split(/,|-|\//).map(p => p.trim()).filter(p => p.length > 0);
+            
+            let cand = '';
+            if (parts.length > 1) {
+                // Si la primera parte parece una calle con número (ej: Corrientes 1234, Almagro), tomar la segunda
+                if (/\d+/.test(parts[0]) && !/\d+/.test(parts[1])) {
+                    cand = parts[1];
+                } else {
+                    cand = parts[0];
+                }
+            } else if (parts.length === 1) {
+                cand = parts[0];
+            }
+
+            // Quitar números de calle residuales
+            cand = cand.replace(/^\d+\s+/, '').replace(/\s+\d+$/, '').trim();
+            cand = cand.replace(/\b(?:caba|buenos aires|bs as)\b/gi, '').trim();
+
+            if (cand.length >= 3) {
+                // Capitalizar primera letra de cada palabra
+                return cand.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+            }
+
+            return 'Otras Zonas';
+        }
+
         function switchMainView(view) {
             currentMainView = view;
             const btnDispatch = document.getElementById('btn-nav-dispatch');
@@ -613,14 +720,14 @@
             const viewAnalytics = document.getElementById('view-analytics');
 
             if (view === 'dispatch') {
-                btnDispatch.className = "px-4 py-2 rounded-lg text-xs font-bold bg-emerald-600 text-white transition flex items-center gap-2 shadow";
-                btnAnalytics.className = "px-4 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-2";
+                btnDispatch.className = "px-3.5 sm:px-4 py-2 rounded-lg text-xs font-bold bg-emerald-600 text-white transition flex items-center gap-2 shadow";
+                btnAnalytics.className = "px-3.5 sm:px-4 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-2";
                 viewDispatch.classList.remove('hidden');
                 viewAnalytics.classList.add('hidden');
                 if (dispatchOrders.length === 0) fetchDispatchOrders();
             } else {
-                btnAnalytics.className = "px-4 py-2 rounded-lg text-xs font-bold bg-indigo-600 text-white transition flex items-center gap-2 shadow";
-                btnDispatch.className = "px-4 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-2";
+                btnAnalytics.className = "px-3.5 sm:px-4 py-2 rounded-lg text-xs font-bold bg-indigo-600 text-white transition flex items-center gap-2 shadow";
+                btnDispatch.className = "px-3.5 sm:px-4 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-2";
                 viewAnalytics.classList.remove('hidden');
                 viewDispatch.classList.add('hidden');
                 fetchAnalyticsData();
@@ -653,9 +760,9 @@
             ['adar', 'nacha', 'nnn'].forEach(k => {
                 const btn = document.getElementById(`btn-ana-${k}`);
                 if (k === storeKey) {
-                    btn.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white transition flex items-center gap-1.5";
+                    btn.className = "px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white transition flex items-center gap-1.5";
                 } else {
-                    btn.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5";
+                    btn.className = "px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5";
                 }
             });
 
@@ -1277,16 +1384,27 @@
                     const nombre = getVal(r, ['nombre', 'cliente'], 3) || 'Cliente';
                     const productos = getVal(r, ['productos', 'producto', 'detalles'], 4);
                     const costoEnvio = getVal(r, ['costoenvio', 'envio'], 5);
-                    const subtotal = getVal(r, ['subtotal', 'sub'], 6);
-                    const totalStr = getVal(r, ['total', 'totalfinal', 'monto'], 7);
-                    const confirmoStr = getVal(r, ['confirmo', 'confirmado', 'metododepago', 'pago', 'metodo'], 8).trim().toUpperCase();
+                    const direccionRaw = getVal(r, ['direccion', 'direccionenvio', 'entrega', 'destino'], 6);
+                    const subtotal = getVal(r, ['subtotal', 'sub'], 7);
+                    const totalStr = getVal(r, ['total', 'totalfinal', 'monto'], 8);
+                    const confirmoStr = getVal(r, ['confirmo', 'confirmado', 'metododepago', 'pago', 'metodo'], 9).trim().toUpperCase();
 
                     const fechaParsed = parseGoogleDate(rawFecha);
                     
-                    // Si no está explícitamente cancelado o 'NO', y tiene monto total, se considera confirmada
                     const isConfirmed = confirmoStr !== 'NO' && (confirmoStr === 'SI' || confirmoStr === 'S' || confirmoStr === 'CONFIRMADO' || confirmoStr === 'TRUE' || confirmoStr === 'EFECTIVO' || confirmoStr === 'TRANSFERENCIA' || confirmoStr === '' || parseMonto(totalStr) > 0);
                     const isEnvio = !costoEnvio.toUpperCase().includes('NO') && !costoEnvio.toUpperCase().includes('RETIRA');
                     const totalMonto = parseMonto(totalStr);
+                    const locality = extractLocalityName(direccionRaw, costoEnvio);
+
+                    // Calcular unidades totales dentro de este pedido
+                    let orderUnitsCount = 0;
+                    if (productos) {
+                        const items = productos.split(/,|\n/);
+                        items.forEach(it => {
+                            if (it.trim()) orderUnitsCount += extractItemQuantity(it);
+                        });
+                    }
+                    if (orderUnitsCount === 0) orderUnitsCount = 1;
 
                     analyticsRawOrders.push({
                         id: ticketId,
@@ -1294,12 +1412,15 @@
                         tel: tel,
                         productos: productos,
                         costoEnvio: costoEnvio,
+                        direccionRaw: direccionRaw,
+                        locality: locality,
                         subtotal: subtotal,
                         totalStr: totalStr,
                         totalMonto: totalMonto,
                         confirmoRaw: confirmoStr,
                         isConfirmed: isConfirmed,
                         isEnvio: isEnvio,
+                        orderUnitsCount: orderUnitsCount,
                         fecha: fechaParsed
                     });
                 }
@@ -1382,11 +1503,17 @@
             optgroup.innerHTML = optionsHtml;
         }
 
+        function onTopNChange() {
+            const sel = document.getElementById('select-top-n');
+            currentTopNLimit = parseInt(sel.value, 10) || 10;
+            document.getElementById('title-top-products').innerText = `Top ${currentTopNLimit} Productos Más Elegidos`;
+            renderAnalyticsDashboard();
+        }
+
         function onPeriodChange() {
             const select = document.getElementById('select-cycle');
             selectedPeriodKey = select.value;
             
-            // Si eligen un ciclo o preset, actualizar los date pickers visualmente
             if (selectedPeriodKey.startsWith('cycle_')) {
                 const cycle = availableCycles.find(c => c.key === selectedPeriodKey);
                 if (cycle) {
@@ -1506,6 +1633,7 @@
             let confirmedRevenue = 0;
             let confirmedCount = 0;
             let totalRegistered = orders.length;
+            let totalUnits = 0;
             let totalEnvios = 0;
             let totalRetiros = 0;
 
@@ -1513,6 +1641,7 @@
                 if (o.isConfirmed) {
                     confirmedRevenue += o.totalMonto;
                     confirmedCount++;
+                    totalUnits += (o.orderUnitsCount || 1);
                 }
                 if (o.isEnvio) totalEnvios++;
                 else totalRetiros++;
@@ -1524,6 +1653,7 @@
             document.getElementById('kpi-revenue').innerText = `$${confirmedRevenue.toLocaleString('es-AR')}`;
             document.getElementById('kpi-orders').innerText = confirmedCount;
             document.getElementById('kpi-total-registered').innerText = totalRegistered;
+            document.getElementById('kpi-total-units').innerText = totalUnits;
             document.getElementById('kpi-rate').innerText = `${conversionRate}%`;
             document.getElementById('kpi-avg-ticket').innerText = `$${avgTicket.toLocaleString('es-AR')}`;
 
@@ -1531,6 +1661,7 @@
             renderTopProductsChart(orders);
             renderStatusDonutChart(orders, confirmedCount, totalRegistered);
             renderDeliveryDonutChart(totalEnvios, totalRetiros);
+            renderLocalitiesList(orders);
             renderAnalyticsTable(orders);
         }
 
@@ -1630,25 +1761,36 @@
             const ctx = document.getElementById('chart-products').getContext('2d');
             if (chartProductsInstance) chartProductsInstance.destroy();
 
-            const productCounts = new Map();
+            // Mapa para registrar { totalUnits, ticketCount } por producto
+            const productStats = new Map();
 
             orders.forEach(o => {
                 if (!o.productos) return;
                 const items = o.productos.split(/,|\n/);
                 items.forEach(rawItem => {
                     const formatted = formatProductWithCode(rawItem);
+                    const qty = extractItemQuantity(rawItem);
                     if (formatted && formatted.length >= 3) {
-                        productCounts.set(formatted, (productCounts.get(formatted) || 0) + 1);
+                        if (!productStats.has(formatted)) {
+                            productStats.set(formatted, { units: 0, tickets: 0 });
+                        }
+                        const entry = productStats.get(formatted);
+                        entry.units += qty;
+                        entry.tickets += 1;
                     }
                 });
             });
 
-            const sortedProds = Array.from(productCounts.entries())
-                                     .sort((a, b) => b[1] - a[1])
-                                     .slice(0, 10);
+            // Ordenar por unidades vendidas desc y tomar el límite seleccionado (Top 5, 10, 15, 20)
+            const sortedProds = Array.from(productStats.entries())
+                                     .sort((a, b) => b[1].units - a[1].units)
+                                     .slice(0, currentTopNLimit);
 
-            const labels = sortedProds.map(p => p[0].length > 30 ? p[0].substring(0, 30) + '...' : p[0]);
-            const data = sortedProds.map(p => p[1]);
+            const labels = sortedProds.map(p => {
+                const name = p[0];
+                return name.length > 26 ? name.substring(0, 24) + '...' : name;
+            });
+            const unitsData = sortedProds.map(p => p[1].units);
 
             chartProductsInstance = new Chart(ctx, {
                 type: 'bar',
@@ -1656,8 +1798,8 @@
                     labels: labels,
                     datasets: [{
                         label: 'Unidades Vendidas',
-                        data: data,
-                        backgroundColor: 'rgba(99, 102, 241, 0.8)',
+                        data: unitsData,
+                        backgroundColor: 'rgba(99, 102, 241, 0.85)',
                         borderColor: '#818cf8',
                         borderWidth: 1.5,
                         borderRadius: 6
@@ -1667,22 +1809,33 @@
                     indexAxis: 'y',
                     responsive: true,
                     maintainAspectRatio: false,
+                    layout: {
+                        padding: { left: 5, right: 10 }
+                    },
                     plugins: {
                         legend: { display: false },
                         tooltip: {
                             callbacks: {
-                                title: items => sortedProds[items[0].dataIndex][0]
+                                title: items => sortedProds[items[0].dataIndex][0],
+                                label: item => {
+                                    const entry = sortedProds[item.dataIndex][1];
+                                    return ` ${entry.units} unidades (${entry.tickets} pedidos)`;
+                                }
                             }
                         }
                     },
                     scales: {
                         x: {
                             grid: { color: 'rgba(51, 65, 85, 0.3)' },
-                            ticks: { color: '#94a3b8', font: { size: 10 } }
+                            ticks: { color: '#94a3b8', font: { size: 10 }, precision: 0 }
                         },
                         y: {
                             grid: { display: false },
-                            ticks: { color: '#e2e8f0', font: { size: 11, weight: '500' } }
+                            ticks: { 
+                                color: '#e2e8f0', 
+                                font: { size: 10.5, weight: '500' },
+                                autoSkip: false
+                            }
                         }
                     }
                 }
@@ -1713,7 +1866,7 @@
                     plugins: {
                         legend: {
                             position: 'bottom',
-                            labels: { color: '#94a3b8', font: { size: 11, weight: 'bold' }, padding: 15 }
+                            labels: { color: '#94a3b8', font: { size: 10.5, weight: 'bold' }, padding: 12 }
                         }
                     }
                 }
@@ -1742,11 +1895,57 @@
                     plugins: {
                         legend: {
                             position: 'bottom',
-                            labels: { color: '#94a3b8', font: { size: 11, weight: 'bold' }, padding: 15 }
+                            labels: { color: '#94a3b8', font: { size: 10.5, weight: 'bold' }, padding: 12 }
                         }
                     }
                 }
             });
+        }
+
+        // Renderizado del Top 7 Localidades con más ventas
+        function renderLocalitiesList(orders) {
+            const container = document.getElementById('localities-container');
+            if (!container) return;
+
+            const locMap = new Map();
+            let total = 0;
+
+            orders.forEach(o => {
+                const loc = o.locality || 'Otras Zonas';
+                locMap.set(loc, (locMap.get(loc) || 0) + 1);
+                total++;
+            });
+
+            const sortedLocs = Array.from(locMap.entries())
+                                    .sort((a, b) => b[1] - a[1])
+                                    .slice(0, 7);
+
+            if (sortedLocs.length === 0) {
+                container.innerHTML = `<div class="text-center text-xs text-slate-500 py-6">Sin datos de localidades</div>`;
+                return;
+            }
+
+            container.innerHTML = sortedLocs.map((loc, idx) => {
+                const pct = total > 0 ? ((loc[1] / total) * 100).toFixed(0) : 0;
+                const isTop1 = idx === 0;
+                return `
+                <div class="space-y-1 bg-slate-950/40 p-2 rounded-xl border border-slate-800/60">
+                    <div class="flex justify-between items-center text-xs">
+                        <div class="flex items-center gap-1.5 truncate">
+                            <span class="font-bold w-4 text-[11px] ${isTop1 ? 'text-amber-400' : 'text-slate-500'}">#${idx + 1}</span>
+                            <span class="font-medium text-slate-200 truncate" title="${loc[0]}">${loc[0]}</span>
+                        </div>
+                        <div class="text-right whitespace-nowrap pl-2">
+                            <span class="font-bold text-white text-xs">${loc[1]}</span>
+                            <span class="text-[10px] text-slate-400 ml-1">(${pct}%)</span>
+                        </div>
+                    </div>
+                    <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                        <div class="h-1.5 rounded-full ${isTop1 ? 'bg-gradient-to-r from-amber-400 to-rose-500' : 'bg-indigo-500'}" style="width: ${pct}%"></div>
+                    </div>
+                </div>
+                `;
+            }).join('');
         }
 
         function renderAnalyticsTable(orders) {
@@ -1788,7 +1987,8 @@
                 return o.nombre.toLowerCase().includes(query) ||
                        o.tel.toLowerCase().includes(query) ||
                        o.productos.toLowerCase().includes(query) ||
-                       o.costoEnvio.toLowerCase().includes(query);
+                       o.costoEnvio.toLowerCase().includes(query) ||
+                       (o.locality && o.locality.toLowerCase().includes(query));
             });
 
             renderAnalyticsTable(filtered);
