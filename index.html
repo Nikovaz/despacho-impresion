@@ -669,47 +669,81 @@
             return str;
         }
 
-        // Extractor y normalizador de localidades / destinos
-        function extractLocalityName(direccionRaw, costoEnvioRaw) {
-            const combined = (direccionRaw + ' ' + costoEnvioRaw).toLowerCase();
-            
-            if (combined.includes('retira') || combined.includes('depósito') || combined.includes('deposito') || (combined.includes('once') && combined.includes('retiro'))) {
-                return 'Depósito Once (Retiro)';
+        // Extractor y normalizador de localidades según la tienda
+        function extractLocalityName(storeKey, direccionRaw, costoEnvioRaw) {
+            const envio = String(costoEnvioRaw || '').trim();
+            const dir = String(direccionRaw || '').trim();
+
+            // Descartar retiros en depósito
+            const combined = (envio + ' ' + dir).toLowerCase();
+            if (combined.includes('retira') || combined.includes('deposito') || combined.includes('depósito') || (combined.includes('once') && combined.includes('retiro')) || envio.toUpperCase() === 'NO') {
+                return null;
             }
 
-            let text = (direccionRaw || costoEnvioRaw || '').trim();
-            
-            // Limpiar precios: $3.500, $4500
-            text = text.replace(/\$[\d\.,\s]+/g, '');
-            // Limpiar preposiciones al inicio
-            text = text.replace(/^(?:a\s+|en\s+|de\s+|hacia\s+)/i, '');
-            text = text.replace(/[\(\)\[\]]/g, ' ');
-            
-            // Quitar CABA o Bs As genérico si viene con coma
-            const parts = text.split(/,|-|\//).map(p => p.trim()).filter(p => p.length > 0);
-            
-            let cand = '';
-            if (parts.length > 1) {
-                // Si la primera parte parece una calle con número (ej: Corrientes 1234, Almagro), tomar la segunda
-                if (/\d+/.test(parts[0]) && !/\d+/.test(parts[1])) {
-                    cand = parts[1];
-                } else {
-                    cand = parts[0];
+            let loc = '';
+
+            if (storeKey === 'adar') {
+                // En Adar la localidad está en Costo_envio
+                let raw = envio;
+                
+                // 1. Paréntesis: $4.500 (Isla Maciel), $5.800 (Berazategui), (motomensajería a José C. Paz, ...)
+                const mParen = raw.match(/\(([^)]+)\)/);
+                if (mParen) {
+                    let inside = mParen[1];
+                    inside = inside.replace(/motomensajer[ií]a\s+a\s+/gi, '');
+                    inside = inside.replace(/\bes\s+\d+.*$/gi, '');
+                    inside = inside.replace(/[\$0-9\.,]/g, '').trim();
+                    if (inside.length >= 3) loc = inside;
                 }
-            } else if (parts.length === 1) {
-                cand = parts[0];
+
+                // 2. Si no, buscar 'a Localidad': $5.800 a Ministro Rivadavia, $4.500 a Banfield, a González Catán
+                if (!loc) {
+                    const mA = raw.match(/\ba\s+([A-Za-zÁÉÍÓÚáéíóúñÑ\s]+)/i);
+                    if (mA) {
+                        let l = mA[1].trim();
+                        l = l.replace(/\b(?:confirmar|coordinar|con)\b.*$/gi, '').trim();
+                        if (l.length >= 3) loc = l;
+                    }
+                }
+
+                // 3. Fallback: limpiar precio
+                if (!loc) {
+                    let cleaned = raw.replace(/\$[\d\.,\s]+/g, '').replace(/[\(\)]/g, '').trim();
+                    cleaned = cleaned.replace(/^(?:a\s+|en\s+|de\s+)/i, '').trim();
+                    if (cleaned.length >= 3 && !cleaned.toLowerCase().startsWith('no')) {
+                        loc = cleaned;
+                    }
+                }
+            } else {
+                // En Nacha y NNN la localidad está al final de Direccion (separada por comas)
+                let raw = (dir && dir.toLowerCase() !== 'true' && dir.toLowerCase() !== 'false') ? dir : envio;
+
+                const parts = raw.split(',').map(p => p.trim()).filter(p => p.length > 0);
+                if (parts.length > 1) {
+                    let last = parts[parts.length - 1];
+                    last = last.replace(/\b\d{4,5}\b/g, '').replace(/[\(\)\[\]]/g, '').trim();
+                    if (last.length >= 3) loc = last;
+                } else if (parts.length === 1) {
+                    const dashParts = raw.split('-').map(p => p.trim()).filter(p => p.length > 0);
+                    if (dashParts.length > 1) {
+                        let last = dashParts[dashParts.length - 1];
+                        last = last.replace(/\b\d{4,5}\b/g, '').replace(/[\(\)\[\]]/g, '').trim();
+                        if (last.length >= 3) loc = last;
+                    } else {
+                        let c = parts[0].replace(/\$[\d\.,\s]+/g, '').replace(/[\(\)]/g, '').trim();
+                        if (c.length >= 3 && !c.toLowerCase().startsWith('no')) loc = c;
+                    }
+                }
             }
 
-            // Quitar números de calle residuales
-            cand = cand.replace(/^\d+\s+/, '').replace(/\s+\d+$/, '').trim();
-            cand = cand.replace(/\b(?:caba|buenos aires|bs as)\b/gi, '').trim();
+            if (!loc) return null;
 
-            if (cand.length >= 3) {
-                // Capitalizar primera letra de cada palabra
-                return cand.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+            loc = loc.replace(/\s+/g, ' ').trim();
+            if (loc.toUpperCase() === 'CABA' || loc.toUpperCase() === 'CAPITAL FEDERAL' || loc.toUpperCase() === 'CAPITAL') {
+                return 'CABA (Capital)';
             }
 
-            return 'Otras Zonas';
+            return loc.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
         }
 
         function switchMainView(view) {
@@ -1394,7 +1428,7 @@
                     const isConfirmed = confirmoStr !== 'NO' && (confirmoStr === 'SI' || confirmoStr === 'S' || confirmoStr === 'CONFIRMADO' || confirmoStr === 'TRUE' || confirmoStr === 'EFECTIVO' || confirmoStr === 'TRANSFERENCIA' || confirmoStr === '' || parseMonto(totalStr) > 0);
                     const isEnvio = !costoEnvio.toUpperCase().includes('NO') && !costoEnvio.toUpperCase().includes('RETIRA');
                     const totalMonto = parseMonto(totalStr);
-                    const locality = extractLocalityName(direccionRaw, costoEnvio);
+                    const locality = extractLocalityName(currentAnalyticsStore, direccionRaw, costoEnvio);
 
                     // Calcular unidades totales dentro de este pedido
                     let orderUnitsCount = 0;
@@ -1537,10 +1571,10 @@
                 document.getElementById('input-date-to').value = now.toISOString().split('T')[0];
             } else if (selectedPeriodKey === 'thisMonth') {
                 const now = new Date();
-                const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-                const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-                document.getElementById('input-date-from').value = firstDay.toISOString().split('T')[0];
-                document.getElementById('input-date-to').value = lastDay.toISOString().split('T')[0];
+                const start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
+                const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+                document.getElementById('input-date-from').value = start.toISOString().split('T')[0];
+                document.getElementById('input-date-to').value = end.toISOString().split('T')[0];
             } else if (selectedPeriodKey === 'all') {
                 if (analyticsRawOrders.length > 0) {
                     const minDate = analyticsRawOrders[analyticsRawOrders.length - 1].fecha;
@@ -1908,12 +1942,13 @@
             if (!container) return;
 
             const locMap = new Map();
-            let total = 0;
+            let totalEnviosConLoc = 0;
 
             orders.forEach(o => {
-                const loc = o.locality || 'Otras Zonas';
-                locMap.set(loc, (locMap.get(loc) || 0) + 1);
-                total++;
+                if (o.locality) {
+                    locMap.set(o.locality, (locMap.get(o.locality) || 0) + 1);
+                    totalEnviosConLoc++;
+                }
             });
 
             const sortedLocs = Array.from(locMap.entries())
@@ -1921,12 +1956,12 @@
                                     .slice(0, 7);
 
             if (sortedLocs.length === 0) {
-                container.innerHTML = `<div class="text-center text-xs text-slate-500 py-6">Sin datos de localidades</div>`;
+                container.innerHTML = `<div class="text-center text-xs text-slate-500 py-6">No hay envíos a domicilio en este período</div>`;
                 return;
             }
 
             container.innerHTML = sortedLocs.map((loc, idx) => {
-                const pct = total > 0 ? ((loc[1] / total) * 100).toFixed(0) : 0;
+                const pct = totalEnviosConLoc > 0 ? ((loc[1] / totalEnviosConLoc) * 100).toFixed(0) : 0;
                 const isTop1 = idx === 0;
                 return `
                 <div class="space-y-1 bg-slate-950/40 p-2 rounded-xl border border-slate-800/60">
@@ -1936,12 +1971,12 @@
                             <span class="font-medium text-slate-200 truncate" title="${loc[0]}">${loc[0]}</span>
                         </div>
                         <div class="text-right whitespace-nowrap pl-2">
-                            <span class="font-bold text-white text-xs">${loc[1]}</span>
+                            <span class="font-bold text-white text-xs">${loc[1]} envíos</span>
                             <span class="text-[10px] text-slate-400 ml-1">(${pct}%)</span>
                         </div>
                     </div>
                     <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
-                        <div class="h-1.5 rounded-full ${isTop1 ? 'bg-gradient-to-r from-amber-400 to-rose-500' : 'bg-indigo-500'}" style="width: ${pct}%"></div>
+                        <div class="h-1.5 rounded-full ${isTop1 ? 'bg-gradient-to-r from-rose-500 to-amber-400' : 'bg-indigo-500'}" style="width: ${pct}%"></div>
                     </div>
                 </div>
                 `;
