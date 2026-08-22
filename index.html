@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Control - Despacho & Métricas Adar</title>
+    <title>Panel de Control - Despacho & Métricas Multitienda</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -98,7 +98,7 @@
                     </div>
                     <div>
                         <span class="font-extrabold text-white text-lg tracking-tight">OPERACIONES</span>
-                        <span class="text-emerald-400 font-semibold text-xs ml-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">v2.0</span>
+                        <span class="text-emerald-400 font-semibold text-xs ml-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">v2.1</span>
                     </div>
                 </div>
 
@@ -107,8 +107,8 @@
                     <button onclick="switchMainView('dispatch')" id="btn-nav-dispatch" class="px-4 py-2 rounded-lg text-xs font-bold bg-emerald-600 text-white transition flex items-center gap-2 shadow">
                         <i class="fa-solid fa-print"></i> Despacho & Impresión
                     </button>
-                    <button onclick="switchMainView('adar')" id="btn-nav-adar" class="px-4 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-2">
-                        <i class="fa-solid fa-chart-pie"></i> Métricas & Analytics (Adar)
+                    <button onclick="switchMainView('analytics')" id="btn-nav-analytics" class="px-4 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-2">
+                        <i class="fa-solid fa-chart-pie"></i> Métricas & Analytics
                     </button>
                 </div>
             </div>
@@ -116,7 +116,7 @@
     </nav>
 
     <!-- ========================================== -->
-    <!-- MODULE 1: DESPACHO & IMPRESIÓN (NNN & NACHA) -->
+    <!-- MODULE 1: DESPACHO & IMPRESIÓN             -->
     <!-- ========================================== -->
     <div id="view-dispatch" class="no-print max-w-7xl mx-auto p-4 md:p-6">
         <!-- Header -->
@@ -134,12 +134,12 @@
             </div>
 
             <div class="flex items-center gap-3 flex-wrap">
-                <!-- Selector de Tienda (NNN vs NachaHome) -->
+                <!-- Selector de Tienda Despacho -->
                 <div class="flex items-center bg-slate-900 rounded-xl p-1 border border-slate-800">
-                    <button onclick="switchStore('nnn')" id="btn-store-nnn" class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white transition flex items-center gap-1.5">
+                    <button onclick="switchDispatchStore('nnn')" id="btn-store-nnn" class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white transition flex items-center gap-1.5">
                         <i class="fa-solid fa-shirt"></i> NNN Tienda
                     </button>
-                    <button onclick="switchStore('nacha')" id="btn-store-nacha" class="px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5">
+                    <button onclick="switchDispatchStore('nacha')" id="btn-store-nacha" class="px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5">
                         <i class="fa-solid fa-house"></i> NachaHome
                     </button>
                 </div>
@@ -215,24 +215,37 @@
     </div>
 
     <!-- ========================================== -->
-    <!-- MODULE 2: ANALYTICS & MÉTRICAS (ADAR)      -->
+    <!-- MODULE 2: ANALYTICS & MÉTRICAS             -->
     <!-- ========================================== -->
-    <div id="view-adar" class="no-print max-w-7xl mx-auto p-4 md:p-6 hidden">
-        <!-- Header Adar -->
+    <div id="view-analytics" class="no-print max-w-7xl mx-auto p-4 md:p-6 hidden">
+        <!-- Header Analytics -->
         <header class="flex flex-col md:flex-row items-start md:items-center justify-between pb-6 border-b border-slate-800 gap-4">
             <div>
                 <h1 class="text-2xl font-bold text-white flex items-center gap-3">
                     <span class="p-2 bg-indigo-500/10 text-indigo-400 rounded-xl border border-indigo-500/20">
                         <i class="fa-solid fa-chart-line"></i>
                     </span>
-                    Adar Import | Inteligencia de Ventas & Reportes
+                    <span id="title-analytics-store">Adar Import</span> | Inteligencia de Ventas & Reportes
                 </h1>
                 <p class="text-slate-400 text-sm mt-1">
-                    Cálculo directo en tiempo real desde la hoja <span class="text-indigo-400 font-mono font-semibold">Ventas</span>
+                    Cálculo directo en tiempo real desde la hoja <span id="label-analytics-sheet" class="text-indigo-400 font-mono font-semibold">Ventas Adar</span>
                 </p>
             </div>
 
             <div class="flex items-center gap-3 flex-wrap">
+                <!-- Selector de Tienda en Analytics -->
+                <div class="flex items-center bg-slate-900 rounded-xl p-1 border border-slate-800">
+                    <button onclick="switchAnalyticsStore('adar')" id="btn-ana-adar" class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-box-open"></i> Adar Import
+                    </button>
+                    <button onclick="switchAnalyticsStore('nacha')" id="btn-ana-nacha" class="px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-house"></i> NachaHome
+                    </button>
+                    <button onclick="switchAnalyticsStore('nnn')" id="btn-ana-nnn" class="px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-shirt"></i> NNN Tienda
+                    </button>
+                </div>
+
                 <!-- Selector de Ciclo Mensual (16 al 16) -->
                 <div class="flex items-center bg-slate-900 rounded-xl px-3 py-1.5 border border-slate-800">
                     <label for="select-cycle" class="text-xs font-semibold text-slate-400 mr-2 flex items-center gap-1.5">
@@ -244,8 +257,8 @@
                     </select>
                 </div>
 
-                <button onclick="fetchAdarData()" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl font-medium text-sm flex items-center gap-2 border border-slate-800 transition">
-                    <i class="fa-solid fa-rotate" id="refresh-icon-adar"></i> Actualizar Métricas
+                <button onclick="fetchAnalyticsData()" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl font-medium text-sm flex items-center gap-2 border border-slate-800 transition">
+                    <i class="fa-solid fa-rotate" id="refresh-icon-analytics"></i> Actualizar Métricas
                 </button>
             </div>
         </header>
@@ -263,7 +276,7 @@
                 </div>
                 <div class="text-3xl font-black text-white mt-2" id="kpi-revenue">$0</div>
                 <div class="text-xs text-slate-400 mt-1 flex items-center gap-1" id="kpi-revenue-sub">
-                    <span>Solo ventas con confirmación = SI</span>
+                    <span>Ventas confirmadas / pagadas</span>
                 </div>
             </div>
 
@@ -333,7 +346,7 @@
                         <h3 class="font-bold text-white text-base flex items-center gap-2">
                             <i class="fa-solid fa-trophy text-amber-400"></i> Top 10 Productos Más Elegidos
                         </h3>
-                        <p class="text-xs text-slate-400 mt-0.5">Replicado de <span class="font-mono text-indigo-400">Ranking_Productos_Base</span></p>
+                        <p class="text-xs text-slate-400 mt-0.5">Ranking de rendimiento de catálogo</p>
                     </div>
                 </div>
                 <div class="h-72 w-full">
@@ -383,7 +396,7 @@
                 <div class="flex items-center gap-2 w-full sm:w-auto">
                     <div class="relative flex-1 sm:w-64">
                         <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-500 text-xs"></i>
-                        <input type="text" id="table-search" oninput="filterAdarTable()" placeholder="Buscar cliente, tel, producto..." class="w-full bg-slate-950 text-slate-200 text-xs rounded-xl pl-8 pr-3 py-2 border border-slate-800 focus:outline-none focus:border-indigo-500">
+                        <input type="text" id="table-search" oninput="filterAnalyticsTable()" placeholder="Buscar cliente, tel, producto..." class="w-full bg-slate-950 text-slate-200 text-xs rounded-xl pl-8 pr-3 py-2 border border-slate-800 focus:outline-none focus:border-indigo-500">
                     </div>
                 </div>
             </div>
@@ -401,9 +414,9 @@
                             <th class="p-3.5 text-center">Estado</th>
                         </tr>
                     </thead>
-                    <tbody id="adar-table-body" class="divide-y divide-slate-800/60">
+                    <tbody id="analytics-table-body" class="divide-y divide-slate-800/60">
                         <tr>
-                            <td colspan="7" class="p-8 text-center text-slate-500">Cargando datos de Adar...</td>
+                            <td colspan="7" class="p-8 text-center text-slate-500">Cargando datos...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -415,23 +428,41 @@
     <div id="print-area" class="hidden"></div>
 
     <script>
-        const SHEET_ID_DISPATCH = '13OZcCBHrVufQSB4HcZu1Vgnu6uYAGLFpWrwW-x347aw';
-        const SHEET_ID_ADAR = '1iZ2jlTKNypQDuRC-mVWZaJvFHN1UaI75oRUg1hTfuEY';
-
-        const STORES = {
-            nnn: { name: 'NNN Tienda', gid: '1354054217', sheetLabel: 'Ventas NNN' },
-            nacha: { name: 'NachaHome', gid: '1810697795', sheetLabel: 'Ventas NachaHome' }
+        const STORES_CONFIG = {
+            adar: { 
+                name: 'Adar Import', 
+                sheetId: '1iZ2jlTKNypQDuRC-mVWZaJvFHN1UaI75oRUg1hTfuEY', 
+                gid: '0', 
+                sheetLabel: 'Ventas Adar',
+                icon: 'fa-box-open'
+            },
+            nacha: { 
+                name: 'NachaHome', 
+                sheetId: '13OZcCBHrVufQSB4HcZu1Vgnu6uYAGLFpWrwW-x347aw', 
+                gid: '1810697795', 
+                sheetLabel: 'Ventas NachaHome',
+                icon: 'fa-house'
+            },
+            nnn: { 
+                name: 'NNN Tienda', 
+                sheetId: '13OZcCBHrVufQSB4HcZu1Vgnu6uYAGLFpWrwW-x347aw', 
+                gid: '1354054217', 
+                sheetLabel: 'Ventas NNN',
+                icon: 'fa-shirt'
+            }
         };
 
         let currentMainView = 'dispatch';
-        let currentStore = 'nnn';
+        let currentDispatchStore = 'nnn';
+        let currentAnalyticsStore = 'adar';
+
         let dispatchOrders = [];
         let printedOrderIds = JSON.parse(localStorage.getItem('nnn_printed_orders') || '[]');
         let customPaymentMethods = JSON.parse(localStorage.getItem('nnn_payment_methods') || '{}');
         let currentDispatchTab = 'today';
         let printMode = 'thermal';
 
-        let adarRawOrders = [];
+        let analyticsRawOrders = [];
         let availableCycles = [];
         let selectedCycleKey = 'current';
 
@@ -460,29 +491,30 @@
         function switchMainView(view) {
             currentMainView = view;
             const btnDispatch = document.getElementById('btn-nav-dispatch');
-            const btnAdar = document.getElementById('btn-nav-adar');
+            const btnAnalytics = document.getElementById('btn-nav-analytics');
             const viewDispatch = document.getElementById('view-dispatch');
-            const viewAdar = document.getElementById('view-adar');
+            const viewAnalytics = document.getElementById('view-analytics');
 
             if (view === 'dispatch') {
                 btnDispatch.className = "px-4 py-2 rounded-lg text-xs font-bold bg-emerald-600 text-white transition flex items-center gap-2 shadow";
-                btnAdar.className = "px-4 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-2";
+                btnAnalytics.className = "px-4 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-2";
                 viewDispatch.classList.remove('hidden');
-                viewAdar.classList.add('hidden');
+                viewAnalytics.classList.add('hidden');
                 if (dispatchOrders.length === 0) fetchDispatchOrders();
             } else {
-                btnAdar.className = "px-4 py-2 rounded-lg text-xs font-bold bg-indigo-600 text-white transition flex items-center gap-2 shadow";
+                btnAnalytics.className = "px-4 py-2 rounded-lg text-xs font-bold bg-indigo-600 text-white transition flex items-center gap-2 shadow";
                 btnDispatch.className = "px-4 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-2";
-                viewAdar.classList.remove('hidden');
+                viewAnalytics.classList.remove('hidden');
                 viewDispatch.classList.add('hidden');
-                if (adarRawOrders.length === 0) fetchAdarData();
+                fetchAnalyticsData();
             }
         }
 
-        function switchStore(storeKey) {
-            currentStore = storeKey;
-            document.getElementById('title-store').innerText = STORES[storeKey].name;
-            document.getElementById('label-active-sheet').innerText = STORES[storeKey].sheetLabel;
+        /* DESPACHO STORE SWITCH */
+        function switchDispatchStore(storeKey) {
+            currentDispatchStore = storeKey;
+            document.getElementById('title-store').innerText = STORES_CONFIG[storeKey].name;
+            document.getElementById('label-active-sheet').innerText = STORES_CONFIG[storeKey].sheetLabel;
 
             if (storeKey === 'nnn') {
                 document.getElementById('btn-store-nnn').className = "px-3.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white transition flex items-center gap-1.5";
@@ -493,6 +525,24 @@
             }
 
             fetchDispatchOrders();
+        }
+
+        /* ANALYTICS STORE SWITCH */
+        function switchAnalyticsStore(storeKey) {
+            currentAnalyticsStore = storeKey;
+            document.getElementById('title-analytics-store').innerText = STORES_CONFIG[storeKey].name;
+            document.getElementById('label-analytics-sheet').innerText = STORES_CONFIG[storeKey].sheetLabel;
+
+            ['adar', 'nacha', 'nnn'].forEach(k => {
+                const btn = document.getElementById(`btn-ana-${k}`);
+                if (k === storeKey) {
+                    btn.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white transition flex items-center gap-1.5";
+                } else {
+                    btn.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5";
+                }
+            });
+
+            fetchAnalyticsData();
         }
 
         function setPrintMode(mode) {
@@ -518,8 +568,8 @@
             const icon = document.getElementById('refresh-icon-dispatch');
             if (icon) icon.classList.add('fa-spin');
             
-            const gid = STORES[currentStore].gid;
-            const sheetUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID_DISPATCH}/gviz/tq?tqx=out:json&gid=${gid}`;
+            const conf = STORES_CONFIG[currentDispatchStore];
+            const sheetUrl = `https://docs.google.com/spreadsheets/d/${conf.sheetId}/gviz/tq?tqx=out:json&gid=${conf.gid}`;
 
             try {
                 const res = await fetch(sheetUrl);
@@ -613,7 +663,7 @@
 
                     dispatchOrders.push({
                         id: ticketId,
-                        tienda: STORES[currentStore].name,
+                        tienda: conf.name,
                         cliente_nombre: nombre,
                         celular: tel,
                         direccion: isEnvio ? direccion : 'Retiro en Depósito Once',
@@ -1041,17 +1091,18 @@
         }
 
         /* ====================================================== */
-        /* MÓDULO 2: ANALYTICS & MÉTRICAS (ADAR)                  */
+        /* MÓDULO 2: ANALYTICS & MÉTRICAS (MULTITIENDA)           */
         /* ====================================================== */
-        async function fetchAdarData() {
-            const icon = document.getElementById('refresh-icon-adar');
+        async function fetchAnalyticsData() {
+            const icon = document.getElementById('refresh-icon-analytics');
             if (icon) icon.classList.add('fa-spin');
 
-            const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID_ADAR}/gviz/tq?tqx=out:json`;
+            const conf = STORES_CONFIG[currentAnalyticsStore];
+            const url = `https://docs.google.com/spreadsheets/d/${conf.sheetId}/gviz/tq?tqx=out:json&gid=${conf.gid}`;
 
             try {
                 const res = await fetch(url);
-                if (!res.ok) throw new Error('Error al conectar con la hoja de Adar');
+                if (!res.ok) throw new Error(`Error al conectar con la hoja de ${conf.name}`);
                 const text = await res.text();
                 const jsonText = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
                 const data = JSON.parse(jsonText);
@@ -1095,7 +1146,7 @@
                     return '';
                 }
 
-                adarRawOrders = [];
+                analyticsRawOrders = [];
 
                 for (let rIdx = startRowIdx; rIdx < rows.length; rIdx++) {
                     const r = rows[rIdx];
@@ -1111,14 +1162,16 @@
                     const costoEnvio = getVal(r, ['costoenvio', 'envio'], 5);
                     const subtotal = getVal(r, ['subtotal', 'sub'], 6);
                     const totalStr = getVal(r, ['total', 'totalfinal', 'monto'], 7);
-                    const confirmoStr = getVal(r, ['confirmo', 'confirmado', 'metododepago', 'pago'], 8).trim().toUpperCase();
+                    const confirmoStr = getVal(r, ['confirmo', 'confirmado', 'metododepago', 'pago', 'metodo'], 8).trim().toUpperCase();
 
                     const fechaParsed = parseGoogleDate(rawFecha);
-                    const isConfirmed = confirmoStr === 'SI' || confirmoStr === 'S' || confirmoStr === 'CONFIRMADO' || confirmoStr === 'TRUE' || confirmoStr === 'EFECTIVO' || confirmoStr === 'TRANSFERENCIA';
+                    
+                    // Si no está explícitamente cancelado o 'NO', y tiene monto total, se considera confirmada
+                    const isConfirmed = confirmoStr !== 'NO' && (confirmoStr === 'SI' || confirmoStr === 'S' || confirmoStr === 'CONFIRMADO' || confirmoStr === 'TRUE' || confirmoStr === 'EFECTIVO' || confirmoStr === 'TRANSFERENCIA' || confirmoStr === '' || parseMonto(totalStr) > 0);
                     const isEnvio = !costoEnvio.toUpperCase().includes('NO') && !costoEnvio.toUpperCase().includes('RETIRA');
                     const totalMonto = parseMonto(totalStr);
 
-                    adarRawOrders.push({
+                    analyticsRawOrders.push({
                         id: ticketId,
                         nombre: nombre,
                         tel: tel,
@@ -1134,13 +1187,13 @@
                     });
                 }
 
-                adarRawOrders.sort((a, b) => b.fecha - a.fecha);
+                analyticsRawOrders.sort((a, b) => b.fecha - a.fecha);
 
                 buildCycleOptions();
-                renderAdarAnalytics();
+                renderAnalyticsDashboard();
             } catch (err) {
                 console.error(err);
-                alert('Error al cargar datos de Adar: ' + err.message);
+                alert(`Error al cargar datos de ${conf.name}: ` + err.message);
             } finally {
                 if (icon) icon.classList.remove('fa-spin');
             }
@@ -1177,7 +1230,7 @@
         function buildCycleOptions() {
             const cyclesMap = new Map();
 
-            adarRawOrders.forEach(o => {
+            analyticsRawOrders.forEach(o => {
                 const c = getCycleKeyForDate(o.fecha);
                 if (!cyclesMap.has(c.key)) {
                     cyclesMap.set(c.key, c);
@@ -1196,7 +1249,7 @@
                 });
             }
 
-            optionsHtml += `<option value="all">🌐 Todos los datos (Histórico total: ${adarRawOrders.length} pedidos)</option>`;
+            optionsHtml += `<option value="all">🌐 Todos los datos (Histórico total: ${analyticsRawOrders.length} pedidos)</option>`;
             select.innerHTML = optionsHtml;
 
             if (availableCycles.length > 0) {
@@ -1209,21 +1262,21 @@
         function onCycleChange() {
             const select = document.getElementById('select-cycle');
             selectedCycleKey = select.value;
-            renderAdarAnalytics();
+            renderAnalyticsDashboard();
         }
 
-        function getFilteredAdarOrders() {
+        function getFilteredAnalyticsOrders() {
             if (selectedCycleKey === 'all') {
-                return adarRawOrders;
+                return analyticsRawOrders;
             }
             const cycle = availableCycles.find(c => c.key === selectedCycleKey);
-            if (!cycle) return adarRawOrders;
+            if (!cycle) return analyticsRawOrders;
 
-            return adarRawOrders.filter(o => o.fecha >= cycle.start && o.fecha < cycle.end);
+            return analyticsRawOrders.filter(o => o.fecha >= cycle.start && o.fecha < cycle.end);
         }
 
-        function renderAdarAnalytics() {
-            const orders = getFilteredAdarOrders();
+        function renderAnalyticsDashboard() {
+            const orders = getFilteredAnalyticsOrders();
 
             let confirmedRevenue = 0;
             let confirmedCount = 0;
@@ -1253,7 +1306,7 @@
             renderTopProductsChart(orders);
             renderStatusDonutChart(orders, confirmedCount, totalRegistered);
             renderDeliveryDonutChart(totalEnvios, totalRetiros);
-            renderAdarTable(orders);
+            renderAnalyticsTable(orders);
         }
 
         function renderEvolutionChart(orders) {
@@ -1473,8 +1526,8 @@
             });
         }
 
-        function renderAdarTable(orders) {
-            const tbody = document.getElementById('adar-table-body');
+        function renderAnalyticsTable(orders) {
+            const tbody = document.getElementById('analytics-table-body');
             if (orders.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-500">No hay ventas registradas en este período.</td></tr>`;
                 return;
@@ -1499,12 +1552,12 @@
             }).join('');
         }
 
-        function filterAdarTable() {
+        function filterAnalyticsTable() {
             const query = (document.getElementById('table-search').value || '').toLowerCase().trim();
-            const orders = getFilteredAdarOrders();
+            const orders = getFilteredAnalyticsOrders();
 
             if (!query) {
-                renderAdarTable(orders);
+                renderAnalyticsTable(orders);
                 return;
             }
 
@@ -1515,7 +1568,7 @@
                        o.costoEnvio.toLowerCase().includes(query);
             });
 
-            renderAdarTable(filtered);
+            renderAnalyticsTable(filtered);
         }
 
         fetchDispatchOrders();
