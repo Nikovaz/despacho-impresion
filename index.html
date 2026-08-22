@@ -124,7 +124,7 @@
                     <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">Usuario / Empresa</label>
                     <div class="relative">
                         <i class="fa-solid fa-building absolute left-3.5 top-3 text-slate-500 text-sm"></i>
-                        <input type="text" id="login-username" required placeholder="Ej: adar o admin" class="w-full bg-slate-950 text-white text-sm rounded-xl pl-10 pr-4 py-2.5 border border-slate-800 focus:outline-none focus:border-emerald-500 transition">
+                        <input type="text" id="login-username" required placeholder="Ej: adar o Croc" class="w-full bg-slate-950 text-white text-sm rounded-xl pl-10 pr-4 py-2.5 border border-slate-800 focus:outline-none focus:border-emerald-500 transition">
                     </div>
                 </div>
 
@@ -569,7 +569,7 @@
                             <th class="p-3.5 text-center">Estado</th>
                         </tr>
                     </thead>
-                    <tbody id="analytics-table-body" class="divide-y divide-slate-800/60">
+                    <tbody id="analytics-table-body" class="divide-y border-slate-800/60">
                         <tr>
                             <td colspan="7" class="p-8 text-center text-slate-500">Cargando datos...</td>
                         </tr>
@@ -2086,8 +2086,10 @@
                 document.getElementById('input-date-to').value = todayStr;
             } else if (selectedPeriodKey === 'last7') {
                 const now = new Date();
-                const past7 = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-                document.getElementById('input-date-from').value = past7.toISOString().split('T')[0];
+                const start = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                start.setHours(0, 0, 0, 0);
+                filtered = analyticsRawOrders.filter(o => o.fecha >= start && o.fecha <= now);
+                document.getElementById('input-date-from').value = start.toISOString().split('T')[0];
                 document.getElementById('input-date-to').value = now.toISOString().split('T')[0];
             } else if (selectedPeriodKey === 'last30') {
                 const now = new Date();
