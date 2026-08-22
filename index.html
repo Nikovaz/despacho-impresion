@@ -905,36 +905,43 @@
             const isSuperAdmin = currentUser.role === 'superadmin';
             const allowedModules = currentUser.modules_allowed || ['analytics'];
 
-            // Botón Admin
-            if (isSuperAdmin) {
-                btnAdmin.classList.remove('hidden');
-                if (dispatchStoreWrap) dispatchStoreWrap.classList.remove('hidden');
-                if (analyticsStoreWrap) analyticsStoreWrap.classList.remove('hidden');
-            } else {
-                btnAdmin.classList.add('hidden');
-                // En modo cliente: ocultar selectores de otras tiendas
-                if (dispatchStoreWrap) dispatchStoreWrap.classList.add('hidden');
-                if (analyticsStoreWrap) analyticsStoreWrap.classList.add('hidden');
+            // Sincronizar tienda asignada si es cliente
+            if (currentUser.store_key && STORES_CONFIG[currentUser.store_key]) {
+                currentDispatchStore = currentUser.store_key;
+                currentAnalyticsStore = currentUser.store_key;
+                const storeObj = STORES_CONFIG[currentUser.store_key];
                 
-                // Fijar la tienda asignada
-                if (currentUser.store_key) {
-                    currentDispatchStore = currentUser.store_key;
-                    currentAnalyticsStore = currentUser.store_key;
-                }
+                const titleStore = document.getElementById('title-store');
+                const titleAnaStore = document.getElementById('title-analytics-store');
+                const labelSheet = document.getElementById('label-active-sheet');
+                const labelAnaSheet = document.getElementById('label-analytics-sheet');
+                
+                if (titleStore) titleStore.innerText = storeObj.name;
+                if (titleAnaStore) titleAnaStore.innerText = storeObj.name;
+                if (labelSheet) labelSheet.innerText = storeObj.sheetLabel;
+                if (labelAnaSheet) labelAnaSheet.innerText = storeObj.sheetLabel;
             }
 
-            // Control de módulos visibles
+            // Ocultar selectores de otras tiendas si no es SuperAdmin
+            if (isSuperAdmin) {
+                btnAdmin.style.display = 'flex';
+                if (dispatchStoreWrap) dispatchStoreWrap.style.display = 'flex';
+                if (analyticsStoreWrap) analyticsStoreWrap.style.display = 'flex';
+            } else {
+                btnAdmin.style.display = 'none';
+                if (dispatchStoreWrap) dispatchStoreWrap.style.display = 'none';
+                if (analyticsStoreWrap) analyticsStoreWrap.style.display = 'none';
+            }
+
+            // Permisos de módulos
             const canDispatch = isSuperAdmin || allowedModules.includes('dispatch');
             const canAnalytics = isSuperAdmin || allowedModules.includes('analytics');
 
-            if (!canDispatch) btnDispatch.classList.add('hidden');
-            else btnDispatch.classList.remove('hidden');
+            btnDispatch.style.display = canDispatch ? 'flex' : 'none';
+            btnAnalytics.style.display = canAnalytics ? 'flex' : 'none';
 
-            if (!canAnalytics) btnAnalytics.classList.add('hidden');
-            else btnAnalytics.classList.remove('hidden');
-
-            // Abrir vista inicial disponible
-            if (canAnalytics && !canDispatch) {
+            // Abrir la vista permitida
+            if (!canDispatch && canAnalytics) {
                 switchMainView('analytics');
             } else {
                 switchMainView('dispatch');
@@ -1259,24 +1266,26 @@
             const viewAnalytics = document.getElementById('view-analytics');
             const viewAdmin = document.getElementById('view-admin');
 
-            [btnDispatch, btnAnalytics, btnAdmin].forEach(b => {
-                if (b) b.className = "px-3 sm:px-4 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5";
-            });
+            const baseInactive = "px-3 sm:px-4 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition items-center gap-1.5";
+            
+            if (btnDispatch) btnDispatch.className = baseInactive;
+            if (btnAnalytics) btnAnalytics.className = baseInactive;
+            if (btnAdmin) btnAdmin.className = baseInactive;
 
             viewDispatch.classList.add('hidden');
             viewAnalytics.classList.add('hidden');
             viewAdmin.classList.add('hidden');
 
             if (view === 'dispatch') {
-                btnDispatch.className = "px-3 sm:px-4 py-2 rounded-lg text-xs font-bold bg-emerald-600 text-white transition flex items-center gap-1.5 shadow";
+                if (btnDispatch) btnDispatch.className = "px-3 sm:px-4 py-2 rounded-lg text-xs font-bold bg-emerald-600 text-white transition items-center gap-1.5 shadow";
                 viewDispatch.classList.remove('hidden');
                 if (dispatchOrders.length === 0) fetchDispatchOrders();
             } else if (view === 'analytics') {
-                btnAnalytics.className = "px-3 sm:px-4 py-2 rounded-lg text-xs font-bold bg-indigo-600 text-white transition flex items-center gap-1.5 shadow";
+                if (btnAnalytics) btnAnalytics.className = "px-3 sm:px-4 py-2 rounded-lg text-xs font-bold bg-indigo-600 text-white transition items-center gap-1.5 shadow";
                 viewAnalytics.classList.remove('hidden');
                 fetchAnalyticsData();
             } else if (view === 'admin') {
-                btnAdmin.className = "px-3 sm:px-4 py-2 rounded-lg text-xs font-bold bg-amber-600 text-white transition flex items-center gap-1.5 shadow";
+                if (btnAdmin) btnAdmin.className = "px-3 sm:px-4 py-2 rounded-lg text-xs font-bold bg-amber-600 text-white transition items-center gap-1.5 shadow";
                 viewAdmin.classList.remove('hidden');
                 loadAdminUsersList();
             }
