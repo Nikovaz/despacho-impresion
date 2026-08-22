@@ -14,6 +14,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
     <style>
         @media print {
             @page {
@@ -782,11 +783,11 @@
         /* ====================================================== */
         /* AUTH & SESSION MANAGEMENT (SUPABASE)                   */
         /* ====================================================== */
-        async function sha256(str) {
-            const buffer = new TextEncoder().encode(str);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        function sha256(str) {
+            if (window.CryptoJS && window.CryptoJS.SHA256) {
+                return window.CryptoJS.SHA256(str).toString();
+            }
+            return '';
         }
 
         async function initAuth() {
@@ -833,7 +834,7 @@
             submitBtn.disabled = true;
 
             try {
-                const passHash = await sha256(passwordInput);
+                const passHash = sha256(passwordInput);
 
                 if (supabaseClient) {
                     const { data, error } = await supabaseClient
@@ -1023,7 +1024,7 @@
                 return;
             }
             try {
-                const newHash = await sha256(newPass.trim());
+                const newHash = sha256(newPass.trim());
                 const { error } = await supabaseClient
                     .from('portal_users')
                     .update({ password_hash: newHash })
@@ -1065,7 +1066,7 @@
             btnSubmit.disabled = true;
 
             try {
-                const passHash = await sha256(password);
+                const passHash = sha256(password);
                 const { error } = await supabaseClient
                     .from('portal_users')
                     .insert([{
@@ -2081,8 +2082,10 @@
                 document.getElementById('input-date-to').value = now.toISOString().split('T')[0];
             } else if (selectedPeriodKey === 'last30') {
                 const now = new Date();
-                const past30 = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-                document.getElementById('input-date-from').value = past30.toISOString().split('T')[0];
+                const start = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                start.setHours(0, 0, 0, 0);
+                filtered = analyticsRawOrders.filter(o => o.fecha >= start && o.fecha <= now);
+                document.getElementById('input-date-from').value = start.toISOString().split('T')[0];
                 document.getElementById('input-date-to').value = now.toISOString().split('T')[0];
             } else if (selectedPeriodKey === 'thisMonth') {
                 const now = new Date();
