@@ -237,41 +237,70 @@
                 const jsonText = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
                 const data = JSON.parse(jsonText);
                 
-                const cols = data.table.cols || [];
+                // Mapeo dinámico y robusto de encabezados
                 const colMap = {};
+                const cols = data.table.cols || [];
                 cols.forEach((col, idx) => {
                     if (col && col.label) {
-                        colMap[col.label.trim().toLowerCase()] = idx;
+                        const key = col.label.trim().toLowerCase().replace(/\s+/g, '').replace(/_/g, '').replace(/\?/g, '');
+                        colMap[key] = idx;
                     }
                 });
 
                 const rows = data.table.rows || [];
+                let startRowIdx = 0;
+
+                // Si las columnas no vinieron etiquetadas, leer la primera fila como encabezados
+                if (Object.keys(colMap).length === 0 && rows.length > 0) {
+                    const firstRow = rows[0].c || [];
+                    firstRow.forEach((c, idx) => {
+                        if (c && c.v) {
+                            const key = String(c.v).trim().toLowerCase().replace(/\s+/g, '').replace(/_/g, '').replace(/\?/g, '');
+                            colMap[key] = idx;
+                        }
+                    });
+                    startRowIdx = 1;
+                }
+
+                // Función auxiliar para extraer valor según nombre de columna
+                function getVal(row, keys, fallbackIdx) {
+                    const c = row.c || [];
+                    for (const k of keys) {
+                        const normK = k.toLowerCase().replace(/\s+/g, '').replace(/_/g, '').replace(/\?/g, '');
+                        if (colMap[normK] !== undefined) {
+                            const idx = colMap[normK];
+                            if (idx < c.length && c[idx] !== null && c[idx] !== undefined) {
+                                return String(c[idx].f || c[idx].v || '');
+                            }
+                        }
+                    }
+                    if (fallbackIdx !== undefined && fallbackIdx < c.length && c[fallbackIdx] !== null && c[fallbackIdx] !== undefined) {
+                        return String(c[fallbackIdx].f || c[fallbackIdx].v || '');
+                    }
+                    return '';
+                }
+
                 allOrders = [];
 
-                rows.forEach((r) => {
-                    const c = r.c;
-                    if (!c || !c[0] || !c[0].v) return;
+                for (let rIdx = startRowIdx; rIdx < rows.length; rIdx++) {
+                    const r = rows[rIdx];
+                    if (!r || !r.c || !r.c[0] || !r.c[0].v) continue;
 
-                    const ticketId = String(c[0]?.v || '');
-                    if (ticketId.toLowerCase() === 'ticket_id') return;
+                    const ticketId = getVal(r, ['ticketid', 'ticket'], 0);
+                    if (ticketId.toLowerCase() === 'ticket_id' || ticketId.toLowerCase() === 'ticket') continue;
 
-                    const rawFecha = c[1]?.f || c[1]?.v || '';
-                    const tel = String(c[2]?.f || c[2]?.v || '');
-                    const nombre = String(c[3]?.v || 'Cliente');
-                    const productos = String(c[4]?.v || '');
-                    const costoEnvio = String(c[5]?.v || '');
-                    const subtotal = String(c[6]?.v || '');
-                    const total = String(c[7]?.v || '');
-                    const metodoPagoCol = String(c[8]?.v || '');
-                    
-                    // Búsqueda inteligente de Dirección (Columna Direccion, Col J index 9, o dentro de otros campos)
-                    let direccion = '';
-                    const dirColIdx = colMap['direccion'] ?? colMap['dirección'] ?? colMap['direccion_envio'] ?? colMap['entrega'] ?? 9;
-                    if (c[dirColIdx] && c[dirColIdx].v && String(c[dirColIdx].v).trim() !== '' && !String(c[dirColIdx].v).toLowerCase().includes('ticket')) {
-                        direccion = String(c[dirColIdx].v).trim();
-                    }
+                    const rawFecha = getVal(r, ['diayhora', 'fecha', 'dia'], 1);
+                    const tel = getVal(r, ['telefono', 'celular', 'tel'], 2);
+                    const nombre = getVal(r, ['nombre', 'cliente'], 3) || 'Cliente';
+                    const productos = getVal(r, ['productos', 'producto', 'detalles'], 4);
+                    const costoEnvio = getVal(r, ['costoenvio', 'envio'], 5);
+                    const direccionRaw = getVal(r, ['direccion', 'direccionenvio', 'entrega', 'destino'], 6);
+                    const subtotal = getVal(r, ['subtotal', 'sub'], 7);
+                    const total = getVal(r, ['total', 'totalfinal', 'monto'], 8);
+                    const metodoPagoCol = getVal(r, ['metododepago', 'metodopago', 'pago', 'metodo'], 9);
 
-                    // Si no está en columna separada, intentar extraer de costoEnvio o del texto
+                    // Formateo de Dirección
+                    let direccion = direccionRaw.trim();
                     if (!direccion || direccion.toLowerCase() === 'true' || direccion.toLowerCase() === 'false') {
                         const cleanedEnvio = costoEnvio.replace(/^\$[\d\.,\s]+/, '').replace(/^a\s+/i, '').replace(/[\(\)]/g, '').trim();
                         if (cleanedEnvio && cleanedEnvio.length > 2 && !cleanedEnvio.toLowerCase().includes('retiro')) {
@@ -322,7 +351,7 @@
                         fecha_hora: fechaParsed.toISOString(),
                         estado: printedOrderIds.includes(ticketId) ? 'impreso' : 'pendiente'
                     });
-                });
+                }
 
                 allOrders.sort((a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora));
                 renderDashboard();
