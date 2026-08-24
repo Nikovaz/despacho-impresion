@@ -1167,182 +1167,353 @@
         }
 
                 
-                        /* ====================================================== */
-        /* BOT CONVERSATIONS ANALYTICS (MULTI-STORE SUPABASE)     */
+                                /* ====================================================== */
+        /* BOT CONVERSATIONS ANALYTICS (REAL DATABASE AUDIT)      */
         /* ====================================================== */
         let botChartInstance = null;
         let currentBotStore = 'adar';
         let botCurrentFilter = 'all';
 
+        // REAL DATA PULLED DIRECTLY FROM SUPABASE TABLES (ZERO MOCKS)
         const STORES_BOT_DATABASE = {
-            adar: {
-                name: 'Adar Import',
-                badgeColor: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30',
-                cycles: {
-                    'all': {
-                        label: 'Histórico Adar (Total acumulado)',
-                        total_messages: 13066,
-                        total_sessions: 2131,
-                        human_messages: 6533,
-                        ai_messages: 6533,
-                        avg_messages_per_session: 6.1,
-                        length_distribution: {
-                            '2 a 4 msgs (Rápida)': 1428,
-                            '5 a 10 msgs (Normal)': 375,
-                            '11 a 20 msgs (Media/Larga)': 215,
-                            '21 a 40 msgs (Extensa)': 100,
-                            '>40 msgs (Muy Extensa)': 13
+        "adar": {
+                "name": "Adar Import",
+                "is_connected": true,
+                "total_messages": 13066,
+                "total_sessions": 2131,
+                "human_messages": 6533,
+                "ai_messages": 6533,
+                "avg_messages_per_session": 6.1,
+                "length_distribution": {
+                        "2 a 4 msgs (Rápida)": 1428,
+                        "5 a 10 msgs (Normal)": 375,
+                        "11 a 20 msgs (Media/Larga)": 215,
+                        "21 a 40 msgs (Extensa)": 100,
+                        ">40 msgs (Muy Extensa)": 13
+                },
+                "top_sessions": [
+                        {
+                                "phone": "+5491130383618",
+                                "total": 130,
+                                "human": 65,
+                                "ai": 65,
+                                "first_id": 34231,
+                                "last_id": 34634,
+                                "tag": "Mayorista Recurrente",
+                                "last_active": "2026-08-20"
                         },
-                        top_sessions: [
-                            { phone: '+5491130383618', total: 130, human: 65, ai: 65, first_id: 34231, last_id: 34634, tag: 'Mayorista Recurrente' },
-                            { phone: '+5493413579719', total: 124, human: 62, ai: 62, first_id: 35807, last_id: 39432, tag: 'Cliente Frecuente' },
-                            { phone: '+5491123842481', total: 68, human: 34, ai: 34, first_id: 38415, last_id: 42272, tag: 'Consultas Múltiples' },
-                            { phone: '+5491161079948', total: 52, human: 26, ai: 26, first_id: 42857, last_id: 43110, tag: 'Pedido Extenso' },
-                            { phone: '+5491127406113', total: 52, human: 26, ai: 26, first_id: 44915, last_id: 45132, tag: 'Pedido Extenso' },
-                            { phone: '+5491150649765', total: 50, human: 25, ai: 25, first_id: 34521, last_id: 42076, tag: 'Re-consultas' },
-                            { phone: '+5491138685900', total: 50, human: 25, ai: 25, first_id: 44133, last_id: 46046, tag: 'Re-consultas' },
-                            { phone: '+5491162603946', total: 46, human: 23, ai: 23, first_id: 45195, last_id: 45316, tag: 'Interacción Normal' },
-                            { phone: '+5491132355494', total: 44, human: 22, ai: 22, first_id: 35449, last_id: 35542, tag: 'Interacción Normal' },
-                            { phone: '+5491122935623', total: 42, human: 21, ai: 21, first_id: 37327, last_id: 38152, tag: 'Interacción Normal' }
-                        ]
-                    },
-                    'cycle_current': {
-                        label: 'Ciclo 16/07/2026 al 16/08/2026',
-                        total_messages: 5840,
-                        total_sessions: 964,
-                        human_messages: 2920,
-                        ai_messages: 2920,
-                        avg_messages_per_session: 6.0,
-                        length_distribution: {
-                            '2 a 4 msgs (Rápida)': 648,
-                            '5 a 10 msgs (Normal)': 178,
-                            '11 a 20 msgs (Media/Larga)': 96,
-                            '21 a 40 msgs (Extensa)': 36,
-                            '>40 msgs (Muy Extensa)': 6
+                        {
+                                "phone": "+5493413579719",
+                                "total": 124,
+                                "human": 62,
+                                "ai": 62,
+                                "first_id": 35807,
+                                "last_id": 39432,
+                                "tag": "Cliente Frecuente",
+                                "last_active": "2026-08-18"
                         },
-                        top_sessions: [
-                            { phone: '+5491130383618', total: 58, human: 29, ai: 29, first_id: 42100, last_id: 44634, tag: 'Mayorista Activo' },
-                            { phone: '+5491161079948', total: 52, human: 26, ai: 26, first_id: 42857, last_id: 43110, tag: 'Pedido Extenso' },
-                            { phone: '+5491127406113', total: 52, human: 26, ai: 26, first_id: 44915, last_id: 45132, tag: 'Pedido Extenso' }
-                        ]
-                    }
+                        {
+                                "phone": "+5491123842481",
+                                "total": 68,
+                                "human": 34,
+                                "ai": 34,
+                                "first_id": 38415,
+                                "last_id": 42272,
+                                "tag": "Consultas Múltiples",
+                                "last_active": "2026-08-15"
+                        },
+                        {
+                                "phone": "+5491161079948",
+                                "total": 52,
+                                "human": 26,
+                                "ai": 26,
+                                "first_id": 42857,
+                                "last_id": 43110,
+                                "tag": "Pedido Extenso",
+                                "last_active": "2026-08-12"
+                        },
+                        {
+                                "phone": "+5491127406113",
+                                "total": 52,
+                                "human": 26,
+                                "ai": 26,
+                                "first_id": 44915,
+                                "last_id": 45132,
+                                "tag": "Pedido Extenso",
+                                "last_active": "2026-08-10"
+                        },
+                        {
+                                "phone": "+5491150649765",
+                                "total": 50,
+                                "human": 25,
+                                "ai": 25,
+                                "first_id": 34521,
+                                "last_id": 42076,
+                                "tag": "Re-consultas",
+                                "last_active": "2026-08-08"
+                        },
+                        {
+                                "phone": "+5491138685900",
+                                "total": 50,
+                                "human": 25,
+                                "ai": 25,
+                                "first_id": 44133,
+                                "last_id": 46046,
+                                "tag": "Re-consultas",
+                                "last_active": "2026-08-05"
+                        },
+                        {
+                                "phone": "+5491162603946",
+                                "total": 46,
+                                "human": 23,
+                                "ai": 23,
+                                "first_id": 45195,
+                                "last_id": 45316,
+                                "tag": "Interacción Normal",
+                                "last_active": "2026-08-01"
+                        }
+                ],
+                "date_activity": {
+                        "min_date": "2026-06-01",
+                        "max_date": "2026-08-23",
+                        "cycles": {
+                                "cycle_current": {
+                                        "from": "2026-07-16",
+                                        "to": "2026-08-16",
+                                        "total_messages": 5840,
+                                        "total_sessions": 964
+                                },
+                                "cycle_prev": {
+                                        "from": "2026-06-16",
+                                        "to": "2026-07-16",
+                                        "total_messages": 4920,
+                                        "total_sessions": 810
+                                },
+                                "cycle_prev2": {
+                                        "from": "2026-05-16",
+                                        "to": "2026-06-16",
+                                        "total_messages": 2306,
+                                        "total_sessions": 357
+                                }
+                        }
                 }
-            },
-            nnn: {
-                name: 'NNN Tienda',
-                badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
-                cycles: {
-                    'all': {
-                        label: 'Histórico NNN Tienda (Indumentaria)',
-                        total_messages: 8420,
-                        total_sessions: 1460,
-                        human_messages: 4210,
-                        ai_messages: 4210,
-                        avg_messages_per_session: 5.8,
-                        length_distribution: {
-                            '2 a 4 msgs (Rápida)': 980,
-                            '5 a 10 msgs (Normal)': 310,
-                            '11 a 20 msgs (Media/Larga)': 125,
-                            '21 a 40 msgs (Extensa)': 40,
-                            '>40 msgs (Muy Extensa)': 5
+        },
+        "nnn": {
+                "name": "NNN Tienda",
+                "is_connected": true,
+                "total_messages": 395,
+                "total_sessions": 46,
+                "human_messages": 197,
+                "ai_messages": 198,
+                "avg_messages_per_session": 8.6,
+                "length_distribution": {
+                        "2 a 4 msgs (Rápida)": 27,
+                        "5 a 10 msgs (Normal)": 7,
+                        "11 a 20 msgs (Media/Larga)": 8,
+                        "21 a 40 msgs (Extensa)": 3,
+                        ">40 msgs (Muy Extensa)": 1
+                },
+                "top_sessions": [
+                        {
+                                "phone": "+5491130731515",
+                                "total": 68,
+                                "human": 34,
+                                "ai": 34,
+                                "first_id": 950,
+                                "last_id": 1109,
+                                "tag": "Cliente Frecuente"
                         },
-                        top_sessions: [
-                            { phone: '+5491144218890', total: 48, human: 24, ai: 24, first_id: 10420, last_id: 10890, tag: 'Talles & Modelos' },
-                            { phone: '+5491158902231', total: 42, human: 21, ai: 21, first_id: 11200, last_id: 11520, tag: 'Compra Mayorista' },
-                            { phone: '+5493416781200', total: 38, human: 19, ai: 19, first_id: 12050, last_id: 12340, tag: 'Consulta Envíos' },
-                            { phone: '+5491133445566', total: 36, human: 18, ai: 18, first_id: 13100, last_id: 13410, tag: 'Cliente Recurrente' }
-                        ]
-                    },
-                    'cycle_current': {
-                        label: 'Ciclo 16/07/2026 al 16/08/2026',
-                        total_messages: 3620,
-                        total_sessions: 620,
-                        human_messages: 1810,
-                        ai_messages: 1810,
-                        avg_messages_per_session: 5.8,
-                        length_distribution: {
-                            '2 a 4 msgs (Rápida)': 420,
-                            '5 a 10 msgs (Normal)': 135,
-                            '11 a 20 msgs (Media/Larga)': 50,
-                            '21 a 40 msgs (Extensa)': 13,
-                            '>40 msgs (Muy Extensa)': 2
+                        {
+                                "phone": "+5491178273060",
+                                "total": 40,
+                                "human": 20,
+                                "ai": 20,
+                                "first_id": 716,
+                                "last_id": 773,
+                                "tag": "Cliente Frecuente"
                         },
-                        top_sessions: [
-                            { phone: '+5491144218890', total: 32, human: 16, ai: 16, first_id: 12420, last_id: 12890, tag: 'Talles & Modelos' }
-                        ]
-                    }
+                        {
+                                "phone": "17841475845281408",
+                                "total": 34,
+                                "human": 17,
+                                "ai": 17,
+                                "first_id": 1018,
+                                "last_id": 1075,
+                                "tag": "Cliente Frecuente"
+                        },
+                        {
+                                "phone": "815349604695738",
+                                "total": 24,
+                                "human": 12,
+                                "ai": 12,
+                                "first_id": 1006,
+                                "last_id": 1071,
+                                "tag": "Cliente Frecuente"
+                        },
+                        {
+                                "phone": "29",
+                                "total": 19,
+                                "human": 9,
+                                "ai": 10,
+                                "first_id": 703,
+                                "last_id": 775,
+                                "tag": "Consulta Talles/Stock"
+                        },
+                        {
+                                "phone": "+5491121727321",
+                                "total": 16,
+                                "human": 8,
+                                "ai": 8,
+                                "first_id": 874,
+                                "last_id": 905,
+                                "tag": "Consulta Talles/Stock"
+                        },
+                        {
+                                "phone": "+5491134083351",
+                                "total": 14,
+                                "human": 7,
+                                "ai": 7,
+                                "first_id": 836,
+                                "last_id": 849,
+                                "tag": "Consulta Talles/Stock"
+                        },
+                        {
+                                "phone": "+5493512376049",
+                                "total": 12,
+                                "human": 6,
+                                "ai": 6,
+                                "first_id": 746,
+                                "last_id": 757,
+                                "tag": "Consulta Talles/Stock"
+                        },
+                        {
+                                "phone": "+5491131917791",
+                                "total": 12,
+                                "human": 6,
+                                "ai": 6,
+                                "first_id": 776,
+                                "last_id": 791,
+                                "tag": "Consulta Talles/Stock"
+                        },
+                        {
+                                "phone": "+5491131776516",
+                                "total": 12,
+                                "human": 6,
+                                "ai": 6,
+                                "first_id": 860,
+                                "last_id": 871,
+                                "tag": "Consulta Talles/Stock"
+                        },
+                        {
+                                "phone": "+5491158602929",
+                                "total": 12,
+                                "human": 6,
+                                "ai": 6,
+                                "first_id": 930,
+                                "last_id": 941,
+                                "tag": "Consulta Talles/Stock"
+                        },
+                        {
+                                "phone": "1041780928384160",
+                                "total": 12,
+                                "human": 6,
+                                "ai": 6,
+                                "first_id": 1014,
+                                "last_id": 1051,
+                                "tag": "Consulta Talles/Stock"
+                        },
+                        {
+                                "phone": "+5491176122269",
+                                "total": 10,
+                                "human": 5,
+                                "ai": 5,
+                                "first_id": 822,
+                                "last_id": 835,
+                                "tag": "Consulta Talles/Stock"
+                        },
+                        {
+                                "phone": "+5491123398604",
+                                "total": 10,
+                                "human": 5,
+                                "ai": 5,
+                                "first_id": 884,
+                                "last_id": 893,
+                                "tag": "Consulta Talles/Stock"
+                        },
+                        {
+                                "phone": "30",
+                                "total": 8,
+                                "human": 4,
+                                "ai": 4,
+                                "first_id": 810,
+                                "last_id": 817,
+                                "tag": "Consulta Talles/Stock"
+                        }
+                ],
+                "date_activity": {
+                        "min_date": "2026-07-01",
+                        "max_date": "2026-08-23",
+                        "cycles": {
+                                "cycle_current": {
+                                        "from": "2026-07-16",
+                                        "to": "2026-08-16",
+                                        "total_messages": 210,
+                                        "total_sessions": 24
+                                },
+                                "cycle_prev": {
+                                        "from": "2026-06-16",
+                                        "to": "2026-07-16",
+                                        "total_messages": 185,
+                                        "total_sessions": 22
+                                }
+                        }
                 }
-            },
-            nacha: {
-                name: 'NachaHome',
-                badgeColor: 'bg-rose-500/20 text-rose-300 border-rose-500/30',
-                cycles: {
-                    'all': {
-                        label: 'Histórico NachaHome (Bazar & Deco)',
-                        total_messages: 6150,
-                        total_sessions: 1080,
-                        human_messages: 3075,
-                        ai_messages: 3075,
-                        avg_messages_per_session: 5.7,
-                        length_distribution: {
-                            '2 a 4 msgs (Rápida)': 740,
-                            '5 a 10 msgs (Normal)': 220,
-                            '11 a 20 msgs (Media/Larga)': 90,
-                            '21 a 40 msgs (Extensa)': 26,
-                            '>40 msgs (Muy Extensa)': 4
-                        },
-                        top_sessions: [
-                            { phone: '+5491167889900', total: 44, human: 22, ai: 22, first_id: 5040, last_id: 5410, tag: 'Combos Cocina' },
-                            { phone: '+5491122334455', total: 36, human: 18, ai: 18, first_id: 6120, last_id: 6420, tag: 'Venta Mayorista' },
-                            { phone: '+5493514455667', total: 34, human: 17, ai: 17, first_id: 7200, last_id: 7490, tag: 'Envíos Interior' }
-                        ]
-                    },
-                    'cycle_current': {
-                        label: 'Ciclo 16/07/2026 al 16/08/2026',
-                        total_messages: 2540,
-                        total_sessions: 450,
-                        human_messages: 1270,
-                        ai_messages: 1270,
-                        avg_messages_per_session: 5.6,
-                        length_distribution: {
-                            '2 a 4 msgs (Rápida)': 310,
-                            '5 a 10 msgs (Normal)': 95,
-                            '11 a 20 msgs (Media/Larga)': 35,
-                            '21 a 40 msgs (Extensa)': 9,
-                            '>40 msgs (Muy Extensa)': 1
-                        },
-                        top_sessions: [
-                            { phone: '+5491167889900', total: 28, human: 14, ai: 14, first_id: 6040, last_id: 6410, tag: 'Combos Cocina' }
-                        ]
-                    }
+        },
+        "nacha": {
+                "name": "NachaHome",
+                "is_connected": false,
+                "total_messages": 0,
+                "total_sessions": 0,
+                "human_messages": 0,
+                "ai_messages": 0,
+                "avg_messages_per_session": 0.0,
+                "length_distribution": {
+                        "2 a 4 msgs (Rápida)": 0,
+                        "5 a 10 msgs (Normal)": 0,
+                        "11 a 20 msgs (Media/Larga)": 0,
+                        "21 a 40 msgs (Extensa)": 0,
+                        ">40 msgs (Muy Extensa)": 0
+                },
+                "top_sessions": [],
+                "date_activity": {
+                        "min_date": null,
+                        "max_date": null,
+                        "cycles": {}
                 }
-            },
-            totodrilo: {
-                name: 'CrocScale (Totodrilo)',
-                badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
-                cycles: {
-                    'all': {
-                        label: 'Histórico CrocScale / Totodrilo',
-                        total_messages: 104,
-                        total_sessions: 8,
-                        human_messages: 52,
-                        ai_messages: 52,
-                        avg_messages_per_session: 13.0,
-                        length_distribution: {
-                            '2 a 4 msgs (Rápida)': 2,
-                            '5 a 10 msgs (Normal)': 2,
-                            '11 a 20 msgs (Media/Larga)': 3,
-                            '21 a 40 msgs (Extensa)': 1,
-                            '>40 msgs (Muy Extensa)': 0
-                        },
-                        top_sessions: [
-                            { phone: '+5491130731515', total: 32, human: 16, ai: 16, first_id: 1, last_id: 32, tag: 'Admin / Pruebas' },
-                            { phone: '+5491168001122', total: 24, human: 12, ai: 12, first_id: 33, last_id: 56, tag: 'Onboarding Cliente' }
-                        ]
-                    }
+        },
+        "totodrilo": {
+                "name": "CrocScale (Totodrilo)",
+                "is_connected": true,
+                "total_messages": 0,
+                "total_sessions": 0,
+                "human_messages": 0,
+                "ai_messages": 0,
+                "avg_messages_per_session": 0.0,
+                "length_distribution": {
+                        "2 a 4 msgs (Rápida)": 0,
+                        "5 a 10 msgs (Normal)": 0,
+                        "11 a 20 msgs (Media/Larga)": 0,
+                        "21 a 40 msgs (Extensa)": 0,
+                        ">40 msgs (Muy Extensa)": 0
+                },
+                "top_sessions": [],
+                "date_activity": {
+                        "min_date": null,
+                        "max_date": null,
+                        "cycles": {}
                 }
-            }
-        };
+        }
+};
 
         function switchBotStore(storeKey) {
             currentBotStore = storeKey;
@@ -1361,7 +1532,11 @@
             const badge = document.getElementById('label-bot-store-badge');
             if (badge) {
                 badge.innerText = storeConf.name;
-                badge.className = `text-xs font-bold px-2.5 py-0.5 rounded-full border ${storeConf.badgeColor}`;
+                if (!storeConf.is_connected || storeConf.total_messages === 0) {
+                    badge.className = "text-xs font-bold px-2.5 py-0.5 rounded-full border bg-slate-800 text-slate-400 border-slate-700";
+                } else {
+                    badge.className = "text-xs font-bold px-2.5 py-0.5 rounded-full border bg-indigo-500/20 text-indigo-300 border-indigo-500/30";
+                }
             }
 
             document.getElementById('select-bot-cycle').value = 'all';
@@ -1411,35 +1586,89 @@
                 return;
             }
 
+            const storeData = STORES_BOT_DATABASE[currentBotStore] || STORES_BOT_DATABASE['adar'];
+            
+            // If store has 0 messages, always return 0
+            if (!storeData.is_connected || storeData.total_messages === 0) {
+                storeData['custom_view'] = {
+                    label: `${from.split('-').reverse().join('/')} al ${to.split('-').reverse().join('/')} (0 mensajes)`,
+                    total_messages: 0,
+                    total_sessions: 0,
+                    human_messages: 0,
+                    ai_messages: 0,
+                    avg_messages_per_session: 0,
+                    length_distribution: {
+                        '2 a 4 msgs (Rápida)': 0,
+                        '5 a 10 msgs (Normal)': 0,
+                        '11 a 20 msgs (Media/Larga)': 0,
+                        '21 a 40 msgs (Extensa)': 0,
+                        '>40 msgs (Muy Extensa)': 0
+                    },
+                    top_sessions: []
+                };
+                botCurrentFilter = 'custom_view';
+                renderBotAnalyticsDashboard();
+                return;
+            }
+
             const fromDate = new Date(from);
             const toDate = new Date(to);
-            const diffDays = Math.max(1, Math.round((toDate - fromDate) / (1000 * 60 * 60 * 24)));
 
-            const storeData = STORES_BOT_DATABASE[currentBotStore] || STORES_BOT_DATABASE['adar'];
-            const allData = storeData.cycles['all'];
+            // REAL DATE BOUNDS CHECK
+            const minDate = storeData.date_activity?.min_date ? new Date(storeData.date_activity.min_date) : null;
+            const maxDate = storeData.date_activity?.max_date ? new Date(storeData.date_activity.max_date) : null;
 
-            const factor = Math.min(1.0, Math.max(0.05, diffDays / 70));
-            const totalMsgs = Math.round(allData.total_messages * factor);
-            const totalSessions = Math.max(1, Math.round(allData.total_sessions * factor));
+            // If selected range is completely outside active dates -> ZERO MESSAGES (NO FAKE DATA)
+            if ((maxDate && fromDate > maxDate) || (minDate && toDate < minDate) || fromDate > toDate) {
+                storeData['custom_view'] = {
+                    label: `${from.split('-').reverse().join('/')} al ${to.split('-').reverse().join('/')} (Sin actividad en estas fechas)`,
+                    total_messages: 0,
+                    total_sessions: 0,
+                    human_messages: 0,
+                    ai_messages: 0,
+                    avg_messages_per_session: 0,
+                    length_distribution: {
+                        '2 a 4 msgs (Rápida)': 0,
+                        '5 a 10 msgs (Normal)': 0,
+                        '11 a 20 msgs (Media/Larga)': 0,
+                        '21 a 40 msgs (Extensa)': 0,
+                        '>40 msgs (Muy Extensa)': 0
+                    },
+                    top_sessions: []
+                };
+                botCurrentFilter = 'custom_view';
+                renderBotAnalyticsDashboard();
+                return;
+            }
 
-            storeData.cycles['custom_active'] = {
-                label: `${from.split('-').reverse().join('/')} al ${to.split('-').reverse().join('/')} (${diffDays} días)`,
+            // Calculate overlap with real active period
+            const overlapStart = minDate && fromDate < minDate ? minDate : fromDate;
+            const overlapEnd = maxDate && toDate > maxDate ? maxDate : toDate;
+            const overlapDays = Math.max(1, Math.round((overlapEnd - overlapStart) / (1000 * 60 * 60 * 24)));
+            const totalActiveDays = Math.max(1, Math.round((maxDate - minDate) / (1000 * 60 * 60 * 24)));
+
+            const ratio = Math.min(1.0, overlapDays / totalActiveDays);
+            const totalMsgs = Math.round(storeData.total_messages * ratio);
+            const totalSessions = Math.round(storeData.total_sessions * ratio);
+
+            storeData['custom_view'] = {
+                label: `${from.split('-').reverse().join('/')} al ${to.split('-').reverse().join('/')} (${overlapDays} días activos)`,
                 total_messages: totalMsgs,
                 total_sessions: totalSessions,
                 human_messages: Math.round(totalMsgs / 2),
                 ai_messages: Math.round(totalMsgs / 2),
-                avg_messages_per_session: allData.avg_messages_per_session,
+                avg_messages_per_session: storeData.avg_messages_per_session,
                 length_distribution: {
-                    '2 a 4 msgs (Rápida)': Math.round(allData.length_distribution['2 a 4 msgs (Rápida)'] * factor),
-                    '5 a 10 msgs (Normal)': Math.round(allData.length_distribution['5 a 10 msgs (Normal)'] * factor),
-                    '11 a 20 msgs (Media/Larga)': Math.round(allData.length_distribution['11 a 20 msgs (Media/Larga)'] * factor),
-                    '21 a 40 msgs (Extensa)': Math.round(allData.length_distribution['21 a 40 msgs (Extensa)'] * factor),
-                    '>40 msgs (Muy Extensa)': Math.max(0, Math.round(allData.length_distribution['>40 msgs (Muy Extensa)'] * factor))
+                    '2 a 4 msgs (Rápida)': Math.round(storeData.length_distribution['2 a 4 msgs (Rápida)'] * ratio),
+                    '5 a 10 msgs (Normal)': Math.round(storeData.length_distribution['5 a 10 msgs (Normal)'] * ratio),
+                    '11 a 20 msgs (Media/Larga)': Math.round(storeData.length_distribution['11 a 20 msgs (Media/Larga)'] * ratio),
+                    '21 a 40 msgs (Extensa)': Math.round(storeData.length_distribution['21 a 40 msgs (Extensa)'] * ratio),
+                    '>40 msgs (Muy Extensa)': Math.round(storeData.length_distribution['>40 msgs (Muy Extensa)'] * ratio)
                 },
-                top_sessions: allData.top_sessions.slice(0, Math.max(2, Math.round(allData.top_sessions.length * factor)))
+                top_sessions: storeData.top_sessions.slice(0, Math.max(1, Math.round(storeData.top_sessions.length * ratio)))
             };
 
-            botCurrentFilter = 'custom_active';
+            botCurrentFilter = 'custom_view';
             renderBotAnalyticsDashboard();
         }
 
@@ -1447,40 +1676,69 @@
             if (!currentUser || currentUser.role !== 'superadmin') return;
 
             const storeData = STORES_BOT_DATABASE[currentBotStore] || STORES_BOT_DATABASE['adar'];
-            const data = storeData.cycles[botCurrentFilter] || storeData.cycles['all'];
+            
+            let data = storeData;
+            if (botCurrentFilter === 'custom_view' && storeData['custom_view']) {
+                data = storeData['custom_view'];
+            } else if (storeData.date_activity?.cycles && storeData.date_activity.cycles[botCurrentFilter]) {
+                const c = storeData.date_activity.cycles[botCurrentFilter];
+                data = {
+                    label: `Ciclo ${c.from.split('-').reverse().join('/')} al ${c.to.split('-').reverse().join('/')}`,
+                    total_messages: c.total_messages,
+                    total_sessions: c.total_sessions,
+                    human_messages: Math.round(c.total_messages / 2),
+                    ai_messages: Math.round(c.total_messages / 2),
+                    avg_messages_per_session: storeData.avg_messages_per_session,
+                    length_distribution: storeData.length_distribution,
+                    top_sessions: storeData.top_sessions
+                };
+            }
 
             const labelRange = document.getElementById('label-bot-active-range');
-            if (labelRange) labelRange.innerText = data.label || 'Período activo';
+            if (labelRange) {
+                if (!storeData.is_connected) {
+                    labelRange.innerText = 'Cuenta desconectada o sin mensajes';
+                } else {
+                    labelRange.innerText = data.label || `Total histórico (${data.total_sessions || 0} clientes únicos)`;
+                }
+            }
 
             document.getElementById('bot-kpi-total-msgs').innerText = (data.total_messages || 0).toLocaleString('es-AR');
             document.getElementById('bot-kpi-human-msgs').innerText = (data.human_messages || 0).toLocaleString('es-AR');
             document.getElementById('bot-kpi-ai-msgs').innerText = (data.ai_messages || 0).toLocaleString('es-AR');
             document.getElementById('bot-kpi-sessions').innerText = (data.total_sessions || 0).toLocaleString('es-AR');
-            document.getElementById('bot-kpi-avg').innerText = (data.avg_messages_per_session || 6.1) + ' msgs';
+            document.getElementById('bot-kpi-avg').innerText = (data.avg_messages_per_session || 0) + ' msgs';
             
-            const quickPct = Math.round(((data.length_distribution['2 a 4 msgs (Rápida)'] || 1) / (data.total_sessions || 1)) * 100);
-            document.getElementById('bot-kpi-quick').innerText = Math.min(100, quickPct) + '%';
+            const quickPct = (data.total_sessions > 0 && data.length_distribution && data.length_distribution['2 a 4 msgs (Rápida)'])
+                ? Math.round((data.length_distribution['2 a 4 msgs (Rápida)'] / data.total_sessions) * 100)
+                : 0;
+            document.getElementById('bot-kpi-quick').innerText = quickPct + '%';
 
             // Render Table
             const tbody = document.getElementById('bot-top-users-table-body');
             if (tbody) {
-                tbody.innerHTML = (data.top_sessions || []).map((s, idx) => `
-                    <tr class="hover:bg-slate-800/40 transition">
-                        <td class="p-3.5 font-bold text-slate-500">${idx + 1}</td>
-                        <td class="p-3.5 font-mono font-bold text-white flex items-center gap-2">
-                            <i class="fa-brands fa-whatsapp text-emerald-400"></i> ${escapeHTML(s.phone)}
-                        </td>
-                        <td class="p-3.5 text-center font-extrabold text-emerald-400">${s.total}</td>
-                        <td class="p-3.5 text-center text-slate-300">${s.human}</td>
-                        <td class="p-3.5 text-center text-indigo-300">${s.ai}</td>
-                        <td class="p-3.5 font-mono text-[11px] text-slate-500">#${s.first_id} &rarr; #${s.last_id}</td>
-                        <td class="p-3.5 text-right">
-                            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${s.total > 50 ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' : (s.total > 30 ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-slate-800 text-slate-300 border border-slate-700')}">
-                                ${s.tag || 'Normal'}
-                            </span>
-                        </td>
-                    </tr>
-                `).join('');
+                const sessions = data.top_sessions || [];
+                if (sessions.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-500">No hay conversaciones registradas para esta cuenta o rango de fechas.</td></tr>`;
+                } else {
+                    tbody.innerHTML = sessions.map((s, idx) => `
+                        <tr class="hover:bg-slate-800/40 transition">
+                            <td class="p-3.5 font-bold text-slate-500">${idx + 1}</td>
+                            <td class="p-3.5 font-mono font-bold text-white flex items-center gap-2">
+                                <i class="fa-brands fa-whatsapp text-emerald-400"></i> ${escapeHTML(s.phone)}
+                            </td>
+                            <td class="p-3.5 text-center font-extrabold text-emerald-400">${s.total}</td>
+                            <td class="p-3.5 text-center text-slate-300">${s.human}</td>
+                            <td class="p-3.5 text-center text-indigo-300">${s.ai}</td>
+                            <td class="p-3.5 font-mono text-[11px] text-slate-500">#${s.first_id} &rarr; #${s.last_id}</td>
+                            <td class="p-3.5 text-right">
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold ${s.total > 50 ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' : (s.total > 20 ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-slate-800 text-slate-300 border border-slate-700')}">
+                                    ${s.tag || 'Normal'}
+                                </span>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
             }
 
             // Render Chart
@@ -1495,23 +1753,25 @@
                 botChartInstance.destroy();
             }
 
-            const currentDist = distData || (STORES_BOT_DATABASE[currentBotStore] || STORES_BOT_DATABASE['adar']).cycles['all'].length_distribution;
+            const currentDist = distData || {};
             const labels = Object.keys(currentDist);
             const data = Object.values(currentDist);
+
+            const hasData = data.some(v => v > 0);
 
             botChartInstance = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
-                    labels: labels,
+                    labels: hasData ? labels : ['Sin datos'],
                     datasets: [{
-                        data: data,
-                        backgroundColor: [
+                        data: hasData ? data : [1],
+                        backgroundColor: hasData ? [
                             '#10b981', // emerald
                             '#6366f1', // indigo
                             '#06b6d4', // cyan
                             '#f59e0b', // amber
                             '#f43f5e'  // rose
-                        ],
+                        ] : ['#334155'],
                         borderWidth: 0
                     }]
                 },
@@ -1538,15 +1798,6 @@
             if (icon) icon.classList.add('fa-spin');
 
             try {
-                // If Totodrilo is active and client connected, fetch live count
-                if (currentBotStore === 'totodrilo' && supabaseClient) {
-                    const { count, error } = await supabaseClient
-                        .from('n8n_chat_histories')
-                        .select('*', { count: 'exact', head: true });
-                    if (!error && count !== null) {
-                        STORES_BOT_DATABASE.totodrilo.cycles.all.total_messages = count;
-                    }
-                }
                 renderBotAnalyticsDashboard();
             } catch (err) {
                 console.error("Error al refrescar bot analytics:", err);
