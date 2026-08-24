@@ -1625,6 +1625,22 @@
                 }
             }
 
+            // Set Desde/Hasta to exactly the min and max dates where real data exists
+            const minD = storeConf.date_activity?.min_date || '';
+            const maxD = storeConf.date_activity?.max_date || new Date().toISOString().split('T')[0];
+            
+            const inputFrom = document.getElementById('input-bot-date-from');
+            const inputTo = document.getElementById('input-bot-date-to');
+            if (inputFrom && inputTo) {
+                inputFrom.value = minD;
+                inputFrom.min = minD;
+                inputFrom.max = maxD;
+                
+                inputTo.value = maxD;
+                inputTo.min = minD;
+                inputTo.max = maxD;
+            }
+
             document.getElementById('select-bot-cycle').value = 'all';
             botCurrentFilter = 'all';
             renderBotAnalyticsDashboard();
@@ -1762,6 +1778,18 @@
             if (!currentUser || currentUser.role !== 'superadmin') return;
 
             const storeData = STORES_BOT_DATABASE[currentBotStore] || STORES_BOT_DATABASE['adar'];
+            
+            // Auto-fill Desde/Hasta if empty
+            const inputFrom = document.getElementById('input-bot-date-from');
+            const inputTo = document.getElementById('input-bot-date-to');
+            if (inputFrom && !inputFrom.value) {
+                inputFrom.value = storeData.date_activity?.min_date || '';
+                inputFrom.min = storeData.date_activity?.min_date || '';
+            }
+            if (inputTo && !inputTo.value) {
+                inputTo.value = storeData.date_activity?.max_date || new Date().toISOString().split('T')[0];
+                inputTo.max = storeData.date_activity?.max_date || new Date().toISOString().split('T')[0];
+            }
             
             let data = storeData;
             if (botCurrentFilter === 'custom_view' && storeData['custom_view']) {
