@@ -2101,51 +2101,84 @@
             return new Date();
         }
 
-        function extractItemQuantity(rawItem) {
-            if (!rawItem) return 1;
-            const str = String(rawItem).trim();
-            const mLead = str.match(/^\s*(\d+)\s*x\b/i);
-            if (mLead) return parseInt(mLead[1], 10) || 1;
-            const mTrailX = str.match(/\bx\s*(\d+)\b/i);
-            if (mTrailX) return parseInt(mTrailX[1], 10) || 1;
-            const mUnits = str.match(/\b(\d+)\s*(?:unidades?|unidad|u)\b/i);
-            if (mUnits) return parseInt(mUnits[1], 10) || 1;
-            const mLeadNum = str.match(/^\\s*(\\d+)\\s+(?=[A-Za-z])/);
-            if (mLeadNum) {
-                const n = parseInt(mLeadNum[1], 10);
-                if (n > 0 && n < 100) return n;
-            }
-            return 1;
+                /* ====================================================== */
+        /* ROBUST PRODUCT CANONICAL NORMALIZATION & QUANTITY      */
+        /* ====================================================== */
+        const KNOWN_CATALOG_SKUS = {
+            'TX-V226': 'Termo 1L Media Manija c/Bombilla',
+            'DH-B36': 'Termo 1L Media Manija',
+            'GL199-3': 'Marcadores Touch x 168',
+            'GL119-4': 'Valija Marcadores Touch x 204',
+            'GL81119-1': 'Fibrones / Marcadores Touch x 24',
+            'GL80734-2': 'Set Utensilios Cocina 19 Piezas',
+            'SL023': 'Vaso Acero Doble Capa',
+            'FLK-1679': 'Mate Autocebante Visioner 900ml',
+            'GL81063-2': 'Set x 2 Vasos Doble Capa 250ml',
+            'IPA-6': 'Vaso Térmico Quencher 1.2L',
+            'YCW-3': 'Vaso Cervecero Doble Pared',
+            'DPK-2': 'Termo 1L c/Filtro',
+            'SL300': 'Termo Infantil Pico Silicona 500ml',
+            'SZM-SL72M': 'Vaso Quencher 1.2L',
+            'X168': 'Marcadores Touch x 168',
+            'X204': 'Valija Marcadores Touch x 204',
+            'X80': 'Marcadores Touch x 80',
+            'X24': 'Marcadores Touch x 24'
+        };
+
+        function cleanTextDescription(text) {
+            if (!text) return '';
+            let s = String(text);
+            // Remove prices: ($17.600), = $32.500, ($6.000 c/u Oferta), etc.
+            s = s.replace(/\(?[\s\$]*[0-9]{1,3}(?:\.[0-9]{3})*(?:,[0-9]+)?(?:\s*c\/u)?(?:\s*oferta)?\s*\)?/gi, '');
+            s = s.replace(/=\s*\$?\s*[0-9\.,]+/g, '');
+            
+            // Remove order multipliers: x 1, x 2, x1, x3, 1 unidad, 2 unidades
+            s = s.replace(/\bx\s*\d+\s*(?:unidades?|unidad|u)?\b/gi, '');
+            s = s.replace(/^\s*\d+\s*x\b/gi, '');
+            s = s.replace(/^\s*\d+\s+(?=[A-Za-z])/g, '');
+            s = s.replace(/\b\d+\s+(?:unidades?|unidad)\b/gi, '');
+            s = s.replace(/cantidad\s+no\s+especificada/gi, '');
+            
+            // Remove color names & variations
+            const colors = ['negro', 'negra', 'blanco', 'blanca', 'rosa', 'azul', 'celeste', 'rojo', 'roja', 'lila', 'verde', 'acero', 'pastel', 'fluor', 'fluo'];
+            colors.forEach(c => {
+                s = s.replace(new RegExp('\\b' + c + '\\b', 'gi'), '');
+            });
+            
+            // Remove noise punctuation
+            s = s.replace(/[\(\)\[\]\-\+,]+/g, ' ');
+            s = s.replace(/\s+/g, ' ').trim();
+            
+            if (!s) return '';
+            return s.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
         }
 
-        function formatProductWithCode(rawItem) {
-            if (!rawItem) return '';
-            let str = String(rawItem).trim();
-            let foundCode = '';
+        function extractCanonicalProduct(rawItem) {
+            if (!rawItem) return null;
+            const raw = String(rawItem).trim();
+            if (raw.length < 3) return null;
             
-            const parenMatches = str.match(/\(([^\)]+)\)/g) || [];
+            let foundCode = null;
+            
+            // Check parentheses first for SKU
+            const parenMatches = raw.match(/\(([A-Za-z0-9\-]+)\)/g) || [];
             for (const pm of parenMatches) {
-                const inside = pm.replace(/[\(\)]/g, '').trim();
-                const codeMatch = inside.match(/\b([A-Za-z]{1,5}-?[A-Za-z0-9]{2,8}(?:-[0-9]+)?)\b/);
-                if (codeMatch) {
-                    const cand = codeMatch[1].toUpperCase();
-                    if ((/[0-9]/.test(cand) && /[A-Z]/.test(cand)) || (cand.includes('-') && /[0-9]/.test(cand))) {
-                        const invalid = ['1L', '2L', '500ML', '750ML', 'NEGRO', 'BLANCO', 'ROSA', 'AZUL', 'LILA', 'VERDE', 'ACERO'];
-                        if (!invalid.includes(cand)) {
-                            foundCode = cand;
-                            break;
-                        }
+                const cand = pm.replace(/[\(\)]/g, '').trim().toUpperCase();
+                if ((/[0-9]/.test(cand) && /[A-Z]/.test(cand)) || (cand.includes('-') && /[0-9]/.test(cand))) {
+                    if (!['1L', '2L', '500ML', '750ML', '1.2L', '24', '80', '168', '204'].includes(cand)) {
+                        foundCode = cand;
+                        break;
                     }
                 }
             }
-
+            
+            // Check tokens in raw text
             if (!foundCode) {
-                const tokens = str.match(/\b([A-Za-z]{1,5}-?[A-Za-z0-9]{2,8}(?:-[0-9]+)?)\b/g) || [];
+                const tokens = raw.match(/\b([A-Za-z]{1,5}-?[A-Za-z0-9]{2,8}(?:-[0-9]+)?)\b/g) || [];
                 for (const t of tokens) {
-                    const cand = t.toUpperCase();
+                    const cand = t.trim().toUpperCase();
                     if ((/[0-9]/.test(cand) && /[A-Z]/.test(cand)) || (cand.includes('-') && /[0-9]/.test(cand))) {
-                        const invalid = ['1L', '2L', '500ML', '750ML', '204', '80', 'UNIDAD', 'UNIDADES'];
-                        if (!invalid.includes(cand)) {
+                        if (!['1L', '2L', '500ML', '750ML', '1.2L', 'UNIDAD', 'UNIDADES'].includes(cand)) {
                             foundCode = cand;
                             break;
                         }
@@ -2153,28 +2186,59 @@
                 }
             }
 
-            let desc = str;
+            // Match with Known Catalog SKUs
             if (foundCode) {
-                desc = desc.replace(new RegExp('\\\\(\\\\s*' + foundCode + '\\\\s*\\\\)', 'gi'), '');
-                desc = desc.replace(new RegExp('\\\\b' + foundCode + '\\\\b', 'gi'), '');
+                for (const [k, v] of Object.entries(KNOWN_CATALOG_SKUS)) {
+                    if (k === foundCode || foundCode.includes(k) || k.includes(foundCode)) {
+                        return `${k} - ${v}`;
+                    }
+                }
+                const desc = cleanTextDescription(raw.replace(new RegExp(foundCode, 'gi'), ''));
+                return desc ? `${foundCode} - ${desc}` : foundCode;
             }
 
-            desc = desc.replace(/\(\s*\$?[0-9\.,]+[^\)]*\)/gi, '');
-            desc = desc.replace(/\(\s*\$?[0-9\.,]+[^\)]*\)/gi, '');
-            desc = desc.replace(/\(\s*\$?[0-9\.,]+[^\)]*\)/gi, '');
-            desc = desc.replace(/\(\s*\$?[0-9\.,]+[^\)]*\)/gi, '');
-            desc = desc.replace(/^\s*\d+\s+(?=[A-Za-z])/, '');
-            desc = desc.replace(/cantidad\s+no\s+especificada/gi, '');
-            desc = desc.replace(/[\(\)\[\]]+/g, ' ');
-            desc = desc.replace(/\(\s*\$?[0-9\.,]+[^\)]*\)/gi, '');
-            desc = desc.replace(/,\s*,/g, ',');
-            desc = desc.replace(/^[\s,;:\-]+|[\s,;:\-]+$/g, '');
-            desc = desc.replace(/\(\s*\$?[0-9\.,]+[^\)]*\)/gi, '');
+            const cleanDesc = cleanTextDescription(raw);
+            return cleanDesc && cleanDesc.length >= 4 ? cleanDesc : null;
+        }
 
-            if (foundCode && desc) return `${foundCode} ,${desc}`;
-            if (foundCode) return foundCode;
-            if (desc) return desc;
-            return str;
+        function extractItemQuantity(rawItem) {
+            if (!rawItem) return 1;
+            const s = String(rawItem);
+            
+            // Leading 2x or 2 x
+            const mLead = s.match(/^\s*(\d+)\s*x\b/i);
+            if (mLead) {
+                const q = parseInt(mLead[1], 10);
+                if (q > 0 && q < 50) return q;
+            }
+            
+            // Trailing order multipliers (excluding pack sizes like x168, x204, x80, x24)
+            const matches = s.matchAll(/\bx\s*(\d+)\b/gi);
+            for (const m of matches) {
+                const q = parseInt(m[1], 10);
+                if ([168, 204, 80, 24, 19, 12, 60, 48, 36, 100, 250, 500, 750, 900, 1200].includes(q)) {
+                    continue;
+                }
+                if (q > 0 && q < 50) return q;
+            }
+
+            // Units marker: 2 unidades, 3 unidad
+            const mUnits = s.match(/\b(\d+)\s*(?:unidades?|unidad|u)\b/i);
+            if (mUnits) {
+                const q = parseInt(mUnits[1], 10);
+                if (![168, 204, 80, 24, 19, 12].includes(q) && q > 0 && q < 50) return q;
+            }
+
+            // Multi-color split: (1 negro + 1 acero) -> 2
+            if (/\b\d+\s+[a-zA-Z]+\s*\+\s*\d+\s+[a-zA-Z]+\b/.test(s)) {
+                const nums = s.match(/\b(\d+)\b/g) || [];
+                if (nums.length >= 2) {
+                    const total = parseInt(nums[0], 10) + parseInt(nums[1], 10);
+                    if (total > 0 && total < 50) return total;
+                }
+            }
+
+            return 1;
         }
 
         function extractLocalityName(storeKey, direccionRaw, costoEnvioRaw) {
@@ -3299,7 +3363,7 @@
             });
         }
 
-        function renderTopProductsChart(orders) {
+                function renderTopProductsChart(orders) {
             const ctx = document.getElementById('chart-products').getContext('2d');
             if (chartProductsInstance) chartProductsInstance.destroy();
 
@@ -3309,13 +3373,13 @@
                 if (!o.productos) return;
                 const items = o.productos.split(/,|\n/);
                 items.forEach(rawItem => {
-                    const formatted = formatProductWithCode(rawItem);
+                    const canonical = extractCanonicalProduct(rawItem);
                     const qty = extractItemQuantity(rawItem);
-                    if (formatted && formatted.length >= 3) {
-                        if (!productStats.has(formatted)) {
-                            productStats.set(formatted, { units: 0, tickets: 0 });
+                    if (canonical) {
+                        if (!productStats.has(canonical)) {
+                            productStats.set(canonical, { units: 0, tickets: 0 });
                         }
-                        const entry = productStats.get(formatted);
+                        const entry = productStats.get(canonical);
                         entry.units += qty;
                         entry.tickets += 1;
                     }
@@ -3328,7 +3392,7 @@
 
             const labels = sortedProds.map(p => {
                 const name = p[0];
-                return name.length > 26 ? name.substring(0, 24) + '...' : name;
+                return name.length > 28 ? name.substring(0, 26) + '...' : name;
             });
             const unitsData = sortedProds.map(p => p[1].units);
 
@@ -3369,10 +3433,9 @@
                         },
                         y: {
                             grid: { display: false },
-                            ticks: { 
-                                color: '#e2e8f0', 
-                                font: { size: 10.5, weight: '500' },
-                                autoSkip: false
+                            ticks: {
+                                color: '#e2e8f0',
+                                font: { size: 11, weight: 'bold' }
                             }
                         }
                     }
