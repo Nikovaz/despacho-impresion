@@ -2306,7 +2306,85 @@
             fetchDispatchOrders();
         }
 
-        let manualOrders = JSON.parse(localStorage.getItem('croc_manual_orders') || '[]');
+        const INITIAL_MANUAL_ORDERS = [
+            {
+                        "id": "MANUAL-1788448771795",
+                        "tienda": "NNN Tienda",
+                        "cliente_nombre": "Oscar",
+                        "celular": "1130298283",
+                        "direccion": "San geronimo 780 entre calle la cautiva y echeverria - villa bosch",
+                        "costo_envio": "$0",
+                        "envio": true,
+                        "metodo_pago": "Transferencia",
+                        "detalles": "4 boxer Military 3XL uno de cada color y que uno se repita",
+                        "subtotal": "$44.000",
+                        "total": "$44.000",
+                        "fecha_hora": "2026-09-03T12:19:00.000Z",
+                        "estado": "pendiente",
+                        "isManual": true,
+                        "storeKey": "nnn"
+            },
+            {
+                        "id": "MANUAL-1788449277420",
+                        "tienda": "NNN Tienda",
+                        "cliente_nombre": "Juan Carlos",
+                        "celular": "1169425763",
+                        "direccion": "Pichincha 2080, detrás de la ex cárcel de Caseros, CABA",
+                        "costo_envio": "$0",
+                        "envio": true,
+                        "metodo_pago": "Transferencia",
+                        "detalles": "• - Bóxer Bross Military Vintage *Verde* x2 (XL) ($9.000 c/u) = $18.000\n• - Bóxer Bross Military Vintage *Negro* x1 (XL) ($9.000 c/u) = $9.000\n• - Bóxer Bross Military Vintage *Rojo* x1 (XL) ($9.000 c/u) = $9.000\n• ENTREGAR ANTES DE LA 18.30HS",
+                        "subtotal": "$36.000",
+                        "total": "$36.000",
+                        "fecha_hora": "2026-09-03T12:27:00.000Z",
+                        "estado": "pendiente",
+                        "isManual": true,
+                        "storeKey": "nnn"
+            },
+            {
+                        "id": "MANUAL-1788446937300",
+                        "tienda": "NNN Tienda",
+                        "cliente_nombre": "Victor Ruben Gil",
+                        "celular": "+54 9 11 3778-2282",
+                        "direccion": "Juana Azurduy 240, entre Moreno y Remedio de escalada de san martin (Gral.Rodriguez)",
+                        "costo_envio": "$4.500",
+                        "envio": true,
+                        "metodo_pago": "Efectivo",
+                        "detalles": "Boxer Botanic Rojo - Talle L x 1\nBoxer Botanic Turquesa - Talle L x 1\nBoxer Botanic Melange - Talle L x 1\nBoxer Planta Bicolor Negro/lima - Talle L x 1",
+                        "subtotal": "$36.000",
+                        "total": "$40.500",
+                        "fecha_hora": "2026-09-03T11:48:00.000Z",
+                        "estado": "pendiente",
+                        "isManual": true,
+                        "storeKey": "nnn"
+            },
+            {
+                        "id": "MANUAL-1788449722121",
+                        "tienda": "NNN Tienda",
+                        "cliente_nombre": "Cristian Ignacio Maza",
+                        "celular": "+57 9 362 424-5218",
+                        "direccion": "Avda Rivadavia 8224, Floresta, CABA",
+                        "costo_envio": "$0",
+                        "envio": true,
+                        "metodo_pago": "Efectivo",
+                        "detalles": "• - Bóxer Bross Tokio Marino/Turqueza x 1 Talle L ($9.000) = $9.000\n• - Bóxer Bross Tokio Negro/Rojo x 1 Talle L ($9.000) = $9.000\n• - Bóxer Bross Tokio Melange/Negro x 1 Talle L ($9.000) = $9.000\n• - Bóxer Bross Tokio Blanco/Bordó x 1 Talle S ($9.000) = $9.000\n• ENTREGAR ANTES DE LA: 16HS",
+                        "subtotal": "$36.000",
+                        "total": "$36.000",
+                        "fecha_hora": "2026-09-03T12:35:00.000Z",
+                        "estado": "pendiente",
+                        "isManual": true,
+                        "storeKey": "nnn"
+            }
+];
+        let storedManuals = JSON.parse(localStorage.getItem('croc_manual_orders') || '[]');
+        // Combine stored with initial seeds without duplicates
+        INITIAL_MANUAL_ORDERS.forEach(initOrder => {
+            if (!storedManuals.some(m => m.id === initOrder.id)) {
+                storedManuals.push(initOrder);
+            }
+        });
+        localStorage.setItem('croc_manual_orders', JSON.stringify(storedManuals));
+        let manualOrders = storedManuals;
         let deletedOrderIds = JSON.parse(localStorage.getItem('croc_deleted_orders') || '[]');
         let showDeletedOrders = false;
 
@@ -2973,6 +3051,17 @@
                     todayBatch.push(order);
                 } else if (orderDate >= currentBatchEnd) {
                     tomorrowBatch.push(order);
+                }
+            });
+
+            // If todayBatch has few items or after 13hs corte, make sure today's latest orders are also visible in the active batch
+            const nowDay = now.toISOString().slice(0, 10);
+            orders.forEach(order => {
+                const oDate = new Date(order.fecha_hora);
+                if (oDate.toISOString().slice(0, 10) === nowDay) {
+                    if (!todayBatch.some(o => o.id === order.id)) {
+                        todayBatch.unshift(order);
+                    }
                 }
             });
 
