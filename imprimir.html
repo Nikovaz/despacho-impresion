@@ -2995,10 +2995,52 @@
 
         }
 
-        function generateTicketHTML(order) {
+        
+        /* ====================================================== */
+        /* BANK TRANSFER DETAILS FOR TICKETS & REMITOS            */
+        /* ====================================================== */
+        const STORES_TRANSFER_DATA = {
+            'nnn': {
+                alias: 'nicovaz.',
+                titular: 'Nicolas Marcelo Galarza Vazquez',
+                banco: 'Mercado Pago'
+            },
+            'nacha': {
+                alias: 'nicovaz.',
+                titular: 'Nicolas Marcelo Galarza Vazquez',
+                banco: 'Mercado Pago'
+            },
+            'adar': {
+                alias: 'nicovaz.',
+                titular: 'Nicolas Marcelo Galarza Vazquez',
+                banco: 'Mercado Pago'
+            },
+            'bross': {
+                alias: 'nicovaz.',
+                titular: 'Nicolas Marcelo Galarza Vazquez',
+                banco: 'Mercado Pago'
+            },
+            'crocscale': {
+                alias: 'nicovaz.',
+                titular: 'Nicolas Marcelo Galarza Vazquez',
+                banco: 'Mercado Pago'
+            }
+        };
+
+        function getTransferInfoForOrder(order) {
+            const t = (order.tienda || '').toLowerCase();
+            if (t.includes('nnn')) return STORES_TRANSFER_DATA['nnn'];
+            if (t.includes('nacha')) return STORES_TRANSFER_DATA['nacha'];
+            if (t.includes('adar')) return STORES_TRANSFER_DATA['adar'];
+            if (t.includes('bross')) return STORES_TRANSFER_DATA['bross'];
+            return STORES_TRANSFER_DATA['nnn'];
+        }
+
+                function generateTicketHTML(order) {
             const fechaStr = new Date(order.fecha_hora).toLocaleDateString('es-AR') + ' ' + new Date(order.fecha_hora).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
-            const isTransfer = order.metodo_pago.toLowerCase().includes('transf');
+            const isTransfer = (order.metodo_pago || '').toLowerCase().includes('transf');
             const pagoTexto = isTransfer ? 'TRANSFERENCIA BANCARIA' : 'EFECTIVO (CONTRAENTREGA)';
+            const transferInfo = getTransferInfoForOrder(order);
 
             if (printMode === 'a4') {
                 return `
@@ -3046,9 +3088,21 @@
                         <span>Costo Envío: <b>${escapeHTML(order.costo_envio)}</b></span>
                     </div>
 
-                    <div style="background:#f9fafb; border:1px solid #000; padding:8px 12px; border-radius:4px; margin-bottom:12px; font-size:15px; font-weight:bold; display:flex; justify-content:space-between; align-items:center;">
-                        <span>FORMA DE PAGO:</span>
+                    <div style="background:#f9fafb; border:1px solid #000; padding:8px 12px; border-radius:4px; margin-bottom:10px; font-size:15px; font-weight:bold; display:flex; justify-content:space-between; align-items:center;">
+                        <span>FORMA DE PAGO DECLARADA:</span>
                         <span style="font-size:16px; text-decoration:underline;">${pagoTexto}</span>
+                    </div>
+
+                    <!-- DATOS DE TRANSFERENCIA A4 -->
+                    <div style="display:grid; grid-template-columns: 1.3fr 1fr; gap:12px; background:#f4f4f5; border:1.5px dashed #000; padding:10px 14px; border-radius:6px; margin-bottom:12px;">
+                        <div>
+                            <div style="font-weight:900; font-size:12px; text-transform:uppercase; margin-bottom:3px;">💳 DATOS PARA TRANSFERIR (MP / BANCO):</div>
+                            <div style="font-size:13px; margin-top:2px;"><b>Alias:</b> <span style="font-family:monospace; font-size:15px; font-weight:900; background:#fff; padding:2px 6px; border:1px solid #000; border-radius:4px;">${transferInfo.alias}</span></div>
+                            <div style="font-size:12px; color:#333; margin-top:3px;"><b>Titular:</b> ${transferInfo.titular}</div>
+                        </div>
+                        <div style="font-size:11px; color:#444; display:flex; flex-direction:column; justify-content:center; text-align:right;">
+                            <div>* Enviar comprobante al WhatsApp de la tienda al momento de recibir el pedido.</div>
+                        </div>
                     </div>
 
                     <div style="display:flex; justify-content:space-between; align-items:center; border-top:3px solid #000; padding-top:10px; margin-top:10px;">
@@ -3083,7 +3137,7 @@
                     <div style="font-size:15px; font-weight:bold; margin-bottom:3px;">
                         📱 ${escapeHTML(order.celular)}
                     </div>
-                    <div style="font-size:16px; font-weight:900; margin-top:5px; background:#f0f0f0; padding:4px 6px; border:1px solid #000; border-radius:4px;">
+                    <div style="font-size:15px; font-weight:900; margin-top:5px; background:#f0f0f0; padding:6px 8px; border:1.5px solid #000; border-radius:4px;">
                         📍 ${escapeHTML(order.direccion)}
                     </div>
                     <div style="font-size:13px; color:#333; margin-top:3px;">
@@ -3121,6 +3175,17 @@
                 <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0;">
                     <span style="font-size:16px; font-weight:bold;">TOTAL A COBRAR:</span>
                     <span style="font-size:22px; font-weight:900;">${escapeHTML(order.total)}</span>
+                </div>
+
+                <!-- CAJA DE DATOS DE TRANSFERENCIA EN TICKET TÉRMICO -->
+                <div style="background:#f4f4f5; border:1.5px dashed #000; padding:8px 10px; border-radius:6px; margin:8px 0; font-size:13px;">
+                    <div style="font-weight:900; font-size:13px; text-transform:uppercase; margin-bottom:3px; display:flex; align-items:center; justify-content:space-between;">
+                        <span>💳 DATOS TRANSFERENCIA:</span>
+                        <span style="font-size:10px; background:#000; color:#fff; padding:1px 5px; border-radius:3px; font-weight:bold;">MP</span>
+                    </div>
+                    <div style="margin-top:2px;"><b>Alias:</b> <span style="font-family:monospace; font-size:15px; font-weight:900; background:#fff; padding:1px 5px; border:1px solid #000; border-radius:3px;">${transferInfo.alias}</span></div>
+                    <div style="margin-top:2px; font-size:12px;"><b>Titular:</b> ${transferInfo.titular}</div>
+                    <div style="font-size:10.5px; color:#444; margin-top:3px; font-style:italic;">* Enviar comprobante por WhatsApp al recibir.</div>
                 </div>
 
                 <div style="text-align:center; font-size:11px; margin-top:8px; border-top:1px dashed #000; padding-top:6px; color:#333;">
