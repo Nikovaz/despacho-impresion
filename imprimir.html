@@ -263,7 +263,10 @@
                     <span id="badge-today" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500 text-slate-950">0</span>
                 </div>
                 <div class="text-2xl font-bold text-white mt-2" id="total-today">$0</div>
-                <div class="text-xs text-slate-400 mt-1" id="desc-tab-today">Pedidos para preparar y despachar</div>
+                <div class="text-xs font-bold text-emerald-400 mt-1 flex items-center gap-1.5" id="profit-today">
+                    <i class="fa-solid fa-hand-holding-dollar"></i> Ganancia: $0
+                </div>
+                <div class="text-[11px] text-slate-400 mt-0.5" id="desc-tab-today">Pedidos para preparar y despachar</div>
             </div>
 
             <!-- Tab Siguiente Día Hábil -->
@@ -273,7 +276,10 @@
                     <span id="badge-tomorrow" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300">0</span>
                 </div>
                 <div class="text-2xl font-bold text-white mt-2" id="total-tomorrow">$0</div>
-                <div class="text-xs text-slate-400 mt-1" id="desc-tab-tomorrow">Pedidos entrados después de las 13:00 hs</div>
+                <div class="text-xs font-bold text-emerald-400 mt-1 flex items-center gap-1.5" id="profit-tomorrow">
+                    <i class="fa-solid fa-hand-holding-dollar"></i> Ganancia: $0
+                </div>
+                <div class="text-[11px] text-slate-400 mt-0.5" id="desc-tab-tomorrow">Pedidos posteriores al corte</div>
             </div>
 
             <!-- Tab Historial -->
@@ -283,7 +289,10 @@
                     <span id="badge-history" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-500/20 text-indigo-300">0</span>
                 </div>
                 <div class="text-2xl font-bold text-white mt-2" id="total-history">$0</div>
-                <div class="text-xs text-slate-400 mt-1">Todos los pedidos registrados</div>
+                <div class="text-xs font-bold text-emerald-400 mt-1 flex items-center gap-1.5" id="profit-history">
+                    <i class="fa-solid fa-hand-holding-dollar"></i> Ganancia: $0
+                </div>
+                <div class="text-[11px] text-slate-400 mt-0.5">Todos los pedidos registrados</div>
             </div>
         </div>
 
@@ -3105,9 +3114,22 @@
             const sumTomorrow = tomorrowBatch.reduce((acc, o) => acc + parseMonto(o.total), 0);
             const sumHistory = historyBatch.reduce((acc, o) => acc + parseMonto(o.total), 0);
 
+            const profitToday = todayBatch.reduce((acc, o) => acc + calculateOrderProfitability(o, currentDispatchStore).netProfit, 0);
+            const profitTomorrow = tomorrowBatch.reduce((acc, o) => acc + calculateOrderProfitability(o, currentDispatchStore).netProfit, 0);
+            const profitHistory = historyBatch.reduce((acc, o) => acc + calculateOrderProfitability(o, currentDispatchStore).netProfit, 0);
+
             document.getElementById('total-today').innerText = `$${sumToday.toLocaleString('es-AR')}`;
             document.getElementById('total-tomorrow').innerText = `$${sumTomorrow.toLocaleString('es-AR')}`;
             document.getElementById('total-history').innerText = `$${sumHistory.toLocaleString('es-AR')}`;
+
+            const elProfitToday = document.getElementById('profit-today');
+            if (elProfitToday) elProfitToday.innerHTML = `<i class="fa-solid fa-hand-holding-dollar"></i> Ganancia: <b class="text-white">$${profitToday.toLocaleString('es-AR')}</b>`;
+
+            const elProfitTomorrow = document.getElementById('profit-tomorrow');
+            if (elProfitTomorrow) elProfitTomorrow.innerHTML = `<i class="fa-solid fa-hand-holding-dollar"></i> Ganancia: <b class="text-white">$${profitTomorrow.toLocaleString('es-AR')}</b>`;
+
+            const elProfitHistory = document.getElementById('profit-history');
+            if (elProfitHistory) elProfitHistory.innerHTML = `<i class="fa-solid fa-hand-holding-dollar"></i> Ganancia: <b class="text-white">$${profitHistory.toLocaleString('es-AR')}</b>`;
 
             renderDispatchList();
         }
@@ -3184,8 +3206,14 @@
                     </div>
 
                     <div class="flex md:flex-col items-end justify-between w-full md:w-auto gap-3 pt-2 md:pt-0 border-t md:border-t-0 border-slate-800">
-                        <div class="text-lg font-extrabold text-emerald-400">
-                            ${escapeHTML(order.total)}
+                        <div class="text-right">
+                            <div class="text-lg font-extrabold text-white">
+                                ${escapeHTML(order.total)}
+                            </div>
+                            <div class="text-xs font-bold text-emerald-400 flex items-center justify-end gap-1">
+                                <span>Ganancia:</span>
+                                <span class="bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">+$${calculateOrderProfitability(order, currentDispatchStore).netProfit.toLocaleString('es-AR')}</span>
+                            </div>
                         </div>
                         <div class="flex items-center gap-1.5 flex-wrap justify-end">
                             <button onclick="openEditOrderModal('${order.id}')" class="px-3 py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded-xl text-xs font-bold flex items-center gap-1.5 transition border border-amber-500/30" title="Editar datos del pedido">
