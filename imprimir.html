@@ -321,6 +321,10 @@
                     <div class="text-[10px] text-slate-400 uppercase font-semibold">Costo Fábrica</div>
                     <div class="text-sm font-bold text-rose-400" id="banner-cost">$0</div>
                 </div>
+                <div class="text-left sm:text-right">
+                    <div class="text-[10px] text-slate-400 uppercase font-semibold">Costo Cadete</div>
+                    <div class="text-sm font-bold text-amber-400" id="banner-cadete">$0</div>
+                </div>
                 <div class="text-right bg-emerald-500/20 px-3.5 py-2 rounded-xl border border-emerald-500/40">
                     <div class="text-[10px] text-emerald-400 uppercase font-black">Ganancia Neta</div>
                     <div class="text-base sm:text-lg font-black text-emerald-300" id="banner-profit">$0</div>
@@ -1002,7 +1006,9 @@
 
                 
         /* ====================================================== */
+                /* ====================================================== */
         /* TOP-LEVEL DATA SCIENCE & FINANCIAL PROFITABILITY ENGINE*/
+        /* (Precios Bross, Precios Jean Cartier & Logística Real) */
         /* ====================================================== */
         const BROSS_COST_RULES = [
             { match: /b[oó]xer.*(?:3xl|4xl|especial)/i, costRatio: 0.538, name: 'Bóxer Talle Especial Bross' },
@@ -1023,14 +1029,50 @@
             { match: /toalla|toall[oó]n/i, costRatio: 0.62, name: 'Toallas JC' }
         ];
 
+        function matchDeliveryCadeteCost(direccion, costoEnvio) {
+            const dClean = String(direccion || '').toLowerCase();
+            const envClean = String(costoEnvio || '').toLowerCase();
+            
+            if (envClean.includes('retiro') || envClean.includes('retira') || envClean.includes('deposito') || envClean.includes('depósito') || dClean.includes('retiro') || dClean.includes('jean jaures')) {
+                return { cost: 0, zone: 'Retiro en Depósito' };
+            }
+
+            // 3er Cordón ($9000)
+            const c3 = ['general rodriguez', 'gral.rodriguez', 'gral rodriguez', 'gral. rodriguez', 'rodriguez', 'pilar', 'del viso', 'fatima', 'fátima', 'la lonja', 'manzone', 'villa astolfi', 'villa rosa', 'zelaya', 'city bell', 'gonnet', 'villa elisa', 'villa elvira', 'tolosa', 'los hornos', 'ensenada', 'berisso', 'la plata', 'guernica', 'san vicente', 'cañuelas', 'marcos paz', 'escobar', 'maschwitz', 'garin', 'garín'];
+            for (const kw of c3) {
+                if (dClean.includes(kw)) return { cost: 9000, zone: '3er Cordón ($9.000)' };
+            }
+
+            // 2do Cordón ($6300)
+            const c2 = ['la tablada', 'tablada', 'isidro casanova', 'casanova', 'gregorio de laferrere', 'laferrere', 'gonzalez catan', 'gonzález catán', 'catan', 'catán', 'rafael castillo', 'castillo', 'lomas del mirador', 'ciudad evita', 'tapiales', 'aldo bonzi', 'villa luzuriaga', 'luzuriaga', 'virrey del pino', 'villa celina', 'adrogue', 'adrogué', 'burzaco', 'glew', 'claypole', 'don orione', 'jose marmol', 'josé mármol', 'marmol', 'longchamps', 'malvinas argentinas', 'ministro rivadavia', 'rafael calzada', 'calzada', 'san jose', 'san josé', 'solano', 'francisco solano', 'ranelagh', 'ezpeleta', 'bernal', 'quilmes', 'berazategui', 'florencio varela', 'varela', 'bosques', 'hudson', 'platanos', 'plátanos', 'san fernando', 'virreyes', 'victoria', 'tigre', 'rincon de milberg', 'don torcuato', 'general pacheco', 'pacheco', 'benavidez', 'benavídez', 'nordelta', 'merlo', 'padua', 'moreno', 'paso del rey', 'trujui', 'alvarez', 'san miguel', 'bella vista', 'muñiz', 'jose c paz', 'josé c. paz', 'hurlingham', 'morris', 'villa tesei', 'ituzaingo', 'ituzaingó', 'parque leloir'];
+            for (const kw of c2) {
+                if (dClean.includes(kw)) return { cost: 6300, zone: '2do Cordón ($6.300)' };
+            }
+
+            // 1er Cordón ($5200)
+            const c1 = ['villa bosch', 'bosch', 'caseros', 'ciudadela', 'santos lugares', 'saenz peña', 'sáenz peña', 'jose ingenieros', 'josé ingenieros', 'pablo podesta', 'pablo podestá', 'villa raffo', 'churruca', 'ciudad jardin', 'ciudad jardín', 'lomas del palomar', 'el palomar', 'palomar', 'martin coronado', 'martín coronado', 'coronado', 'loma hermosa', 'el libertador', 'tres de febrero', 'lanus', 'lanús', 'remedios de escalada', 'escalada', 'gerli', 'valentin alsina', 'valentín alsina', 'monte chingolo', 'chingolo', 'avellaneda', 'dock sud', 'crucecita', 'sarandi', 'sarandí', 'wilde', 'piñeyro', 'san martin', 'san martín', 'billinghurst', 'villa lynch', 'lynch', 'villa ballester', 'ballester', 'san andres', 'san andrés', 'jose leon suarez', 'josé león suárez', 'villa maipu', 'villa maipú', 'vicente lopez', 'vicente lópez', 'olivos', 'florida', 'munro', 'villa martelli', 'martelli', 'carapachay', 'la lucila', 'san isidro', 'acassuso', 'martinez', 'martínez', 'boulogne', 'villa adelina', 'moron', 'morón', 'haedo', 'villa sarmiento', 'castelar', 'san justo', 'ramos mejia', 'ramos mejía', 'lomas de zamora', 'banfield', 'temperley'];
+            for (const kw of c1) {
+                if (dClean.includes(kw)) return { cost: 5200, zone: '1er Cordón ($5.200)' };
+            }
+
+            // CABA ($4000)
+            const caba = ['caba', 'capital federal', 'capital', 'microcentro', 'almagro', 'barracas', 'belgrano', 'boedo', 'caballito', 'devoto', 'flores', 'floresta', 'la boca', 'boca', 'liniers', 'lugano', 'mataderos', 'matadero', 'monserrat', 'monte castro', 'nuñez', 'núñez', 'once', 'palermo', 'parque chacabuco', 'chacabuco', 'parque patricios', 'patricios', 'paternal', 'la paternal', 'pompeya', 'nueva pompeya', 'puerto madero', 'recoleta', 'saavedra', 'san cristobal', 'san cristóbal', 'san nicolas', 'san nicolás', 'san telmo', 'tribunales', 'velez sarsfield', 'vélez sarsfield', 'versalles', 'villa crespo', 'villa del parque', 'villa devoto', 'villa general mitre', 'villa lugano', 'villa luro', 'villa ortuzar', 'villa ortúzar', 'villa pueyrredon', 'villa pueyrredón', 'villa real', 'villa riachuelo', 'villa santa rita', 'santa rita', 'villa soldati', 'soldati', 'villa urquiza', 'urquiza', 'agronomia', 'agronomía', 'chacarita', 'colegiales', 'coghlan', 'constitucion', 'constitución'];
+            for (const kw of caba) {
+                if (dClean.includes(kw)) return { cost: 4000, zone: 'CABA ($4.000)' };
+            }
+
+            return { cost: 4000, zone: 'AMBA ($4.000)' };
+        }
+
         function calculateOrderProfitability(order, storeKey = currentDispatchStore) {
-            if (!order) return { subtotal: 0, total: 0, estimatedCost: 0, netProfit: 0, profitMarginPct: '0.0' };
+            if (!order) return { subtotal: 0, total: 0, estimatedCost: 0, cadeteCost: 0, cadeteZone: '', netProfit: 0, profitMarginPct: '0.0' };
             const total = parseMonto(order.total);
             const subtotal = parseMonto(order.subtotal) || total;
+            const envioCobrado = parseMonto(order.costo_envio);
             const rawProds = (order.detalles || '').toLowerCase();
 
+            // 1. Costo Fábrica / Mercadería
             let estimatedCost = 0;
-
             if (storeKey === 'nnn') {
                 let ruleMatched = false;
                 for (const rule of BROSS_COST_RULES) {
@@ -1059,13 +1101,20 @@
                 estimatedCost = Math.round(subtotal * (1 - (STORES_CONFIG[storeKey]?.defaultMargin || 0.45)));
             }
 
-            const netProfit = Math.max(0, subtotal - estimatedCost);
-            const profitMarginPct = subtotal > 0 ? ((netProfit / subtotal) * 100).toFixed(1) : '0.0';
+            // 2. Costo Real Cadete / Moto (Tabla Logística)
+            const { cost: cadeteCost, zone: cadeteZone } = matchDeliveryCadeteCost(order.direccion, order.costo_envio);
+
+            // 3. Ganancia Neta Real = Total Cobrado - Costo Fábrica - Costo Cadete Real
+            const netProfit = total - estimatedCost - cadeteCost;
+            const profitMarginPct = total > 0 ? ((netProfit / total) * 100).toFixed(1) : '0.0';
 
             return {
                 subtotal,
                 total,
+                envioCobrado,
                 estimatedCost,
+                cadeteCost,
+                cadeteZone,
                 netProfit,
                 profitMarginPct: parseFloat(profitMarginPct)
             };
@@ -3246,6 +3295,10 @@
             const elBannerCost = document.getElementById('banner-cost');
             if (elBannerCost) elBannerCost.innerText = `$${activeCost.toLocaleString('es-AR')}`;
 
+            const activeCadete = activeBatch.reduce((acc, o) => acc + calculateOrderProfitability(o, currentDispatchStore).cadeteCost, 0);
+            const elBannerCadete = document.getElementById('banner-cadete');
+            if (elBannerCadete) elBannerCadete.innerText = `$${activeCadete.toLocaleString('es-AR')}`;
+
             const elBannerProfit = document.getElementById('banner-profit');
             if (elBannerProfit) elBannerProfit.innerText = `+$${activeProfit.toLocaleString('es-AR')}`;
 
@@ -3322,12 +3375,14 @@
                             </div>
                         </div>
 
-                        <!-- DESGLOSE FINANCIERO: COSTO & GANANCIA DEL PEDIDO -->
-                        <div class="flex items-center gap-2 pt-2 border-t border-slate-800/80 mt-2 flex-wrap">
-                            <span class="text-xs text-slate-400">Costo fábrica: <b class="text-rose-400 font-bold">$${calculateOrderProfitability(order, currentDispatchStore).estimatedCost.toLocaleString('es-AR')}</b></span>
+                        <!-- DESGLOSE FINANCIERO: COSTO FÁBRICA, CADETE & GANANCIA NETA DEL PEDIDO -->
+                        <div class="flex items-center gap-2 pt-2 border-t border-slate-800/80 mt-2 flex-wrap text-xs">
+                            <span class="text-slate-400">Fábrica: <b class="text-rose-400 font-bold">$${calculateOrderProfitability(order, currentDispatchStore).estimatedCost.toLocaleString('es-AR')}</b></span>
                             <span class="text-slate-600">•</span>
-                            <span class="bg-emerald-500/20 text-emerald-300 text-xs font-black px-2.5 py-0.5 rounded-lg border border-emerald-500/40 flex items-center gap-1">
-                                <i class="fa-solid fa-hand-holding-dollar"></i> Tu Ganancia: +$${calculateOrderProfitability(order, currentDispatchStore).netProfit.toLocaleString('es-AR')} (${calculateOrderProfitability(order, currentDispatchStore).profitMarginPct}%)
+                            <span class="text-slate-400">Cadete: <b class="text-amber-400 font-bold">$${calculateOrderProfitability(order, currentDispatchStore).cadeteCost.toLocaleString('es-AR')}</b> <span class="text-[10px] text-slate-500">(${calculateOrderProfitability(order, currentDispatchStore).cadeteZone})</span></span>
+                            <span class="text-slate-600">•</span>
+                            <span class="bg-emerald-500/20 text-emerald-300 font-black px-2 py-0.5 rounded-lg border border-emerald-500/40 flex items-center gap-1">
+                                <i class="fa-solid fa-hand-holding-dollar"></i> Ganancia: +$${calculateOrderProfitability(order, currentDispatchStore).netProfit.toLocaleString('es-AR')} (${calculateOrderProfitability(order, currentDispatchStore).profitMarginPct}%)
                             </span>
                         </div>
                     </div>
