@@ -3036,11 +3036,17 @@
             return STORES_TRANSFER_DATA['nnn'];
         }
 
-                function generateTicketHTML(order) {
+                        function generateTicketHTML(order) {
             const fechaStr = new Date(order.fecha_hora).toLocaleDateString('es-AR') + ' ' + new Date(order.fecha_hora).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
             const isTransfer = (order.metodo_pago || '').toLowerCase().includes('transf');
             const pagoTexto = isTransfer ? 'TRANSFERENCIA BANCARIA' : 'EFECTIVO (CONTRAENTREGA)';
             const transferInfo = getTransferInfoForOrder(order);
+
+            // Split items by comma OR newline cleanly
+            const productItems = String(order.detalles || '')
+                .split(/[\r\n,]+/)
+                .map(i => i.trim())
+                .filter(i => i.length > 0);
 
             if (printMode === 'a4') {
                 return `
@@ -3074,10 +3080,10 @@
                             Detalle de Productos a Preparar:
                         </div>
                         <div style="font-size:16px; font-weight:500; line-height:1.6; background:#fafafa; border:1px dashed #ccc; padding:12px; border-radius:6px;">
-                            ${order.detalles.split(',').map(item => `
+                            ${productItems.map(item => `
                                 <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
                                     <span style="font-size:18px;">[  ]</span>
-                                    <span>${item.trim()}</span>
+                                    <span>${escapeHTML(item)}</span>
                                 </div>
                             `).join('')}
                         </div>
@@ -3150,8 +3156,8 @@
                         PRODUCTOS:
                     </div>
                     <div style="font-size:15px; font-weight:bold; line-height:1.4;">
-                        ${order.detalles.split(',').map(item => `
-                            <div style="margin-bottom:4px;">• ${item.trim()}</div>
+                        ${productItems.map(item => `
+                            <div style="margin-bottom:4px;">• ${escapeHTML(item)}</div>
                         `).join('')}
                     </div>
                 </div>
@@ -3178,12 +3184,12 @@
                 </div>
 
                 <!-- CAJA DE DATOS DE TRANSFERENCIA EN TICKET TÉRMICO -->
-                <div style="background:#f4f4f5; border:1.5px dashed #000; padding:8px 10px; border-radius:6px; margin:8px 0; font-size:13px;">
+                <div style="background:#f4f4f5; border:1.5px dashed #000; padding:8px 10px; border-radius:6px; margin:8px 0; font-size:13px; color:#000;">
                     <div style="font-weight:900; font-size:13px; text-transform:uppercase; margin-bottom:3px; display:flex; align-items:center; justify-content:space-between;">
                         <span>💳 DATOS TRANSFERENCIA:</span>
                         <span style="font-size:10px; background:#000; color:#fff; padding:1px 5px; border-radius:3px; font-weight:bold;">MP</span>
                     </div>
-                    <div style="margin-top:2px;"><b>Alias:</b> <span style="font-family:monospace; font-size:15px; font-weight:900; background:#fff; padding:1px 5px; border:1px solid #000; border-radius:3px;">${transferInfo.alias}</span></div>
+                    <div style="margin-top:2px;"><b>Alias:</b> <span style="font-family:monospace; font-size:15px; font-weight:900; background:#fff; padding:1px 5px; border:1.5px solid #000; border-radius:3px; display:inline-block;">${transferInfo.alias}</span></div>
                     <div style="margin-top:2px; font-size:12px;"><b>Titular:</b> ${transferInfo.titular}</div>
                     <div style="font-size:10.5px; color:#444; margin-top:3px; font-style:italic;">* Enviar comprobante por WhatsApp al recibir.</div>
                 </div>
