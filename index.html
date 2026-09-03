@@ -217,7 +217,7 @@
                     <span class="text-slate-300 font-semibold">Despacho Diario</span>
                 </h1>
                 <p class="text-slate-400 text-xs sm:text-sm mt-1">
-                    Corte diario a las 13:00 hs | Fin de semana acumulado (Viernes 13hs a Lunes 13hs)
+                    Corte diario a las 12:00 hs | Fin de semana acumulado (Viernes 12hs a Lunes 12hs)
                 </p>
             </div>
 
@@ -1000,7 +1000,78 @@
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpzYmt6bGdqbndmcWJqa2tncWJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ3OTc1NzcsImV4cCI6MjA4MDM3MzU3N30.QXK8ulyAckDhfnYB8iuBs-MTW8v0Q8irbaRTgbgqAdk';
         const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
-                const STORES_CONFIG = {
+                
+        /* ====================================================== */
+        /* TOP-LEVEL DATA SCIENCE & FINANCIAL PROFITABILITY ENGINE*/
+        /* ====================================================== */
+        const BROSS_COST_RULES = [
+            { match: /b[oó]xer.*(?:3xl|4xl|especial)/i, costRatio: 0.538, name: 'Bóxer Talle Especial Bross' },
+            { match: /b[oó]xer.*niñ/i, costRatio: 0.481, name: 'Bóxer Niños Bross' },
+            { match: /b[oó]xer.*largo/i, costRatio: 0.479, name: 'Bóxer Largo Bross' },
+            { match: /b[oó]xer/i, costRatio: 0.505, name: 'Bóxer Bross Standard' },
+            { match: /deportiv/i, costRatio: 0.496, name: 'Deportivo 3/4 Bross' },
+            { match: /media.*(?:soquete|morley|3002|3052)/i, costRatio: 0.418, name: 'Medias Soquete Bross' },
+            { match: /media/i, costRatio: 0.396, name: 'Medias Bross' },
+            { match: /remera|chomba/i, costRatio: 0.52, name: 'Indumentaria Bross' }
+        ];
+
+        const JEAN_CARTIER_COST_RULES = [
+            { match: /edred[oó]n|cover|acolchado/i, costRatio: 0.738, name: 'Edredón / Acolchado JC' },
+            { match: /almohada/i, costRatio: 0.60, name: 'Almohada JC' },
+            { match: /s[aá]bana|juego/i, costRatio: 0.68, name: 'Juego de Sábanas JC' },
+            { match: /cortina/i, costRatio: 0.65, name: 'Cortinas JC' },
+            { match: /toalla|toall[oó]n/i, costRatio: 0.62, name: 'Toallas JC' }
+        ];
+
+        function calculateOrderProfitability(order, storeKey = currentDispatchStore) {
+            if (!order) return { subtotal: 0, total: 0, estimatedCost: 0, netProfit: 0, profitMarginPct: '0.0' };
+            const total = parseMonto(order.total);
+            const subtotal = parseMonto(order.subtotal) || total;
+            const rawProds = (order.detalles || '').toLowerCase();
+
+            let estimatedCost = 0;
+
+            if (storeKey === 'nnn') {
+                let ruleMatched = false;
+                for (const rule of BROSS_COST_RULES) {
+                    if (rule.match.test(rawProds)) {
+                        estimatedCost = Math.round(subtotal * rule.costRatio);
+                        ruleMatched = true;
+                        break;
+                    }
+                }
+                if (!ruleMatched) {
+                    estimatedCost = Math.round(subtotal * (1 - (STORES_CONFIG.nnn?.defaultMargin || 0.52)));
+                }
+            } else if (storeKey === 'nacha') {
+                let ruleMatched = false;
+                for (const rule of JEAN_CARTIER_COST_RULES) {
+                    if (rule.match.test(rawProds)) {
+                        estimatedCost = Math.round(subtotal * rule.costRatio);
+                        ruleMatched = true;
+                        break;
+                    }
+                }
+                if (!ruleMatched) {
+                    estimatedCost = Math.round(subtotal * (1 - (STORES_CONFIG.nacha?.defaultMargin || 0.35)));
+                }
+            } else {
+                estimatedCost = Math.round(subtotal * (1 - (STORES_CONFIG[storeKey]?.defaultMargin || 0.45)));
+            }
+
+            const netProfit = Math.max(0, subtotal - estimatedCost);
+            const profitMarginPct = subtotal > 0 ? ((netProfit / subtotal) * 100).toFixed(1) : '0.0';
+
+            return {
+                subtotal,
+                total,
+                estimatedCost,
+                netProfit,
+                profitMarginPct: parseFloat(profitMarginPct)
+            };
+        }
+
+        const STORES_CONFIG = {
             adar: { 
                 name: 'Adar Import', 
                 sheetId: '1iZ2jlTKNypQDuRC-mVWZaJvFHN1UaI75oRUg1hTfuEY', 
@@ -3023,23 +3094,23 @@
             if (day === 1) { 
                 currentBatchStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 3, 13, 0, 0);
                 currentBatchEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 13, 0, 0);
-                tabTodayLabel = "Lote de Hoy Lunes (Corte 13hs)";
-                tabTodayDesc = "Acumulado Fin de Semana (Viernes 13hs a Lunes 13hs)";
+                tabTodayLabel = "Lote de Hoy Lunes (Corte 12hs)";
+                tabTodayDesc = "Acumulado Fin de Semana (Viernes 12hs a Lunes 12hs)";
                 tabTomorrowLabel = "Lote de Mañana (Martes)";
-                tabTomorrowDesc = "Pedidos entrados el lunes después de las 13:00 hs";
+                tabTomorrowDesc = "Pedidos entrados el lunes después de las 12:00 hs";
             } else if (day === 5) {
                 if (!isPast13) {
                     currentBatchStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 13, 0, 0);
                     currentBatchEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 13, 0, 0);
-                    tabTodayLabel = "Lote de Hoy Viernes (Corte 13hs)";
+                    tabTodayLabel = "Lote de Hoy Viernes (Corte 12hs)";
                     tabTodayDesc = "Pedidos para despachar hoy viernes a la tarde";
                     tabTomorrowLabel = "Lote del Lunes (Fin de Semana)";
-                    tabTomorrowDesc = "Pedidos entrados después de las 13:00 hs";
+                    tabTomorrowDesc = "Pedidos entrados después de las 12:00 hs";
                 } else {
                     currentBatchStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 13, 0, 0);
                     currentBatchEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 3, 13, 0, 0);
                     tabTodayLabel = "Lote del Lunes (Acumulado Finde)";
-                    tabTodayDesc = "Todo lo que entra desde hoy 13hs hasta el Lunes 13hs";
+                    tabTodayDesc = "Todo lo que entra desde hoy 12hs hasta el Lunes 12hs";
                     tabTomorrowLabel = "Lote del Martes";
                     tabTomorrowDesc = "Pedidos posteriores al corte del Lunes";
                 }
@@ -3047,23 +3118,23 @@
                 currentBatchStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 13, 0, 0);
                 currentBatchEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2, 13, 0, 0);
                 tabTodayLabel = "Lote del Lunes (Acumulado Finde)";
-                tabTodayDesc = "Viernes 13hs a Lunes 13hs (Se despacha el Lunes)";
+                tabTodayDesc = "Viernes 12hs a Lunes 12hs (Se despacha el Lunes)";
                 tabTomorrowLabel = "Lote del Martes";
                 tabTomorrowDesc = "Pedidos posteriores al corte del Lunes";
             } else if (day === 0) {
                 currentBatchStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 2, 13, 0, 0);
                 currentBatchEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 13, 0, 0);
                 tabTodayLabel = "Lote del Lunes (Acumulado Finde)";
-                tabTodayDesc = "Viernes 13hs a Lunes 13hs (Se despacha mañana Lunes)";
+                tabTodayDesc = "Viernes 12hs a Lunes 12hs (Se despacha mañana Lunes)";
                 tabTomorrowLabel = "Lote del Martes";
                 tabTomorrowDesc = "Pedidos posteriores al corte del Lunes";
             } else {
                 currentBatchStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 13, 0, 0);
                 currentBatchEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 13, 0, 0);
-                tabTodayLabel = "Lote de Hoy (Corte 13:00 hs)";
+                tabTodayLabel = "Lote de Hoy (Corte 12:00 hs)";
                 tabTodayDesc = "Pedidos para preparar y despachar hoy";
                 tabTomorrowLabel = "Lote de Mañana (Entraron tarde)";
-                tabTomorrowDesc = "Pedidos entrados después de las 13:00 hs";
+                tabTomorrowDesc = "Pedidos entrados después de las 12:00 hs";
             }
 
             return { currentBatchStart, currentBatchEnd, tabTodayLabel, tabTodayDesc, tabTomorrowLabel, tabTomorrowDesc };
