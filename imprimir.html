@@ -395,62 +395,96 @@
             </div>
         </div>
 
-        <!-- KPI Scorecards Grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <!-- KPI Scorecards Grid 1: Rentabilidad Real & Ciencia de Datos -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
             <!-- Facturación Confirmada -->
             <div class="p-5 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-900/60 border border-slate-800/80 shadow-lg relative overflow-hidden">
-                <div class="absolute -right-2 -bottom-2 opacity-5 text-6xl text-emerald-400">
+                <div class="absolute -right-2 -bottom-2 opacity-5 text-6xl text-indigo-400">
                     <i class="fa-solid fa-sack-dollar"></i>
                 </div>
-                <div class="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center justify-between">
-                    <span>Facturación Confirmada</span>
+                <div class="text-xs font-bold uppercase tracking-wider text-indigo-400 flex items-center justify-between">
+                    <span>Facturación Total</span>
                     <i class="fa-solid fa-circle-check"></i>
                 </div>
                 <div class="text-3xl font-black text-white mt-2" id="kpi-revenue">$0</div>
                 <div class="text-xs text-slate-400 mt-1 flex items-center gap-1" id="kpi-revenue-sub">
-                    <span>Ventas confirmadas / pagadas</span>
+                    <span>Ventas confirmadas</span>
                 </div>
             </div>
 
-            <!-- Total Tickets Confirmados -->
+            <!-- Costo Total de Mercadería (CMV) -->
             <div class="p-5 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-900/60 border border-slate-800/80 shadow-lg relative overflow-hidden">
-                <div class="absolute -right-2 -bottom-2 opacity-5 text-6xl text-indigo-400">
-                    <i class="fa-solid fa-receipt"></i>
+                <div class="absolute -right-2 -bottom-2 opacity-5 text-6xl text-rose-400">
+                    <i class="fa-solid fa-cart-flatbed"></i>
                 </div>
-                <div class="text-xs font-bold uppercase tracking-wider text-indigo-400 flex items-center justify-between">
-                    <span>Pedidos Confirmados</span>
-                    <i class="fa-solid fa-boxes-packing"></i>
+                <div class="text-xs font-bold uppercase tracking-wider text-rose-400 flex items-center justify-between">
+                    <span>Costo Mercadería (CMV)</span>
+                    <i class="fa-solid fa-arrow-trend-down"></i>
                 </div>
-                <div class="text-3xl font-black text-white mt-2" id="kpi-orders">0</div>
-                <div class="text-xs text-slate-400 mt-1" id="kpi-orders-sub">
-                    de <span id="kpi-total-registered">0</span> registrados (<span id="kpi-total-units">0</span> unids)
-                </div>
+                <div class="text-3xl font-black text-rose-300 mt-2" id="kpi-cost">$0</div>
+                <div class="text-xs text-slate-400 mt-1">Costo mayorista de productos</div>
             </div>
 
-            <!-- Tasa de Conversión / Confirmación -->
-            <div class="p-5 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-900/60 border border-slate-800/80 shadow-lg relative overflow-hidden">
-                <div class="absolute -right-2 -bottom-2 opacity-5 text-6xl text-cyan-400">
+            <!-- GANANCIA NETA REAL -->
+            <div class="p-5 rounded-2xl bg-gradient-to-br from-emerald-950/40 to-slate-900/90 border-2 border-emerald-500/40 shadow-xl relative overflow-hidden">
+                <div class="absolute -right-2 -bottom-2 opacity-10 text-6xl text-emerald-400">
+                    <i class="fa-solid fa-hand-holding-dollar"></i>
+                </div>
+                <div class="text-xs font-black uppercase tracking-wider text-emerald-400 flex items-center justify-between">
+                    <span>Ganancia Neta Real</span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Limpio</span>
+                </div>
+                <div class="text-3xl font-black text-emerald-400 mt-2" id="kpi-profit">$0</div>
+                <div class="text-xs text-emerald-300/80 mt-1">Beneficio neto en bolsillo</div>
+            </div>
+
+            <!-- MARGEN DE GANANCIA (%) -->
+            <div class="p-5 rounded-2xl bg-gradient-to-br from-amber-950/30 to-slate-900/90 border border-amber-500/30 shadow-lg relative overflow-hidden">
+                <div class="absolute -right-2 -bottom-2 opacity-5 text-6xl text-amber-400">
+                    <i class="fa-solid fa-chart-pie"></i>
+                </div>
+                <div class="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center justify-between">
+                    <span>Margen de Rentabilidad</span>
                     <i class="fa-solid fa-percent"></i>
                 </div>
-                <div class="text-xs font-bold uppercase tracking-wider text-cyan-400 flex items-center justify-between">
-                    <span>Tasa de Confirmación</span>
-                    <i class="fa-solid fa-bullseye"></i>
+                <div class="text-3xl font-black text-amber-300 mt-2" id="kpi-margin-pct">0%</div>
+                <div class="text-xs text-slate-400 mt-1" id="kpi-avg-ticket-sub">Ticket prom: <b id="kpi-avg-ticket" class="text-white">$0</b></div>
+            </div>
+        </div>
+
+        <!-- KPI Scorecards Grid 2: Métricas Operativas y Conversión -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center justify-between">
+                <div>
+                    <div class="text-xs text-slate-400 font-semibold uppercase">Pedidos Confirmados</div>
+                    <div class="text-xl font-bold text-white mt-0.5" id="kpi-orders">0</div>
+                    <div class="text-[11px] text-slate-500" id="kpi-orders-sub">de <span id="kpi-total-registered">0</span> registrados</div>
                 </div>
-                <div class="text-3xl font-black text-white mt-2" id="kpi-rate">0%</div>
-                <div class="text-xs text-slate-400 mt-1">Efectividad del bot de ventas</div>
+                <div class="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-boxes-packing"></i>
+                </div>
             </div>
 
-            <!-- Ticket Promedio -->
-            <div class="p-5 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-900/60 border border-slate-800/80 shadow-lg relative overflow-hidden">
-                <div class="absolute -right-2 -bottom-2 opacity-5 text-6xl text-purple-400">
-                    <i class="fa-solid fa-calculator"></i>
+            <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center justify-between">
+                <div>
+                    <div class="text-xs text-slate-400 font-semibold uppercase">Tasa de Conversión</div>
+                    <div class="text-xl font-bold text-cyan-400 mt-0.5" id="kpi-rate">0%</div>
+                    <div class="text-[11px] text-slate-500">Efectividad del bot de ventas</div>
                 </div>
-                <div class="text-xs font-bold uppercase tracking-wider text-purple-400 flex items-center justify-between">
-                    <span>Ticket Promedio</span>
-                    <i class="fa-solid fa-chart-simple"></i>
+                <div class="w-10 h-10 rounded-xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-bullseye"></i>
                 </div>
-                <div class="text-3xl font-black text-white mt-2" id="kpi-avg-ticket">$0</div>
-                <div class="text-xs text-slate-400 mt-1">Monto promedio por pedido</div>
+            </div>
+
+            <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center justify-between">
+                <div>
+                    <div class="text-xs text-slate-400 font-semibold uppercase">Unidades Vendidas</div>
+                    <div class="text-xl font-bold text-purple-400 mt-0.5" id="kpi-total-units">0</div>
+                    <div class="text-[11px] text-slate-500">Prendas / Artículos despachados</div>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-tags"></i>
+                </div>
             </div>
         </div>
 
@@ -925,27 +959,33 @@
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpzYmt6bGdqbndmcWJqa2tncWJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ3OTc1NzcsImV4cCI6MjA4MDM3MzU3N30.QXK8ulyAckDhfnYB8iuBs-MTW8v0Q8irbaRTgbgqAdk';
         const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
-        const STORES_CONFIG = {
+                const STORES_CONFIG = {
             adar: { 
                 name: 'Adar Import', 
                 sheetId: '1iZ2jlTKNypQDuRC-mVWZaJvFHN1UaI75oRUg1hTfuEY', 
                 gid: '0', 
+                sheetName: 'Ventas Adar',
                 sheetLabel: 'Ventas Adar',
-                icon: 'fa-box-open'
+                icon: 'fa-box-open',
+                defaultMargin: 0.45
             },
             nacha: { 
                 name: 'NachaHome', 
                 sheetId: '13OZcCBHrVufQSB4HcZu1Vgnu6uYAGLFpWrwW-x347aw', 
                 gid: '1810697795', 
+                sheetName: 'Ventas NachaHome',
                 sheetLabel: 'Ventas NachaHome',
-                icon: 'fa-house'
+                icon: 'fa-house',
+                defaultMargin: 0.35
             },
             nnn: { 
                 name: 'NNN Tienda', 
                 sheetId: '13OZcCBHrVufQSB4HcZu1Vgnu6uYAGLFpWrwW-x347aw', 
                 gid: '1354054217', 
+                sheetName: 'Ventas NNN',
                 sheetLabel: 'Ventas NNN',
-                icon: 'fa-shirt'
+                icon: 'fa-shirt',
+                defaultMargin: 0.52
             }
         };
 
