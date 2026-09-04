@@ -1006,7 +1006,7 @@
 
                 
         /* ====================================================== */
-                /* ====================================================== */
+                        /* ====================================================== */
         /* TOP-LEVEL DATA SCIENCE & FINANCIAL PROFITABILITY ENGINE*/
         /* (Precios Bross, Precios Jean Cartier & Logística Real) */
         /* ====================================================== */
@@ -1033,8 +1033,12 @@
             const dClean = String(direccion || '').toLowerCase();
             const envClean = String(costoEnvio || '').toLowerCase();
             
-            if (envClean.includes('retiro') || envClean.includes('retira') || envClean.includes('deposito') || envClean.includes('depósito') || dClean.includes('retiro') || dClean.includes('jean jaures')) {
-                return { cost: 0, zone: 'Retiro en Depósito' };
+            // Punto de encuentro o retiro presencial
+            if (
+                envClean.includes('retiro') || envClean.includes('retira') || envClean.includes('deposito') || envClean.includes('depósito') || envClean.includes('encuentro') || envClean.includes('punto') ||
+                dClean.includes('retiro') || dClean.includes('retira') || dClean.includes('deposito') || dClean.includes('depósito') || dClean.includes('encuentro') || dClean.includes('punto') || dClean.includes('jean jaures') || dClean.includes('personalmente')
+            ) {
+                return { cost: 0, zone: 'Punto de Encuentro / Retiro ($0)' };
             }
 
             // 3er Cordón ($9000)
@@ -1101,8 +1105,25 @@
                 estimatedCost = Math.round(subtotal * (1 - (STORES_CONFIG[storeKey]?.defaultMargin || 0.45)));
             }
 
-            // 2. Costo Real Cadete / Moto (Tabla Logística)
-            const { cost: cadeteCost, zone: cadeteZone } = matchDeliveryCadeteCost(order.direccion, order.costo_envio);
+            // 2. Costo Real Cadete / Moto (Tabla Logística + Soporte 2da Entrega / Punto de Encuentro)
+            let { cost: baseCadeteCost, zone: cadeteZone } = matchDeliveryCadeteCost(order.direccion, order.costo_envio);
+            let cadeteCost = baseCadeteCost;
+
+            // Override manual de cadete
+            if (order.tipoEntrega === 'punto_encuentro') {
+                cadeteCost = 0;
+                cadeteZone = 'Punto de Encuentro ($0)';
+            } else if (order.customCadeteCost !== undefined && order.customCadeteCost !== '' && order.customCadeteCost !== null) {
+                cadeteCost = parseMonto(order.customCadeteCost);
+                cadeteZone = `Personalizado ($${cadeteCost.toLocaleString('es-AR')})`;
+            }
+
+            // 2da Entrega / Reintento a cargo del negocio
+            const isSegundaEntrega = order.segundaEntrega || order.intentosCadete === 2;
+            if (isSegundaEntrega && cadeteCost > 0) {
+                cadeteCost = cadeteCost * 2;
+                cadeteZone = `🔄 2da Entrega (Doble Moto: $${cadeteCost.toLocaleString('es-AR')})`;
+            }
 
             // 3. Ganancia Neta Real = Total Cobrado - Costo Fábrica - Costo Cadete Real
             const netProfit = total - estimatedCost - cadeteCost;
@@ -1115,6 +1136,7 @@
                 estimatedCost,
                 cadeteCost,
                 cadeteZone,
+                isSegundaEntrega,
                 netProfit,
                 profitMarginPct: parseFloat(profitMarginPct)
             };
@@ -2394,6 +2416,13 @@
             document.getElementById('eo-address').value = order.direccion || '';
             document.getElementById('eo-shipping').value = order.costo_envio || '';
             document.getElementById('eo-products').value = order.detalles || '';
+            
+            const isPunto = order.tipoEntrega === 'punto_encuentro' || (order.direccion || '').toLowerCase().includes('encuentro') || (order.costo_envio || '').toLowerCase().includes('encuentro');
+            const elDelType = document.getElementById('eo-delivery-type');
+            if (elDelType) elDelType.value = isPunto ? 'punto_encuentro' : 'cadete';
+
+            const elDelAtt = document.getElementById('eo-delivery-attempts');
+            if (elDelAtt) elDelAtt.value = (order.segundaEntrega || order.intentosCadete === 2) ? '2' : '1';
             document.getElementById('eo-subtotal').value = order.subtotal || '';
             document.getElementById('eo-total').value = order.total || '';
             
@@ -2428,12 +2457,18 @@
             if (!subtotal.startsWith('$') && subtotal) subtotal = '$' + subtotal;
             if (!total.startsWith('$') && total) total = '$' + total;
 
+            const deliveryType = document.getElementById('eo-delivery-type')?.value || 'cadete';
+            const attempts = parseInt(document.getElementById('eo-delivery-attempts')?.value || '1', 10);
+
             const changes = {
                 cliente_nombre: name,
                 celular: phone,
                 direccion: address,
                 costo_envio: shipping,
-                envio: !shipping.toUpperCase().includes('NO'),
+                envio: deliveryType === 'cadete' && !shipping.toUpperCase().includes('NO'),
+                tipoEntrega: deliveryType,
+                intentosCadete: attempts,
+                segundaEntrega: attempts === 2,
                 detalles: products,
                 subtotal: subtotal || total,
                 total: total,
@@ -2468,74 +2503,94 @@
         }
 
         const INITIAL_MANUAL_ORDERS = [
-            {
-                        "id": "MANUAL-1788448771795",
-                        "tienda": "NNN Tienda",
-                        "cliente_nombre": "Oscar",
-                        "celular": "1130298283",
-                        "direccion": "San geronimo 780 entre calle la cautiva y echeverria - villa bosch",
-                        "costo_envio": "$0",
-                        "envio": true,
-                        "metodo_pago": "Transferencia",
-                        "detalles": "4 boxer Military 3XL uno de cada color y que uno se repita",
-                        "subtotal": "$44.000",
-                        "total": "$44.000",
-                        "fecha_hora": "2026-09-03T12:19:00.000Z",
-                        "estado": "pendiente",
-                        "isManual": true,
-                        "storeKey": "nnn"
-            },
-            {
-                        "id": "MANUAL-1788449277420",
-                        "tienda": "NNN Tienda",
-                        "cliente_nombre": "Juan Carlos",
-                        "celular": "1169425763",
-                        "direccion": "Pichincha 2080, detrás de la ex cárcel de Caseros, CABA",
-                        "costo_envio": "$0",
-                        "envio": true,
-                        "metodo_pago": "Transferencia",
-                        "detalles": "• - Bóxer Bross Military Vintage *Verde* x2 (XL) ($9.000 c/u) = $18.000\n• - Bóxer Bross Military Vintage *Negro* x1 (XL) ($9.000 c/u) = $9.000\n• - Bóxer Bross Military Vintage *Rojo* x1 (XL) ($9.000 c/u) = $9.000\n• ENTREGAR ANTES DE LA 18.30HS",
-                        "subtotal": "$36.000",
-                        "total": "$36.000",
-                        "fecha_hora": "2026-09-03T12:27:00.000Z",
-                        "estado": "pendiente",
-                        "isManual": true,
-                        "storeKey": "nnn"
-            },
-            {
-                        "id": "MANUAL-1788446937300",
-                        "tienda": "NNN Tienda",
-                        "cliente_nombre": "Victor Ruben Gil",
-                        "celular": "+54 9 11 3778-2282",
-                        "direccion": "Juana Azurduy 240, entre Moreno y Remedio de escalada de san martin (Gral.Rodriguez)",
-                        "costo_envio": "$4.500",
-                        "envio": true,
-                        "metodo_pago": "Efectivo",
-                        "detalles": "Boxer Botanic Rojo - Talle L x 1\nBoxer Botanic Turquesa - Talle L x 1\nBoxer Botanic Melange - Talle L x 1\nBoxer Planta Bicolor Negro/lima - Talle L x 1",
-                        "subtotal": "$36.000",
-                        "total": "$40.500",
-                        "fecha_hora": "2026-09-03T11:48:00.000Z",
-                        "estado": "pendiente",
-                        "isManual": true,
-                        "storeKey": "nnn"
-            },
-            {
-                        "id": "MANUAL-1788449722121",
-                        "tienda": "NNN Tienda",
-                        "cliente_nombre": "Cristian Ignacio Maza",
-                        "celular": "+57 9 362 424-5218",
-                        "direccion": "Avda Rivadavia 8224, Floresta, CABA",
-                        "costo_envio": "$0",
-                        "envio": true,
-                        "metodo_pago": "Efectivo",
-                        "detalles": "• - Bóxer Bross Tokio Marino/Turqueza x 1 Talle L ($9.000) = $9.000\n• - Bóxer Bross Tokio Negro/Rojo x 1 Talle L ($9.000) = $9.000\n• - Bóxer Bross Tokio Melange/Negro x 1 Talle L ($9.000) = $9.000\n• - Bóxer Bross Tokio Blanco/Bordó x 1 Talle S ($9.000) = $9.000\n• ENTREGAR ANTES DE LA: 16HS",
-                        "subtotal": "$36.000",
-                        "total": "$36.000",
-                        "fecha_hora": "2026-09-03T12:35:00.000Z",
-                        "estado": "pendiente",
-                        "isManual": true,
-                        "storeKey": "nnn"
-            }
+        {
+                "id": "MANUAL-1788448771795",
+                "tienda": "NNN Tienda",
+                "cliente_nombre": "Oscar",
+                "celular": "1130298283",
+                "direccion": "San geronimo 780 entre calle la cautiva y echeverria - villa bosch",
+                "costo_envio": "$0",
+                "envio": true,
+                "metodo_pago": "Transferencia",
+                "detalles": "4 boxer Military 3XL uno de cada color y que uno se repita",
+                "subtotal": "$44.000",
+                "total": "$44.000",
+                "fecha_hora": "2026-09-03T12:19:00.000Z",
+                "estado": "pendiente",
+                "isManual": true,
+                "segundaEntrega": true,
+                "intentosCadete": 2,
+                "storeKey": "nnn"
+        },
+        {
+                "id": "MANUAL-1788490927340",
+                "tienda": "NNN Tienda",
+                "cliente_nombre": "Gustavo Ravecca",
+                "celular": "541154641310",
+                "direccion": "Punto de encuentro",
+                "costo_envio": "Punto de encuentro",
+                "envio": false,
+                "metodo_pago": "Efectivo",
+                "detalles": "Bóxer Bross Military Vintage *Verde* x2 (XXL) - Bóxer Bross Military Vintage *Negro* x1 (XXL) - Bóxer Bross Military Vintage *Rojo* x1 (XXL)",
+                "subtotal": "$27.000",
+                "total": "$27.000",
+                "fecha_hora": "2026-09-03T23:32:00.000Z",
+                "estado": "pendiente",
+                "isManual": true,
+                "tipoEntrega": "punto_encuentro",
+                "storeKey": "nnn"
+        },
+        {
+                "id": "MANUAL-1788449277420",
+                "tienda": "NNN Tienda",
+                "cliente_nombre": "Juan Carlos",
+                "celular": "1169425763",
+                "direccion": "Pichincha 2080, detrás de la ex cárcel de Caseros, CABA",
+                "costo_envio": "$0",
+                "envio": true,
+                "metodo_pago": "Transferencia",
+                "detalles": "• - Bóxer Bross Military Vintage *Verde* x2 (XL) ($9.000 c/u) = $18.000\n• - Bóxer Bross Military Vintage *Negro* x1 (XL) ($9.000 c/u) = $9.000\n• - Bóxer Bross Military Vintage *Rojo* x1 (XL) ($9.000 c/u) = $9.000\n• ENTREGAR ANTES DE LA 18.30HS",
+                "subtotal": "$36.000",
+                "total": "$36.000",
+                "fecha_hora": "2026-09-03T12:27:00.000Z",
+                "estado": "pendiente",
+                "isManual": true,
+                "storeKey": "nnn"
+        },
+        {
+                "id": "MANUAL-1788446937300",
+                "tienda": "NNN Tienda",
+                "cliente_nombre": "Victor Ruben Gil",
+                "celular": "+54 9 11 3778-2282",
+                "direccion": "Juana Azurduy 240, entre Moreno y Remedio de escalada de san martin (Gral.Rodriguez)",
+                "costo_envio": "$4.500",
+                "envio": true,
+                "metodo_pago": "Efectivo",
+                "detalles": "Boxer Botanic Rojo - Talle L x 1\nBoxer Botanic Turquesa - Talle L x 1\nBoxer Botanic Melange - Talle L x 1\nBoxer Planta Bicolor Negro/lima - Talle L x 1",
+                "subtotal": "$36.000",
+                "total": "$40.500",
+                "fecha_hora": "2026-09-03T11:48:00.000Z",
+                "estado": "pendiente",
+                "isManual": true,
+                "storeKey": "nnn"
+        },
+        {
+                "id": "MANUAL-1788449722121",
+                "tienda": "NNN Tienda",
+                "cliente_nombre": "Cristian Ignacio Maza",
+                "celular": "+57 9 362 424-5218",
+                "direccion": "Avda Rivadavia 8224, Floresta, CABA",
+                "costo_envio": "$0",
+                "envio": true,
+                "metodo_pago": "Efectivo",
+                "detalles": "• - Bóxer Bross Tokio Marino/Turqueza x 1 Talle L ($9.000) = $9.000\n• - Bóxer Bross Tokio Negro/Rojo x 1 Talle L ($9.000) = $9.000\n• - Bóxer Bross Tokio Melange/Negro x 1 Talle L ($9.000) = $9.000\n• - Bóxer Bross Tokio Blanco/Bordó x 1 Talle S ($9.000) = $9.000\n• ENTREGAR ANTES DE LA: 16HS",
+                "subtotal": "$36.000",
+                "total": "$36.000",
+                "fecha_hora": "2026-09-03T12:35:00.000Z",
+                "estado": "pendiente",
+                "isManual": true,
+                "storeKey": "nnn"
+        }
 ];
         let storedManuals = JSON.parse(localStorage.getItem('croc_manual_orders') || '[]');
         // Combine stored with initial seeds without duplicates
@@ -2576,6 +2631,9 @@
             if (!total.startsWith('$') && total) total = '$' + total;
 
             const newId = `MANUAL-${Date.now()}`;
+            const deliveryType = document.getElementById('mo-delivery-type')?.value || 'cadete';
+            const attempts = parseInt(document.getElementById('mo-delivery-attempts')?.value || '1', 10);
+
             const newOrder = {
                 id: newId,
                 tienda: STORES_CONFIG[storeKey]?.name || storeKey.toUpperCase(),
@@ -2583,7 +2641,10 @@
                 celular: phone,
                 direccion: address,
                 costo_envio: shipping,
-                envio: !shipping.toUpperCase().includes('NO'),
+                envio: deliveryType === 'cadete' && !shipping.toUpperCase().includes('NO'),
+                tipoEntrega: deliveryType,
+                intentosCadete: attempts,
+                segundaEntrega: attempts === 2,
                 metodo_pago: payment,
                 detalles: products,
                 subtotal: subtotal || total,
@@ -4461,12 +4522,33 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-300 mb-1.5">Dirección de Entrega *</label>
-                        <input type="text" id="mo-address" placeholder="Ej: Cramer 381, piso 6, depto 9 - Colegiales" class="w-full bg-slate-950 text-white text-xs rounded-xl p-3 border border-slate-800 focus:outline-none focus:border-indigo-500" required>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1.5">Dirección de Entrega / Punto de Encuentro *</label>
+                        <input type="text" id="mo-address" placeholder="Ej: Cramer 381, Colegiales o Punto de encuentro" class="w-full bg-slate-950 text-white text-xs rounded-xl p-3 border border-slate-800 focus:outline-none focus:border-indigo-500" required>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-300 mb-1.5">Costo de Envío *</label>
-                        <input type="text" id="mo-shipping" placeholder="Ej: $3.500 (Colegiales) o NO - Retiro" class="w-full bg-slate-950 text-white text-xs rounded-xl p-3 border border-slate-800 focus:outline-none focus:border-indigo-500" value="$3.500" required>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1.5">Costo de Envío Cobrado al Cliente *</label>
+                        <input type="text" id="mo-shipping" placeholder="Ej: $0, $4.500 o Punto de encuentro" class="w-full bg-slate-950 text-white text-xs rounded-xl p-3 border border-slate-800 focus:outline-none focus:border-indigo-500" value="$0" required>
+                    </div>
+                </div>
+
+                <!-- SELECTOR DE LOGÍSTICA & SEGUNDA ENTREGA MANUAL -->
+                <div class="p-3.5 bg-slate-950/80 rounded-xl border border-slate-800 space-y-2.5">
+                    <label class="block text-xs font-bold text-indigo-400">🛵 Configuración de Cadetería / Logística Real</label>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[11px] text-slate-400 mb-1">Tipo de Entrega:</label>
+                            <select id="mo-delivery-type" class="w-full bg-slate-900 text-white text-xs rounded-lg p-2 border border-slate-700 focus:outline-none focus:border-indigo-500">
+                                <option value="cadete">🛵 Envío a Domicilio por Cadete</option>
+                                <option value="punto_encuentro">🤝 Punto de Encuentro / Retiro ($0 Cadete)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] text-slate-400 mb-1">Intentos de Entrega:</label>
+                            <select id="mo-delivery-attempts" class="w-full bg-slate-900 text-white text-xs rounded-lg p-2 border border-slate-700 focus:outline-none focus:border-indigo-500">
+                                <option value="1">1 Entrega Normal (1x Costo Moto)</option>
+                                <option value="2">🔄 2da Entrega (Doble Cadete - Negocio paga reintento)</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
@@ -4546,12 +4628,33 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-300 mb-1.5">Dirección de Entrega *</label>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1.5">Dirección de Entrega / Punto de Encuentro *</label>
                         <input type="text" id="eo-address" class="w-full bg-slate-950 text-white text-xs rounded-xl p-3 border border-slate-800 focus:outline-none focus:border-amber-500 font-medium" required>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-300 mb-1.5">Costo de Envío *</label>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1.5">Costo de Envío Cobrado al Cliente *</label>
                         <input type="text" id="eo-shipping" class="w-full bg-slate-950 text-white text-xs rounded-xl p-3 border border-slate-800 focus:outline-none focus:border-amber-500" required>
+                    </div>
+                </div>
+
+                <!-- SELECTOR DE LOGÍSTICA & SEGUNDA ENTREGA -->
+                <div class="p-3.5 bg-slate-950/80 rounded-xl border border-slate-800 space-y-2.5">
+                    <label class="block text-xs font-bold text-amber-400">🛵 Configuración de Cadetería / Logística Real</label>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[11px] text-slate-400 mb-1">Tipo de Entrega:</label>
+                            <select id="eo-delivery-type" class="w-full bg-slate-900 text-white text-xs rounded-lg p-2 border border-slate-700 focus:outline-none focus:border-amber-500">
+                                <option value="cadete">🛵 Envío a Domicilio por Cadete</option>
+                                <option value="punto_encuentro">🤝 Punto de Encuentro / Retiro ($0 Cadete)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] text-slate-400 mb-1">Intentos de Entrega (Reintentos):</label>
+                            <select id="eo-delivery-attempts" class="w-full bg-slate-900 text-white text-xs rounded-lg p-2 border border-slate-700 focus:outline-none focus:border-amber-500">
+                                <option value="1">1 Entrega Normal (1x Costo Moto)</option>
+                                <option value="2">🔄 2da Entrega (Doble Cadete - Negocio paga reintento)</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
