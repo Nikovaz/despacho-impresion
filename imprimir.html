@@ -1048,7 +1048,25 @@
         let liveBrossCatalog = [];
         let liveJeanCartierCatalog = [];
         let liveLogisticsCatalog = [];
+        let liveAdsExpenses = [];
         let currentAdsSpend = parseFloat(localStorage.getItem('croc_ads_spend_today') || '0') || 0;
+        let isAdsSpendManualOverride = false;
+
+        function parseSheetsDateString(dVal) {
+            if (!dVal) return '';
+            if (typeof dVal === 'string' && dVal.startsWith('Date(')) {
+                const parts = dVal.replace('Date(', '').replace(')', '').split(',');
+                const y = parts[0];
+                const m = String(parseInt(parts[1], 10) + 1).padStart(2, '0');
+                const d = String(parts[2]).padStart(2, '0');
+                return `${y}-${m}-${d}`;
+            }
+            try {
+                return new Date(dVal).toISOString().slice(0, 10);
+            } catch(e) {
+                return String(dVal).slice(0, 10);
+            }
+        }
 
         async function fetchLivePriceCatalogs() {
             try {
@@ -1091,8 +1109,49 @@
                     if (dispatchOrders.length > 0) renderDispatchDashboard();
                 }).catch(e => console.warn('Logistica offline fallback:', e));
 
+                // 3. Fetch Gastos Ads Live from Google Sheets
+                const adsUrl = `https://docs.google.com/spreadsheets/d/${MAIN_SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=Gastos%20Ads`;
+                fetch(adsUrl).then(r => r.text()).then(txt => {
+                    const data = JSON.parse(txt.substring(txt.indexOf('{'), txt.lastIndexOf('}') + 1));
+                    liveAdsExpenses = data.table.rows.map(r => {
+                        const vals = r.c ? r.c.map(c => c ? c.v : null) : [];
+                        return {
+                            fecha: parseSheetsDateString(vals[0]),
+                            tienda: String(vals[1] || '').trim().toLowerCase(),
+                            plataforma: String(vals[2] || 'Meta Ads'),
+                            inversion: parseFloat(vals[3] || 0),
+                            notas: String(vals[4] || '')
+                        };
+                    });
+                    console.log('✅ Loaded Live Gastos Ads from Sheets:', liveAdsExpenses.length, 'entries');
+                    syncAdsSpendFromSheet();
+                    if (dispatchOrders.length > 0) renderDispatchDashboard();
+                }).catch(e => console.warn('Gastos Ads fetch error:', e));
+
             } catch (err) {
                 console.warn('Error loading dynamic price catalogs:', err);
+            }
+        }
+
+        function syncAdsSpendFromSheet() {
+            if (isAdsSpendManualOverride) return;
+            if (!liveAdsExpenses || liveAdsExpenses.length === 0) return;
+
+            const targetStore = (currentDispatchStore || 'nnn').toLowerCase();
+            const todayStr = new Date().toISOString().slice(0, 10);
+
+            // Find matching store and date (or latest entry for store)
+            const matchedEntries = liveAdsExpenses.filter(e => {
+                const matchStore = e.tienda.includes(targetStore) || (targetStore === 'nnn' && e.tienda.includes('nnn')) || (targetStore === 'nacha' && e.tienda.includes('nacha'));
+                return matchStore;
+            });
+
+            if (matchedEntries.length > 0) {
+                // If there is an entry for today or latest date
+                const todayEntry = matchedEntries.find(e => e.fecha === todayStr);
+                const chosen = todayEntry || matchedEntries[matchedEntries.length - 1];
+                currentAdsSpend = chosen.inversion;
+                localStorage.setItem('croc_ads_spend_today', String(currentAdsSpend));
             }
         }
 
@@ -1102,6 +1161,7 @@
         function updateAdsSpend(val) {
             const num = parseFloat(val) || 0;
             currentAdsSpend = num;
+            isAdsSpendManualOverride = true;
             localStorage.setItem('croc_ads_spend_today', String(num));
             renderDispatchDashboard();
         }
