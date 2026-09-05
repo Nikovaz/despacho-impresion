@@ -297,37 +297,70 @@
         </div>
 
         
-        <!-- BANNER DE RENTABILIDAD & GANANCIAS EN VIVO (PRECIOS BROSS / JC) -->
-        <div class="bg-gradient-to-r from-emerald-950/60 via-slate-900 to-slate-900 border border-emerald-500/40 p-4 rounded-2xl mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold text-lg">
-                    <i class="fa-solid fa-hand-holding-dollar"></i>
-                </div>
-                <div>
-                    <div class="text-xs font-black text-white uppercase tracking-wider flex items-center gap-2">
-                        <span>Rentabilidad Real del Lote</span>
-                        <span class="px-2 py-0.5 rounded-full text-[10px] bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">Ciencia de Datos Activa</span>
+        <!-- BANNER DE RENTABILIDAD & GANANCIAS EN VIVO (PRECIOS BROSS / JC / ADS / LOGÍSTICA) -->
+        <div class="bg-gradient-to-r from-emerald-950/70 via-slate-900 to-slate-900 border border-emerald-500/40 p-4 sm:p-5 rounded-2xl mb-6 shadow-2xl space-y-4">
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold text-xl shadow-inner">
+                        <i class="fa-solid fa-hand-holding-dollar"></i>
                     </div>
-                    <div class="text-xs text-slate-400 mt-0.5">Calculado con tu lista oficial de <b>Precios Bross</b> (costos con descuento y ganancias netas)</div>
+                    <div>
+                        <div class="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
+                            <span>Rentabilidad Real del Lote</span>
+                            <span class="px-2.5 py-0.5 rounded-full text-[10px] bg-emerald-500/20 text-emerald-300 font-extrabold border border-emerald-500/30 flex items-center gap-1">
+                                <i class="fa-solid fa-cloud-arrow-down"></i> Precios Sheets en Vivo
+                            </span>
+                        </div>
+                        <div class="text-xs text-slate-400 mt-0.5">Sincronizado con tus hojas de <b>Precios Bross</b>, <b>Precios JC</b>, <b>Logística</b> y <b>Gasto en Ads</b></div>
+                    </div>
+                </div>
+
+                <!-- Control Rápido de Gasto en Anuncios (Ads) -->
+                <div class="flex items-center gap-2 bg-slate-950/80 p-2.5 rounded-xl border border-slate-800 w-full md:w-auto justify-between md:justify-end">
+                    <div class="flex items-center gap-2 text-xs">
+                        <i class="fa-solid fa-bullhorn text-sky-400"></i>
+                        <span class="text-slate-300 font-semibold">Gasto en Ads (Meta/Google):</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-slate-500 text-xs font-bold">$</span>
+                        <input type="number" id="input-ads-spend" value="0" min="0" step="500" onchange="updateAdsSpend(this.value)" onkeyup="updateAdsSpend(this.value)" placeholder="0" class="w-24 bg-slate-900 text-white font-bold text-xs rounded-lg px-2 py-1 border border-slate-700 text-right focus:outline-none focus:border-sky-500">
+                    </div>
                 </div>
             </div>
             
-            <div class="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
-                <div class="text-left sm:text-right">
-                    <div class="text-[10px] text-slate-400 uppercase font-semibold">Facturación</div>
-                    <div class="text-sm font-black text-white" id="banner-revenue">$0</div>
+            <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5 pt-3 border-t border-slate-800/80">
+                <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80">
+                    <div class="text-[10px] text-slate-400 uppercase font-semibold">Facturación Bruta</div>
+                    <div class="text-sm sm:text-base font-black text-white mt-0.5" id="banner-revenue">$0</div>
                 </div>
-                <div class="text-left sm:text-right">
-                    <div class="text-[10px] text-slate-400 uppercase font-semibold">Costo Fábrica</div>
-                    <div class="text-sm font-bold text-rose-400" id="banner-cost">$0</div>
+                <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80">
+                    <div class="text-[10px] text-slate-400 uppercase font-semibold">Costo Fábrica (CMV)</div>
+                    <div class="text-sm sm:text-base font-bold text-rose-400 mt-0.5" id="banner-cost">$0</div>
                 </div>
-                <div class="text-left sm:text-right">
-                    <div class="text-[10px] text-slate-400 uppercase font-semibold">Costo Cadete</div>
-                    <div class="text-sm font-bold text-amber-400" id="banner-cadete">$0</div>
+                <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80">
+                    <div class="text-[10px] text-slate-400 uppercase font-semibold">Cadetería (Motos)</div>
+                    <div class="text-sm sm:text-base font-bold text-amber-400 mt-0.5" id="banner-cadete">$0</div>
                 </div>
-                <div class="text-right bg-emerald-500/20 px-3.5 py-2 rounded-xl border border-emerald-500/40">
-                    <div class="text-[10px] text-emerald-400 uppercase font-black">Ganancia Neta</div>
-                    <div class="text-base sm:text-lg font-black text-emerald-300" id="banner-profit">$0</div>
+                <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80">
+                    <div class="text-[10px] text-sky-400 uppercase font-semibold flex items-center gap-1">
+                        <i class="fa-solid fa-bullhorn text-[9px]"></i> Inversión Ads
+                    </div>
+                    <div class="text-sm sm:text-base font-bold text-sky-300 mt-0.5" id="banner-ads-display">$0</div>
+                </div>
+                <div class="col-span-2 sm:col-span-1 bg-emerald-500/20 p-2.5 rounded-xl border border-emerald-500/40 text-left sm:text-right shadow">
+                    <div class="text-[10px] text-emerald-400 uppercase font-black">Ganancia Limpia (Bolsillo)</div>
+                    <div class="text-base sm:text-lg font-black text-emerald-300 mt-0.5" id="banner-profit">$0</div>
+                </div>
+            </div>
+            
+            <!-- KPIs Secundarios de Ads (ROAS / CPA) -->
+            <div class="flex items-center justify-between flex-wrap gap-2 text-[11px] text-slate-400 pt-1 px-1">
+                <div class="flex items-center gap-4">
+                    <span>ROAS Real: <b class="text-white" id="banner-roas">0.0x</b></span>
+                    <span>CPA (Costo p/ Venta): <b class="text-white" id="banner-cpa">$0</b></span>
+                </div>
+                <div>
+                    <span>Margen Limpio en Bolsillo: <b class="text-emerald-400 font-bold" id="banner-clean-margin">0.0%</b></span>
                 </div>
             </div>
         </div>
@@ -1006,14 +1039,102 @@
 
                 
         /* ====================================================== */
-                                /* ====================================================== */
-        /* TOP-LEVEL DATA SCIENCE & FINANCIAL PROFITABILITY ENGINE*/
-        /* (Unit-by-Unit Exact Item Costs from Precios Bross)     */
+                                        /* ====================================================== */
+        /* TOP-LEVEL DYNAMIC GOOGLE SHEETS LIVE PRICE ENGINE      */
+        /* (Precios Bross, Precios Jean Cartier, Logística & Ads) */
         /* ====================================================== */
+        const MAIN_SPREADSHEET_ID = '13OZcCBHrVufQSB4HcZu1Vgnu6uYAGLFpWrwW-x347aw';
+
+        let liveBrossCatalog = [];
+        let liveJeanCartierCatalog = [];
+        let liveLogisticsCatalog = [];
+        let currentAdsSpend = parseFloat(localStorage.getItem('croc_ads_spend_today') || '0') || 0;
+
+        async function fetchLivePriceCatalogs() {
+            try {
+                // 1. Fetch Precios Bross Live from Google Sheets
+                const brossUrl = `https://docs.google.com/spreadsheets/d/${MAIN_SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=Precios%20Bross`;
+                fetch(brossUrl).then(r => r.text()).then(txt => {
+                    const data = JSON.parse(txt.substring(txt.indexOf('{'), txt.lastIndexOf('}') + 1));
+                    liveBrossCatalog = data.table.rows.map(r => {
+                        const vals = r.c ? r.c.map(c => c ? c.v : null) : [];
+                        return {
+                            producto: String(vals[0] || ''),
+                            medida: String(vals[1] || ''),
+                            articulo: String(vals[2] || ''),
+                            precioCosto: parseFloat(vals[4] || 0),
+                            precioConDesc: parseFloat(vals[5] || 0),
+                            precioPublico: parseFloat(vals[6] || 0),
+                            ganancia: parseFloat(vals[7] || 0)
+                        };
+                    });
+                    console.log('✅ Loaded Live Precios Bross from Sheets:', liveBrossCatalog.length, 'items');
+                    if (dispatchOrders.length > 0) renderDispatchDashboard();
+                }).catch(e => console.warn('Precios Bross offline fallback:', e));
+
+                // 2. Fetch Logistica Live from Google Sheets
+                const logUrl = `https://docs.google.com/spreadsheets/d/${MAIN_SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=Logistica`;
+                fetch(logUrl).then(r => r.text()).then(txt => {
+                    const data = JSON.parse(txt.substring(txt.indexOf('{'), txt.lastIndexOf('}') + 1));
+                    liveLogisticsCatalog = data.table.rows.map(r => {
+                        const vals = r.c ? r.c.map(c => c ? c.v : null) : [];
+                        return {
+                            provincia: String(vals[0] || ''),
+                            localidad: String(vals[1] || ''),
+                            barrio: String(vals[2] || ''),
+                            zona: String(vals[3] || ''),
+                            precio: parseFloat(vals[4] || 0),
+                            cordon: String(vals[5] || '')
+                        };
+                    });
+                    console.log('✅ Loaded Live Logistica from Sheets:', liveLogisticsCatalog.length, 'zones');
+                    if (dispatchOrders.length > 0) renderDispatchDashboard();
+                }).catch(e => console.warn('Logistica offline fallback:', e));
+
+            } catch (err) {
+                console.warn('Error loading dynamic price catalogs:', err);
+            }
+        }
+
+        // Call on startup
+        fetchLivePriceCatalogs();
+
+        function updateAdsSpend(val) {
+            const num = parseFloat(val) || 0;
+            currentAdsSpend = num;
+            localStorage.setItem('croc_ads_spend_today', String(num));
+            renderDispatchDashboard();
+        }
 
         function parseExactBrossItemsCost(detallesText, subtotal) {
             if (!detallesText) return Math.round(subtotal * (4728 / 9000));
             const text = String(detallesText);
+
+            // Dynamic lookup helper if live catalog loaded from Sheets
+            const getCatalogCost = (keywords, defaultCost) => {
+                if (liveBrossCatalog && liveBrossCatalog.length > 0) {
+                    const item = liveBrossCatalog.find(b => {
+                        const combined = `${b.producto} ${b.medida} ${b.articulo}`.toLowerCase();
+                        return keywords.every(k => combined.includes(k));
+                    });
+                    if (item && item.precioConDesc > 0) return item.precioConDesc;
+                }
+                return defaultCost;
+            };
+
+            const costBoxerEspecialEstampado = getCatalogCost(['3xl', 'estampado'], 5924);
+            const costBoxerEspecialLiso = getCatalogCost(['3xl', 'liso'], 5460);
+            const costBoxerStandardEstampado = getCatalogCost(['estampados'], 4728);
+            const costBoxerStandardLiso = getCatalogCost(['lisos'], 4464);
+            const costBoxerNiño = getCatalogCost(['niño'], 2888);
+            const costBoxerLargo = getCatalogCost(['largo'], 8628);
+            const costDeportivo = getCatalogCost(['deportivo'], 7452);
+            const costMedias3002 = getCatalogCost(['3002'], 3696);
+            const costMedias3003 = getCatalogCost(['3003'], 1584);
+            const costMedias3052 = getCatalogCost(['3052'], 1672);
+            const costMedias3053 = getCatalogCost(['3053'], 1936);
+            const costRemera = getCatalogCost(['remera'], 6380);
+            const costPijama = getCatalogCost(['pijama'], 23920);
 
             // 1. Check overall string pattern like "4 boxer Military 3XL..."
             const overallMatch = text.match(/^\s*(\d+)\s*(?:b[oó]xer|boxers)/i);
@@ -1021,14 +1142,13 @@
                 const qty = parseInt(overallMatch[1], 10) || 1;
                 const isSpecial = /3xl|4xl|especial/i.test(text);
                 const isLiso = /liso/i.test(text);
-                const unitCost = isSpecial ? (isLiso ? 5460 : 5924) : (isLiso ? 4464 : 4728);
+                const unitCost = isSpecial ? (isLiso ? costBoxerEspecialLiso : costBoxerEspecialEstampado) : (isLiso ? costBoxerStandardLiso : costBoxerStandardEstampado);
                 return qty * unitCost;
             }
 
             // 2. Split line by line or bullet by bullet
             const lines = text.split(/[\r\n,•-]+/);
             let totalCost = 0;
-            let matchedCount = 0;
 
             for (const line of lines) {
                 const l = line.trim();
@@ -1037,7 +1157,6 @@
                     continue;
                 }
 
-                // Extract quantity: "x 2", "x2", "2x", "x 1", "7"
                 let qty = 1;
                 const qm1 = l.match(/x\s*(\d+)/i);
                 const qm2 = l.match(/^(\d+)\s*x/i);
@@ -1051,39 +1170,37 @@
                 let unitCost = 0;
 
                 if (lLower.includes('3xl') || lLower.includes('4xl') || lLower.includes('especial')) {
-                    unitCost = lLower.includes('liso') ? 5460 : 5924;
+                    unitCost = lLower.includes('liso') ? costBoxerEspecialLiso : costBoxerEspecialEstampado;
                 } else if (lLower.includes('niñ')) {
-                    unitCost = 2888;
+                    unitCost = costBoxerNiño;
                 } else if (lLower.includes('largo') || lLower.includes('t[eé]rmic') || lLower.includes('termic')) {
-                    unitCost = 8628;
+                    unitCost = costBoxerLargo;
                 } else if (lLower.includes('deportiv')) {
-                    unitCost = 7452;
+                    unitCost = costDeportivo;
                 } else if (lLower.includes('3002')) {
-                    unitCost = 3696;
+                    unitCost = costMedias3002;
                 } else if (lLower.includes('3052')) {
-                    unitCost = 1672;
+                    unitCost = costMedias3052;
                 } else if (lLower.includes('3053')) {
-                    unitCost = 1936;
+                    unitCost = costMedias3053;
                 } else if (lLower.includes('media')) {
-                    unitCost = 1584;
+                    unitCost = costMedias3003;
                 } else if (lLower.includes('remera') || lLower.includes('chomba')) {
-                    unitCost = 6380;
+                    unitCost = costRemera;
                 } else if (lLower.includes('pijama')) {
-                    unitCost = 23920;
+                    unitCost = costPijama;
                 } else if (lLower.includes('boxer') || lLower.includes('bóxer') || lLower.includes('botanic') || lLower.includes('tokio') || lLower.includes('military') || lLower.includes('batik') || lLower.includes('planta') || lLower.includes('vintage')) {
-                    unitCost = lLower.includes('liso') ? 4464 : 4728;
+                    unitCost = lLower.includes('liso') ? costBoxerStandardLiso : costBoxerStandardEstampado;
                 } else {
                     continue;
                 }
 
                 totalCost += (qty * unitCost);
-                matchedCount++;
             }
 
             if (totalCost === 0 && subtotal > 0) {
-                // If text was general, calculate number of boxers based on subtotal / 9000
                 const numItems = Math.max(1, Math.round(subtotal / 9000));
-                totalCost = numItems * 4728;
+                totalCost = numItems * costBoxerStandardEstampado;
             }
 
             return totalCost;
