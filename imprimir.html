@@ -254,8 +254,8 @@
             </div>
         </header>
 
-        <!-- Stats & Tabs -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 my-6">
+        <!-- Stats & Tabs (Hoy, Siguiente, Programados, Historial) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 my-6">
             <!-- Tab Lote Activo -->
             <div onclick="switchDispatchTab('today')" id="tab-today-card" class="cursor-pointer p-4 rounded-xl border-2 border-emerald-500 bg-slate-900/90 shadow-md transition">
                 <div class="flex justify-between items-center">
@@ -279,7 +279,22 @@
                 <div class="text-xs font-bold text-emerald-400 mt-1 flex items-center gap-1.5" id="profit-tomorrow">
                     <i class="fa-solid fa-hand-holding-dollar"></i> Ganancia: $0
                 </div>
-                <div class="text-[11px] text-slate-400 mt-0.5" id="desc-tab-tomorrow">Pedidos posteriores al corte</div>
+                <div class="text-[11px] text-slate-400 mt-0.5" id="desc-tab-tomorrow">Posteriores al corte 12hs</div>
+            </div>
+
+            <!-- Tab Programados para Fecha Futura (ej. 24 o 25) -->
+            <div onclick="switchDispatchTab('scheduled')" id="tab-scheduled-card" class="cursor-pointer p-4 rounded-xl border border-slate-800 bg-slate-900/40 hover:bg-slate-900 transition">
+                <div class="flex justify-between items-center">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-purple-400 flex items-center gap-1">
+                        <i class="fa-solid fa-calendar-day text-[11px]"></i> Programados
+                    </span>
+                    <span id="badge-scheduled" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-500/20 text-purple-300">0</span>
+                </div>
+                <div class="text-2xl font-bold text-white mt-2" id="total-scheduled">$0</div>
+                <div class="text-xs font-bold text-purple-400 mt-1 flex items-center gap-1.5" id="profit-scheduled">
+                    <i class="fa-solid fa-hand-holding-dollar"></i> Ganancia: $0
+                </div>
+                <div class="text-[11px] text-slate-400 mt-0.5">Envíos para fechas futuras (ej. 24/25)</div>
             </div>
 
             <!-- Tab Historial -->
@@ -328,24 +343,30 @@
                 </div>
             </div>
             
-            <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5 pt-3 border-t border-slate-800/80">
+            <div class="grid grid-cols-2 sm:grid-cols-6 gap-2.5 pt-3 border-t border-slate-800/80">
                 <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80">
                     <div class="text-[10px] text-slate-400 uppercase font-semibold">Facturación Bruta</div>
                     <div class="text-sm sm:text-base font-black text-white mt-0.5" id="banner-revenue">$0</div>
                 </div>
                 <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80">
-                    <div class="text-[10px] text-slate-400 uppercase font-semibold">Costo Fábrica (CMV)</div>
+                    <div class="text-[10px] text-slate-400 uppercase font-semibold">Costo Fábrica</div>
                     <div class="text-sm sm:text-base font-bold text-rose-400 mt-0.5" id="banner-cost">$0</div>
                 </div>
                 <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80">
                     <div class="text-[10px] text-slate-400 uppercase font-semibold">Cadetería (Motos)</div>
                     <div class="text-sm sm:text-base font-bold text-amber-400 mt-0.5" id="banner-cadete">$0</div>
                 </div>
-                <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80">
+                <div class="bg-slate-950/60 p-2.5 rounded-xl border border-rose-900/40">
+                    <div class="text-[10px] text-rose-400 uppercase font-semibold flex items-center gap-1">
+                        <i class="fa-solid fa-triangle-exclamation text-[9px]"></i> Pérdidas Envíos
+                    </div>
+                    <div class="text-sm sm:text-base font-black text-rose-400 mt-0.5" id="banner-losses">$0</div>
+                </div>
+                <div class="bg-slate-950/60 p-2.5 rounded-xl border border-sky-900/40">
                     <div class="text-[10px] text-sky-400 uppercase font-semibold flex items-center gap-1">
                         <i class="fa-solid fa-bullhorn text-[9px]"></i> Inversión Ads
                     </div>
-                    <div class="text-sm sm:text-base font-bold text-sky-300 mt-0.5" id="banner-ads-display">$0</div>
+                    <div class="text-sm sm:text-base font-black text-sky-300 mt-0.5" id="banner-ads-display">$0</div>
                 </div>
                 <div class="col-span-2 sm:col-span-1 bg-emerald-500/20 p-2.5 rounded-xl border border-emerald-500/40 text-left sm:text-right shadow">
                     <div class="text-[10px] text-emerald-400 uppercase font-black">Ganancia Limpia (Bolsillo)</div>
@@ -967,6 +988,63 @@
 
     </div>
 
+    
+    <!-- MODAL GESTIÓN DE CANCELACIÓN, PÉRDIDA DE ENVÍO & COMENTARIOS -->
+    <div id="modal-order-loss" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="max-w-lg w-full bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl relative space-y-4">
+            <div class="flex justify-between items-center pb-3 border-b border-slate-800">
+                <h3 class="font-bold text-white text-base flex items-center gap-2">
+                    <i class="fa-solid fa-triangle-exclamation text-rose-400"></i>
+                    <span>Gestionar Estado & Pérdida de Envío</span>
+                </h3>
+                <button onclick="closeOrderLossModal()" class="text-slate-400 hover:text-white text-sm p-1">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div>
+                <div class="text-xs text-slate-400" id="loss-modal-order-info">Pedido: Mario Escobar</div>
+            </div>
+
+            <form id="form-order-loss" onsubmit="saveOrderLossState(event)" class="space-y-4">
+                <input type="hidden" id="loss-order-id">
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1.5">Estado de la Entrega:</label>
+                    <select id="loss-select-status" onchange="handleLossStatusChange(this.value)" class="w-full bg-slate-950 text-white text-xs rounded-xl p-3 border border-slate-800 focus:outline-none focus:border-rose-500">
+                        <option value="normal">🟢 Pedido Normal / Pendiente de Entrega</option>
+                        <option value="cancelado_sin_perdida">⚪ Cancelado SIN Pérdida (Se canceló antes de que vaya la moto - $0 cadete)</option>
+                        <option value="cancelado_con_perdida">🔴 Cancelado CON Pérdida de Envío (Cadete fue y cobra 1 viaje completo)</option>
+                        <option value="doble_envio_perdida">🔴 Doble Pérdida de Envío (Cadete fue 2 veces y ambas cancelaron)</option>
+                        <option value="doble_envio_entregado">🔄 Entregado con Doble Envío (Se entregó en 2do intento, negocio paga 2 viajes)</option>
+                    </select>
+                </div>
+
+                <div id="wrap-loss-details" class="space-y-3 p-3.5 bg-rose-950/20 border border-rose-900/40 rounded-2xl">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-rose-300 font-bold">Costo de Cadete a pagar por la pérdida:</span>
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-xs text-slate-400">$</span>
+                            <input type="number" id="loss-input-amount" placeholder="6300" class="w-28 bg-slate-950 text-rose-300 font-bold text-xs rounded-lg px-2.5 py-1.5 border border-rose-800 text-right focus:outline-none">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-rose-300 mb-1">
+                            💬 Motivo / Comentario de lo que pasó (para análisis de datos y mejoras):
+                        </label>
+                        <textarea id="loss-input-comment" rows="3" placeholder="Ej: Mario Escobar canceló en la puerta cuando llegó la moto. Dijo que no estaba en la casa / Rechazó el paquete..." class="w-full bg-slate-950 text-white text-xs rounded-xl p-3 border border-rose-900/60 focus:outline-none focus:border-rose-500"></textarea>
+                    </div>
+                </div>
+
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeOrderLossModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold">Cancelar</button>
+                    <button type="submit" class="px-5 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-bold shadow">Guardar Estado</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- MODAL CREAR / EDITAR CLIENTE -->
     <div id="modal-user" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
         <div class="max-w-md w-full bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl relative">
@@ -1305,11 +1383,18 @@
             return { cost: 4000, zone: 'AMBA ($4.000)' };
         }
 
+        let orderLosses = JSON.parse(localStorage.getItem('croc_order_losses') || '{}');
+
         function calculateOrderProfitability(order, storeKey = currentDispatchStore) {
-            if (!order) return { subtotal: 0, total: 0, estimatedCost: 0, cadeteCost: 0, cadeteZone: '', netProfit: 0, profitMarginPct: '0.0' };
+            if (!order) return { subtotal: 0, total: 0, estimatedCost: 0, cadeteCost: 0, cadeteZone: '', netProfit: 0, profitMarginPct: '0.0', isCancelled: false, isLoss: false };
             const total = parseMonto(order.total);
             const subtotal = parseMonto(order.subtotal) || total;
             const envioCobrado = parseMonto(order.costo_envio);
+
+            // Obtener estado de pérdida si existe
+            const lossData = orderLosses[order.id] || {};
+            const estadoEntrega = lossData.status || order.estado_entrega || 'normal';
+            const motivoPerdida = lossData.comment || order.motivo_perdida || '';
 
             // 1. Costo Fábrica / Mercadería Exacto según Precios Bross / Precios JC
             let estimatedCost = 0;
@@ -1329,7 +1414,6 @@
             let { cost: baseCadeteCost, zone: cadeteZone } = matchDeliveryCadeteCost(order.direccion, order.costo_envio);
             let cadeteCost = baseCadeteCost;
 
-            // Override manual de cadete
             if (order.tipoEntrega === 'punto_encuentro') {
                 cadeteCost = 0;
                 cadeteZone = 'Punto de Encuentro ($0)';
@@ -1339,26 +1423,69 @@
             }
 
             // 2da Entrega / Reintento a cargo del negocio
-            const isSegundaEntrega = order.segundaEntrega || order.intentosCadete === 2;
+            const isSegundaEntrega = order.segundaEntrega || order.intentosCadete === 2 || estadoEntrega === 'doble_envio_entregado' || estadoEntrega === 'doble_envio_perdida';
             if (isSegundaEntrega && cadeteCost > 0) {
                 cadeteCost = cadeteCost * 2;
                 cadeteZone = `🔄 2da Entrega (Doble Moto: $${cadeteCost.toLocaleString('es-AR')})`;
             }
 
-            // 3. Ganancia Neta Real = Total Cobrado - Costo Fábrica - Costo Cadete Real
-            const netProfit = total - estimatedCost - cadeteCost;
-            const profitMarginPct = total > 0 ? ((netProfit / total) * 100).toFixed(1) : '0.0';
+            // Override manual de pérdida ingresado en modal
+            if (lossData.cadeteLoss !== undefined && lossData.cadeteLoss > 0) {
+                cadeteCost = lossData.cadeteLoss;
+            }
+
+            // 3. Casos Especiales de Cancelación y Pérdidas:
+            let netProfit = 0;
+            let finalRevenue = total;
+            let isCancelled = false;
+            let isLoss = false;
+
+            if (estadoEntrega === 'cancelado_sin_perdida') {
+                // Se canceló antes de mandar la moto: producto devuelto ($0 costo), moto no fue ($0 cadete), no se cobró nada.
+                finalRevenue = 0;
+                estimatedCost = 0;
+                cadeteCost = 0;
+                netProfit = 0;
+                isCancelled = true;
+                cadeteZone = '⚪ Cancelado Sin Pérdida ($0)';
+            } else if (estadoEntrega === 'cancelado_con_perdida') {
+                // La moto fue y el cliente canceló en puerta: producto devuelto ($0 costo), pero la moto COBRA el viaje completo!
+                finalRevenue = 0;
+                estimatedCost = 0;
+                netProfit = -cadeteCost; // Pérdida directa!
+                isCancelled = true;
+                isLoss = true;
+                cadeteZone = `🔴 Cancelado c/ Pérdida Moto (-$${cadeteCost.toLocaleString('es-AR')})`;
+            } else if (estadoEntrega === 'doble_envio_perdida') {
+                // La moto fue 2 veces y ambas fallaron/cancelaron:
+                finalRevenue = 0;
+                estimatedCost = 0;
+                netProfit = -cadeteCost; // Pérdida doble viaje
+                isCancelled = true;
+                isLoss = true;
+                cadeteZone = `🔴 Doble Envío Cancelado (-$${cadeteCost.toLocaleString('es-AR')})`;
+            } else {
+                // Pedido normal o doble envío entregado
+                netProfit = total - estimatedCost - cadeteCost;
+            }
+
+            const profitMarginPct = finalRevenue > 0 ? ((netProfit / finalRevenue) * 100).toFixed(1) : (netProfit < 0 ? '-100.0' : '0.0');
 
             return {
                 subtotal,
-                total,
+                total: finalRevenue,
+                originalTotal: total,
                 envioCobrado,
                 estimatedCost,
                 cadeteCost,
                 cadeteZone,
                 isSegundaEntrega,
                 netProfit,
-                profitMarginPct: parseFloat(profitMarginPct)
+                profitMarginPct: parseFloat(profitMarginPct),
+                estadoEntrega,
+                motivoPerdida,
+                isCancelled,
+                isLoss
             };
         }
 
@@ -2616,6 +2743,120 @@
         }
 
         
+        
+        /* ====================================================== */
+        /* GESTIÓN DE PÉRDIDAS, CANCELACIONES Y PROGRAMADOS        */
+        /* ====================================================== */
+        let activeLossOrderId = null;
+
+        function openOrderLossModal(orderId) {
+            const order = dispatchOrders.find(o => o.id === orderId);
+            if (!order) return;
+
+            activeLossOrderId = orderId;
+            document.getElementById('loss-order-id').value = orderId;
+            
+            const currentProf = calculateOrderProfitability(order, currentDispatchStore);
+            const lossData = orderLosses[orderId] || {};
+
+            document.getElementById('loss-modal-order-info').innerHTML = `
+                <b>Cliente:</b> ${escapeHTML(order.cliente_nombre)} | <b>Total:</b> ${escapeHTML(order.total)} | <b>Zona Cadete:</b> ${currentProf.cadeteZone}
+            `;
+
+            const selectStatus = document.getElementById('loss-select-status');
+            const defaultStatus = lossData.status || order.estado_entrega || 'normal';
+            selectStatus.value = defaultStatus;
+
+            const inputAmount = document.getElementById('loss-input-amount');
+            const defaultCadeteCost = matchDeliveryCadeteCost(order.direccion, order.costo_envio).cost;
+            inputAmount.value = lossData.cadeteLoss !== undefined ? lossData.cadeteLoss : defaultCadeteCost;
+
+            const inputComment = document.getElementById('loss-input-comment');
+            inputComment.value = lossData.comment || order.motivo_perdida || '';
+
+            handleLossStatusChange(defaultStatus);
+            document.getElementById('modal-order-loss').classList.remove('hidden');
+        }
+
+        function closeOrderLossModal() {
+            document.getElementById('modal-order-loss').classList.add('hidden');
+            activeLossOrderId = null;
+        }
+
+        function handleLossStatusChange(status) {
+            const wrap = document.getElementById('wrap-loss-details');
+            const inputAmount = document.getElementById('loss-input-amount');
+            const order = dispatchOrders.find(o => o.id === activeLossOrderId);
+            const baseCadete = order ? matchDeliveryCadeteCost(order.direccion, order.costo_envio).cost : 4000;
+
+            if (status === 'cancelado_con_perdida') {
+                wrap.style.display = 'block';
+                inputAmount.value = baseCadete;
+            } else if (status === 'doble_envio_perdida' || status === 'doble_envio_entregado') {
+                wrap.style.display = 'block';
+                inputAmount.value = baseCadete * 2;
+            } else if (status === 'cancelado_sin_perdida') {
+                wrap.style.display = 'block';
+                inputAmount.value = 0;
+            } else {
+                wrap.style.display = 'none';
+            }
+        }
+
+        function saveOrderLossState(e) {
+            e.preventDefault();
+            const orderId = document.getElementById('loss-order-id').value;
+            const status = document.getElementById('loss-select-status').value;
+            const cadeteLoss = parseFloat(document.getElementById('loss-input-amount').value) || 0;
+            const comment = document.getElementById('loss-input-comment').value.trim();
+
+            if ((status === 'cancelado_con_perdida' || status === 'doble_envio_perdida') && !comment) {
+                alert('Por favor describe brevemente qué pasó en la casilla de motivo para que quede registrado en los datos.');
+                return;
+            }
+
+            if (status === 'normal') {
+                delete orderLosses[orderId];
+            } else {
+                orderLosses[orderId] = {
+                    status: status,
+                    cadeteLoss: cadeteLoss,
+                    comment: comment,
+                    timestamp: new Date().toISOString()
+                };
+            }
+
+            localStorage.setItem('croc_order_losses', JSON.stringify(orderLosses));
+
+            // Actualizar en memoria
+            dispatchOrders = dispatchOrders.map(o => {
+                if (o.id === orderId) {
+                    return {
+                        ...o,
+                        estado_entrega: status,
+                        motivo_perdida: comment
+                    };
+                }
+                return o;
+            });
+
+            closeOrderLossModal();
+            renderDispatchDashboard();
+        }
+
+        function promptSetScheduledDate(orderId) {
+            const order = dispatchOrders.find(o => o.id === orderId);
+            if (!order) return;
+            const curDate = order.fecha_programada || '';
+            const newDate = prompt(`Programar fecha de entrega para ${order.cliente_nombre}:\n(Formato: YYYY-MM-DD, ej: 2026-09-24)`, curDate);
+            if (newDate !== null) {
+                order.fecha_programada = newDate.trim();
+                editedOrders[orderId] = { ...(editedOrders[orderId] || {}), fecha_programada: newDate.trim() };
+                localStorage.setItem('croc_edited_orders', JSON.stringify(editedOrders));
+                renderDispatchDashboard();
+            }
+        }
+
         /* ====================================================== */
         /* MANUAL ORDER CREATION, IMAGE EXPORT & DELETION LOGIC   */
         /* ====================================================== */
@@ -2643,6 +2884,9 @@
 
             const elDelAtt = document.getElementById('eo-delivery-attempts');
             if (elDelAtt) elDelAtt.value = (order.segundaEntrega || order.intentosCadete === 2) ? '2' : '1';
+
+            const elSchedDate = document.getElementById('eo-scheduled-date');
+            if (elSchedDate) elSchedDate.value = order.fecha_programada || '';
             document.getElementById('eo-subtotal').value = order.subtotal || '';
             document.getElementById('eo-total').value = order.total || '';
             
@@ -2680,6 +2924,8 @@
             const deliveryType = document.getElementById('eo-delivery-type')?.value || 'cadete';
             const attempts = parseInt(document.getElementById('eo-delivery-attempts')?.value || '1', 10);
 
+            const scheduledDate = document.getElementById('eo-scheduled-date')?.value || '';
+
             const changes = {
                 cliente_nombre: name,
                 celular: phone,
@@ -2689,6 +2935,7 @@
                 tipoEntrega: deliveryType,
                 intentosCadete: attempts,
                 segundaEntrega: attempts === 2,
+                fecha_programada: scheduledDate,
                 detalles: products,
                 subtotal: subtotal || total,
                 total: total,
@@ -3485,9 +3732,20 @@
 
             const todayBatch = [];
             const tomorrowBatch = [];
+            const scheduledBatch = [];
             const historyBatch = [...orders];
 
+            const nowDate = new Date();
+            const todayStr = nowDate.toISOString().slice(0, 10);
+
             orders.forEach(order => {
+                // 1. Si tiene fecha programada futura (ej. 24 o 25)
+                if (order.fecha_programada && order.fecha_programada > todayStr) {
+                    scheduledBatch.push(order);
+                    return; // No mezclar con el lote de hoy ni de mañana
+                }
+
+                // 2. Lógica normal por horario de corte 12:00 hs
                 const orderDate = new Date(order.fecha_hora);
                 if (orderDate >= currentBatchStart && orderDate < currentBatchEnd) {
                     todayBatch.push(order);
@@ -3496,12 +3754,11 @@
                 }
             });
 
-            // If todayBatch has few items or after 13hs corte, make sure today's latest orders are also visible in the active batch
-            const nowDate = new Date();
-            const nowDay = nowDate.toISOString().slice(0, 10);
+            // If todayBatch has few items or after 12hs corte, make sure today's latest non-scheduled orders are visible in todayBatch
             orders.forEach(order => {
+                if (order.fecha_programada && order.fecha_programada > todayStr) return;
                 const oDate = new Date(order.fecha_hora);
-                if (oDate.toISOString().slice(0, 10) === nowDay) {
+                if (oDate.toISOString().slice(0, 10) === todayStr) {
                     if (!todayBatch.some(o => o.id === order.id)) {
                         todayBatch.unshift(order);
                     }
@@ -3509,15 +3766,15 @@
             });
 
             if (todayBatch.length === 0 && orders.length > 0) {
-                return { todayBatch: orders.slice(0, 15), tomorrowBatch, historyBatch };
+                return { todayBatch: orders.filter(o => !(o.fecha_programada && o.fecha_programada > todayStr)).slice(0, 15), tomorrowBatch, scheduledBatch, historyBatch };
             }
 
-            return { todayBatch, tomorrowBatch, historyBatch };
+            return { todayBatch, tomorrowBatch, scheduledBatch, historyBatch };
         }
 
         function switchDispatchTab(tab) {
             currentDispatchTab = tab;
-            ['today', 'tomorrow', 'history'].forEach(t => {
+            ['today', 'tomorrow', 'scheduled', 'history'].forEach(t => {
                 const card = document.getElementById(`tab-${t}-card`);
                 if (card) {
                     if (t === tab) {
@@ -3537,22 +3794,28 @@
         }
 
         function renderDispatchDashboard() {
-            const { todayBatch, tomorrowBatch, historyBatch } = categorizeDispatchOrders(dispatchOrders);
+            const { todayBatch, tomorrowBatch, scheduledBatch, historyBatch } = categorizeDispatchOrders(dispatchOrders);
 
             document.getElementById('badge-today').innerText = todayBatch.length;
             document.getElementById('badge-tomorrow').innerText = tomorrowBatch.length;
+            const elBadgeSched = document.getElementById('badge-scheduled');
+            if (elBadgeSched) elBadgeSched.innerText = (scheduledBatch || []).length;
             document.getElementById('badge-history').innerText = historyBatch.length;
 
-            const sumToday = todayBatch.reduce((acc, o) => acc + parseMonto(o.total), 0);
-            const sumTomorrow = tomorrowBatch.reduce((acc, o) => acc + parseMonto(o.total), 0);
-            const sumHistory = historyBatch.reduce((acc, o) => acc + parseMonto(o.total), 0);
+            const sumToday = todayBatch.reduce((acc, o) => acc + calculateOrderProfitability(o, currentDispatchStore).total, 0);
+            const sumTomorrow = tomorrowBatch.reduce((acc, o) => acc + calculateOrderProfitability(o, currentDispatchStore).total, 0);
+            const sumScheduled = (scheduledBatch || []).reduce((acc, o) => acc + calculateOrderProfitability(o, currentDispatchStore).total, 0);
+            const sumHistory = historyBatch.reduce((acc, o) => acc + calculateOrderProfitability(o, currentDispatchStore).total, 0);
 
             const profitToday = todayBatch.reduce((acc, o) => acc + calculateOrderProfitability(o, currentDispatchStore).netProfit, 0);
             const profitTomorrow = tomorrowBatch.reduce((acc, o) => acc + calculateOrderProfitability(o, currentDispatchStore).netProfit, 0);
+            const profitScheduled = (scheduledBatch || []).reduce((acc, o) => acc + calculateOrderProfitability(o, currentDispatchStore).netProfit, 0);
             const profitHistory = historyBatch.reduce((acc, o) => acc + calculateOrderProfitability(o, currentDispatchStore).netProfit, 0);
 
             document.getElementById('total-today').innerText = `$${sumToday.toLocaleString('es-AR')}`;
             document.getElementById('total-tomorrow').innerText = `$${sumTomorrow.toLocaleString('es-AR')}`;
+            const elTotSched = document.getElementById('total-scheduled');
+            if (elTotSched) elTotSched.innerText = `$${sumScheduled.toLocaleString('es-AR')}`;
             document.getElementById('total-history').innerText = `$${sumHistory.toLocaleString('es-AR')}`;
 
             const elProfitToday = document.getElementById('profit-today');
@@ -3561,14 +3824,46 @@
             const elProfitTomorrow = document.getElementById('profit-tomorrow');
             if (elProfitTomorrow) elProfitTomorrow.innerHTML = `<i class="fa-solid fa-hand-holding-dollar"></i> Ganancia: <b class="text-white">$${profitTomorrow.toLocaleString('es-AR')}</b>`;
 
+            const elProfitSched = document.getElementById('profit-scheduled');
+            if (elProfitSched) elProfitSched.innerHTML = `<i class="fa-solid fa-hand-holding-dollar"></i> Ganancia: <b class="text-white">$${profitScheduled.toLocaleString('es-AR')}</b>`;
+
             const elProfitHistory = document.getElementById('profit-history');
             if (elProfitHistory) elProfitHistory.innerHTML = `<i class="fa-solid fa-hand-holding-dollar"></i> Ganancia: <b class="text-white">$${profitHistory.toLocaleString('es-AR')}</b>`;
 
             // Active Tab Totals for Banner
             const activeBatch = getActiveDispatchList();
-            const activeRevenue = activeBatch.reduce((acc, o) => acc + parseMonto(o.total), 0);
+            const activeRevenue = activeBatch.reduce((acc, o) => acc + calculateOrderProfitability(o, currentDispatchStore).total, 0);
             const activeCost = activeBatch.reduce((acc, o) => acc + calculateOrderProfitability(o, currentDispatchStore).estimatedCost, 0);
-            const activeProfit = activeBatch.reduce((acc, o) => acc + calculateOrderProfitability(o, currentDispatchStore).netProfit, 0);
+            const activeCadete = activeBatch.reduce((acc, o) => {
+                const p = calculateOrderProfitability(o, currentDispatchStore);
+                return acc + (p.isCancelled ? 0 : p.cadeteCost);
+            }, 0);
+
+            // Pérdidas por cancelaciones o envíos fallidos
+            const activeLosses = activeBatch.reduce((acc, o) => {
+                const p = calculateOrderProfitability(o, currentDispatchStore);
+                return acc + (p.isLoss ? p.cadeteCost : 0);
+            }, 0);
+
+            // Ganancia Operativa antes de Ads
+            const activeOperativeProfit = activeBatch.reduce((acc, o) => acc + calculateOrderProfitability(o, currentDispatchStore).netProfit, 0);
+
+            // Gasto en Ads: si no hay gasto hoy, tomar el último registrado en la hoja
+            if (!currentAdsSpend && liveAdsExpenses && liveAdsExpenses.length > 0) {
+                const targetStore = (currentDispatchStore || 'nnn').toLowerCase();
+                const matched = liveAdsExpenses.filter(e => e.tienda.includes(targetStore));
+                if (matched.length > 0) {
+                    currentAdsSpend = matched[matched.length - 1].inversion;
+                }
+            }
+
+            const cleanPocketProfit = activeOperativeProfit - currentAdsSpend;
+            const roas = currentAdsSpend > 0 ? (activeRevenue / currentAdsSpend).toFixed(1) : '0.0';
+            const cpa = (currentAdsSpend > 0 && activeBatch.length > 0) ? Math.round(currentAdsSpend / activeBatch.length) : 0;
+            const cleanMarginPct = activeRevenue > 0 ? ((cleanPocketProfit / activeRevenue) * 100).toFixed(1) : '0.0';
+
+            const elInputAds = document.getElementById('input-ads-spend');
+            if (elInputAds && document.activeElement !== elInputAds) elInputAds.value = currentAdsSpend || '';
 
             const elBannerRev = document.getElementById('banner-revenue');
             if (elBannerRev) elBannerRev.innerText = `$${activeRevenue.toLocaleString('es-AR')}`;
@@ -3576,20 +3871,38 @@
             const elBannerCost = document.getElementById('banner-cost');
             if (elBannerCost) elBannerCost.innerText = `$${activeCost.toLocaleString('es-AR')}`;
 
-            const activeCadete = activeBatch.reduce((acc, o) => acc + calculateOrderProfitability(o, currentDispatchStore).cadeteCost, 0);
             const elBannerCadete = document.getElementById('banner-cadete');
             if (elBannerCadete) elBannerCadete.innerText = `$${activeCadete.toLocaleString('es-AR')}`;
 
+            const elBannerLosses = document.getElementById('banner-losses');
+            if (elBannerLosses) elBannerLosses.innerText = activeLosses > 0 ? `-$${activeLosses.toLocaleString('es-AR')}` : '$0';
+
+            const elBannerAds = document.getElementById('banner-ads-display');
+            if (elBannerAds) elBannerAds.innerText = `-$${currentAdsSpend.toLocaleString('es-AR')}`;
+
             const elBannerProfit = document.getElementById('banner-profit');
-            if (elBannerProfit) elBannerProfit.innerText = `+$${activeProfit.toLocaleString('es-AR')}`;
+            if (elBannerProfit) {
+                elBannerProfit.innerText = cleanPocketProfit >= 0 ? `+$${cleanPocketProfit.toLocaleString('es-AR')}` : `-$${Math.abs(cleanPocketProfit).toLocaleString('es-AR')}`;
+                elBannerProfit.className = cleanPocketProfit >= 0 ? "text-base sm:text-lg font-black text-emerald-300 mt-0.5" : "text-base sm:text-lg font-black text-rose-300 mt-0.5";
+            }
+
+            const elRoas = document.getElementById('banner-roas');
+            if (elRoas) elRoas.innerText = `${roas}x`;
+
+            const elCpa = document.getElementById('banner-cpa');
+            if (elCpa) elCpa.innerText = `$${cpa.toLocaleString('es-AR')}`;
+
+            const elCleanMargin = document.getElementById('banner-clean-margin');
+            if (elCleanMargin) elCleanMargin.innerText = `${cleanMarginPct}%`;
 
             renderDispatchList();
         }
 
         function getActiveDispatchList() {
-            const { todayBatch, tomorrowBatch, historyBatch } = categorizeDispatchOrders(dispatchOrders);
+            const { todayBatch, tomorrowBatch, scheduledBatch, historyBatch } = categorizeDispatchOrders(dispatchOrders);
             if (currentDispatchTab === 'today') return todayBatch;
             if (currentDispatchTab === 'tomorrow') return tomorrowBatch;
+            if (currentDispatchTab === 'scheduled') return scheduledBatch || [];
             return historyBatch;
         }
 
@@ -3611,6 +3924,7 @@
                 const dateStr = new Date(order.fecha_hora).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) + ' hs';
                 const isImpreso = printedOrderIds.includes(order.id);
                 const isTransfer = order.metodo_pago.toLowerCase().includes('transf');
+                const prof = calculateOrderProfitability(order, currentDispatchStore);
                 
                 return `
                 <div class="p-4 md:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 hover:bg-slate-800/30 transition">
@@ -3627,6 +3941,9 @@
                             <span class="text-xs px-2 py-0.5 rounded font-bold ${isTransfer ? 'bg-sky-500/20 text-sky-300 border border-sky-500/30' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'}">
                                 ${isTransfer ? '💳 Transferencia' : '💵 Efectivo'}
                             </span>
+                            ${order.fecha_programada ? `<span class="text-xs px-2 py-0.5 rounded-full font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30 flex items-center gap-1"><i class="fa-solid fa-calendar-day"></i> Programado: ${order.fecha_programada}</span>` : ''}
+                            ${prof.isLoss ? `<span class="text-xs px-2 py-0.5 rounded-full font-black bg-rose-500/20 text-rose-300 border border-rose-500/40">🔴 PÉRDIDA CADETE</span>` : ''}
+                            ${(prof.isCancelled && !prof.isLoss) ? `<span class="text-xs px-2 py-0.5 rounded-full font-bold bg-slate-800 text-slate-400 border border-slate-700">⚪ CANCELADO</span>` : ''}
                             ${(order.isEdited || editedOrders[order.id]) ? '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">✏️ Editado</span>' : ''}
 
                             <span class="text-xs text-slate-500">${new Date(order.fecha_hora).toLocaleDateString('es-AR')} ${dateStr}</span>
@@ -3656,26 +3973,53 @@
                             </div>
                         </div>
 
-                        <!-- DESGLOSE FINANCIERO: COSTO FÁBRICA, CADETE & GANANCIA NETA DEL PEDIDO -->
+                        <!-- DESGLOSE FINANCIERO: COSTO FÁBRICA, CADETE, PÉRDIDAS & GANANCIA NETA -->
                         <div class="flex items-center gap-2 pt-2 border-t border-slate-800/80 mt-2 flex-wrap text-xs">
-                            <span class="text-slate-400">Fábrica: <b class="text-rose-400 font-bold">$${calculateOrderProfitability(order, currentDispatchStore).estimatedCost.toLocaleString('es-AR')}</b></span>
+                            <span class="text-slate-400">Fábrica: <b class="${prof.isCancelled ? 'line-through text-slate-500' : 'text-rose-400 font-bold'}">$${prof.estimatedCost.toLocaleString('es-AR')}</b></span>
                             <span class="text-slate-600">•</span>
-                            <span class="text-slate-400">Cadete: <b class="text-amber-400 font-bold">$${calculateOrderProfitability(order, currentDispatchStore).cadeteCost.toLocaleString('es-AR')}</b> <span class="text-[10px] text-slate-500">(${calculateOrderProfitability(order, currentDispatchStore).cadeteZone})</span></span>
+                            <span class="text-slate-400">Cadete: <b class="text-amber-400 font-bold">$${prof.cadeteCost.toLocaleString('es-AR')}</b> <span class="text-[10px] text-slate-500">(${prof.cadeteZone})</span></span>
                             <span class="text-slate-600">•</span>
-                            <span class="bg-emerald-500/20 text-emerald-300 font-black px-2 py-0.5 rounded-lg border border-emerald-500/40 flex items-center gap-1">
-                                <i class="fa-solid fa-hand-holding-dollar"></i> Ganancia: +$${calculateOrderProfitability(order, currentDispatchStore).netProfit.toLocaleString('es-AR')} (${calculateOrderProfitability(order, currentDispatchStore).profitMarginPct}%)
-                            </span>
+                            ${prof.netProfit >= 0 ? `
+                                <span class="bg-emerald-500/20 text-emerald-300 font-black px-2 py-0.5 rounded-lg border border-emerald-500/40 flex items-center gap-1">
+                                    <i class="fa-solid fa-hand-holding-dollar"></i> Ganancia: +$${prof.netProfit.toLocaleString('es-AR')} (${prof.profitMarginPct}%)
+                                </span>
+                            ` : `
+                                <span class="bg-rose-500/20 text-rose-300 font-black px-2 py-0.5 rounded-lg border border-rose-500/40 flex items-center gap-1">
+                                    <i class="fa-solid fa-triangle-exclamation"></i> Pérdida Neta: -$${Math.abs(prof.netProfit).toLocaleString('es-AR')}
+                                </span>
+                            `}
                         </div>
+                        ${prof.motivoPerdida ? `
+                            <div class="text-xs text-rose-300/90 bg-rose-950/30 p-2 rounded-xl border border-rose-900/50 mt-2 flex items-start gap-2">
+                                <i class="fa-solid fa-circle-exclamation text-rose-400 mt-0.5"></i>
+                                <div>
+                                    <b class="text-rose-200">Motivo / Problema Registrado:</b> ${escapeHTML(prof.motivoPerdida)}
+                                </div>
+                            </div>
+                        ` : ''}
                     </div>
 
                     <div class="flex md:flex-col items-end justify-between w-full md:w-auto gap-3 pt-3 md:pt-0 border-t md:border-t-0 border-slate-800">
                         <div class="text-left md:text-right">
-                            <div class="text-xs text-slate-400 font-semibold uppercase">Total a Cobrar</div>
-                            <div class="text-xl font-black text-white">
-                                ${escapeHTML(order.total)}
-                            </div>
+                            <div class="text-xs text-slate-400 font-semibold uppercase">${prof.isCancelled ? 'Estado Venta' : 'Total a Cobrar'}</div>
+                            ${prof.isCancelled ? `
+                                <div>
+                                    <s class="text-slate-500 text-xs">${escapeHTML(order.total)}</s>
+                                    <div class="text-base font-black text-rose-400">CANCELADO</div>
+                                </div>
+                            ` : `
+                                <div class="text-xl font-black text-white">
+                                    ${escapeHTML(order.total)}
+                                </div>
+                            `}
                         </div>
                         <div class="flex items-center gap-1.5 flex-wrap justify-end">
+                            <button onclick="openOrderLossModal('${order.id}')" class="px-2.5 py-2 ${prof.isLoss ? 'bg-rose-600/30 border-rose-500/60 text-rose-300' : 'bg-slate-800 hover:bg-slate-700 text-slate-300'} rounded-xl text-xs font-bold flex items-center gap-1.5 transition border border-slate-700" title="Registrar Pérdida / Cancelación">
+                                <i class="fa-solid fa-triangle-exclamation ${prof.isLoss ? 'text-rose-400' : 'text-amber-400'}"></i> ${prof.isLoss ? 'Pérdida' : 'Pérdida/Canc'}
+                            </button>
+                            <button onclick="promptSetScheduledDate('${order.id}')" class="px-2.5 py-2 ${order.fecha_programada ? 'bg-purple-600/30 border-purple-500/50 text-purple-300' : 'bg-slate-800 hover:bg-slate-700 text-slate-300'} rounded-xl text-xs font-bold flex items-center gap-1.5 transition border border-slate-700" title="Programar fecha futura">
+                                <i class="fa-solid fa-calendar-day text-purple-400"></i> ${order.fecha_programada ? 'Fecha' : 'Programar'}
+                            </button>
                             <button onclick="openEditOrderModal('${order.id}')" class="px-3 py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded-xl text-xs font-bold flex items-center gap-1.5 transition border border-amber-500/30" title="Editar datos del pedido">
                                 <i class="fa-solid fa-pen"></i> Editar
                             </button>
@@ -4752,6 +5096,17 @@
                 </div>
 
                 <!-- SELECTOR DE LOGÍSTICA & SEGUNDA ENTREGA MANUAL -->
+                <!-- FECHA DE ENTREGA PROGRAMADA (Ej: 24 o 25) -->
+                <div class="p-3.5 bg-purple-950/30 rounded-xl border border-purple-900/50 space-y-2">
+                    <label class="block text-xs font-bold text-purple-300 flex items-center gap-1.5">
+                        <i class="fa-solid fa-calendar-day"></i> Fecha de Entrega Programada (Opcional):
+                    </label>
+                    <div class="flex items-center gap-3">
+                        <input type="date" id="mo-scheduled-date" class="bg-slate-950 text-white text-xs rounded-xl px-3 py-2 border border-purple-800 focus:outline-none focus:border-purple-500">
+                        <span class="text-[11px] text-slate-400">Dejar vacío para despacho inmediato según corte de las 12hs</span>
+                    </div>
+                </div>
+
                 <div class="p-3.5 bg-slate-950/80 rounded-xl border border-slate-800 space-y-2.5">
                     <label class="block text-xs font-bold text-indigo-400">🛵 Configuración de Cadetería / Logística Real</label>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -4858,6 +5213,17 @@
                 </div>
 
                 <!-- SELECTOR DE LOGÍSTICA & SEGUNDA ENTREGA -->
+                <!-- FECHA DE ENTREGA PROGRAMADA (Ej: 24 o 25) -->
+                <div class="p-3.5 bg-purple-950/30 rounded-xl border border-purple-900/50 space-y-2">
+                    <label class="block text-xs font-bold text-purple-300 flex items-center gap-1.5">
+                        <i class="fa-solid fa-calendar-day"></i> Fecha de Entrega Programada (Opcional - Ej: 24 o 25):
+                    </label>
+                    <div class="flex items-center gap-3">
+                        <input type="date" id="eo-scheduled-date" class="bg-slate-950 text-white text-xs rounded-xl px-3 py-2 border border-purple-800 focus:outline-none focus:border-purple-500">
+                        <span class="text-[11px] text-slate-400">Si se programa para fecha futura, irá a la pestaña "Programados"</span>
+                    </div>
+                </div>
+
                 <div class="p-3.5 bg-slate-950/80 rounded-xl border border-slate-800 space-y-2.5">
                     <label class="block text-xs font-bold text-amber-400">🛵 Configuración de Cadetería / Logística Real</label>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
