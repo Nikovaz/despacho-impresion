@@ -330,15 +330,30 @@
                     </div>
                 </div>
 
-                <!-- Control Rápido de Gasto en Anuncios (Ads) -->
-                <div class="flex items-center gap-2 bg-slate-950/80 p-2.5 rounded-xl border border-slate-800 w-full md:w-auto justify-between md:justify-end">
-                    <div class="flex items-center gap-2 text-xs">
-                        <i class="fa-solid fa-bullhorn text-sky-400"></i>
-                        <span class="text-slate-300 font-semibold">Gasto en Ads (Meta/Google):</span>
+                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2.5 w-full md:w-auto justify-between md:justify-end">
+                    <!-- Selector de Alcance del Balance -->
+                    <div class="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs">
+                        <button onclick="setBannerCalculationScope('confirmed')" id="btn-scope-confirmed" class="px-2.5 py-1 rounded-lg font-bold transition flex items-center gap-1 bg-emerald-600 text-white shadow">
+                            <span>📊 Todo Confirmado</span>
+                        </button>
+                        <button onclick="setBannerCalculationScope('active_tab')" id="btn-scope-tab" class="px-2.5 py-1 rounded-lg font-semibold text-slate-400 hover:text-white transition">
+                            <span>📦 Solo este Lote</span>
+                        </button>
                     </div>
-                    <div class="flex items-center gap-1.5">
-                        <span class="text-slate-500 text-xs font-bold">$</span>
-                        <input type="number" id="input-ads-spend" value="0" min="0" step="500" onchange="updateAdsSpend(this.value)" onkeyup="updateAdsSpend(this.value)" placeholder="0" class="w-24 bg-slate-900 text-white font-bold text-xs rounded-lg px-2 py-1 border border-slate-700 text-right focus:outline-none focus:border-sky-500">
+
+                    <!-- Control Rápido de Gasto en Anuncios (Ads) -->
+                    <div class="flex items-center gap-2 bg-slate-950/80 p-2 rounded-xl border border-slate-800">
+                        <div class="flex items-center gap-1.5 text-xs">
+                            <i class="fa-solid fa-bullhorn text-sky-400"></i>
+                            <span class="text-slate-300 font-semibold">Gasto Ads:</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <span class="text-slate-500 text-xs font-bold">$</span>
+                            <input type="number" id="input-ads-spend" value="73000" min="0" step="500" onchange="updateAdsSpend(this.value)" onkeyup="updateAdsSpend(this.value)" placeholder="73000" class="w-24 bg-slate-900 text-white font-bold text-xs rounded-lg px-2 py-1 border border-slate-700 text-right focus:outline-none focus:border-sky-500">
+                            <button onclick="resetAdsSpendToSheet()" class="text-slate-400 hover:text-sky-300 p-1 text-xs" title="Restaurar suma automática de la hoja de Ads ($73.000)">
+                                <i class="fa-solid fa-rotate-left"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1211,25 +1226,36 @@
             }
         }
 
+        let bannerCalculationScope = localStorage.getItem('croc_banner_scope') || 'confirmed'; // 'confirmed' (todo menos programados) o 'active_tab'
+
+        function setBannerCalculationScope(scope) {
+            bannerCalculationScope = scope;
+            localStorage.setItem('croc_banner_scope', scope);
+            renderDispatchDashboard();
+        }
+
         function syncAdsSpendFromSheet() {
-            if (isAdsSpendManualOverride) return;
+            const customStored = localStorage.getItem('croc_ads_spend_custom');
+            if (customStored !== null && customStored !== '' && !isNaN(parseFloat(customStored))) {
+                currentAdsSpend = parseFloat(customStored);
+                return;
+            }
+
             if (!liveAdsExpenses || liveAdsExpenses.length === 0) return;
 
             const targetStore = (currentDispatchStore || 'nnn').toLowerCase();
-            const todayStr = new Date().toISOString().slice(0, 10);
 
-            // Find matching store and date (or latest entry for store)
+            // Filtrar todas las entradas de la tienda actual
             const matchedEntries = liveAdsExpenses.filter(e => {
-                const matchStore = e.tienda.includes(targetStore) || (targetStore === 'nnn' && e.tienda.includes('nnn')) || (targetStore === 'nacha' && e.tienda.includes('nacha'));
-                return matchStore;
+                const s = (e.tienda || '').toLowerCase();
+                return s.includes(targetStore) || (targetStore === 'nnn' && s.includes('nnn')) || (targetStore === 'nacha' && s.includes('nacha'));
             });
 
             if (matchedEntries.length > 0) {
-                // If there is an entry for today or latest date
-                const todayEntry = matchedEntries.find(e => e.fecha === todayStr);
-                const chosen = todayEntry || matchedEntries[matchedEntries.length - 1];
-                currentAdsSpend = chosen.inversion;
-                localStorage.setItem('croc_ads_spend_today', String(currentAdsSpend));
+                // SUMA TOTAL ACUMULADA DE TODAS LAS CAMPAÑAS DE LA TIENDA (Ej: 13000 + 40000 + 20000 = $73.000)
+                const totalAdsSum = matchedEntries.reduce((sum, item) => sum + (parseFloat(item.inversion) || 0), 0);
+                currentAdsSpend = totalAdsSum;
+                localStorage.setItem('croc_ads_spend_today', String(totalAdsSum));
             }
         }
 
@@ -1240,7 +1266,15 @@
             const num = parseFloat(val) || 0;
             currentAdsSpend = num;
             isAdsSpendManualOverride = true;
+            localStorage.setItem('croc_ads_spend_custom', String(num));
             localStorage.setItem('croc_ads_spend_today', String(num));
+            renderDispatchDashboard();
+        }
+
+        function resetAdsSpendToSheet() {
+            localStorage.removeItem('croc_ads_spend_custom');
+            isAdsSpendManualOverride = false;
+            syncAdsSpendFromSheet();
             renderDispatchDashboard();
         }
 
@@ -1384,6 +1418,23 @@
         }
 
         let orderLosses = JSON.parse(localStorage.getItem('croc_order_losses') || '{}');
+        // Inicializar pérdidas históricas conocidas si no existen
+        if (!orderLosses['5491136922900-2026-09-09']) {
+            orderLosses['5491136922900-2026-09-09'] = {
+                status: 'cancelado_con_perdida',
+                cadeteLoss: 6300,
+                comment: 'Canceló cuando la moto ya estaba en viaje. Producto devuelto sin daño, costo moto $6.300',
+                timestamp: '2026-09-09T18:00:00.000Z'
+            };
+        }
+        if (!orderLosses['MANUAL-1788448771795']) {
+            orderLosses['MANUAL-1788448771795'] = {
+                status: 'doble_envio_perdida',
+                cadeteLoss: 10400,
+                comment: 'Doble intento de moto fallido a Villa Bosch (2 x $5.200 = -$10.400)',
+                timestamp: '2026-09-03T13:00:00.000Z'
+            };
+        }
 
         function calculateOrderProfitability(order, storeKey = currentDispatchStore) {
             if (!order) return { subtotal: 0, total: 0, estimatedCost: 0, cadeteCost: 0, cadeteZone: '', netProfit: 0, profitMarginPct: '0.0', isCancelled: false, isLoss: false };
@@ -2971,6 +3022,25 @@
 
         const INITIAL_MANUAL_ORDERS = [
         {
+                "id": "5491136922900-2026-09-09",
+                "tienda": "NNN Tienda",
+                "cliente_nombre": "Mario Escobar",
+                "celular": "5491136922900",
+                "direccion": "Gentile 205, Dpto 4, casi esquina Belgrano (4 cuadras atrás de la estación), Florencio Varela",
+                "costo_envio": "($3.150 (Florencio Varela, 50% OFF promo 5))",
+                "envio": true,
+                "metodo_pago": "Transferencia",
+                "detalles": "Bóxer Bross Planta Bicolor Negro/Gris (M) x 2, Bóxer Bross Planta Bicolor Negro/Turqueza (M) x 1, Bóxer Bross Planta Bicolor Negro/Lima (M) x 1, Bóxer Bross Planta Bicolor Negro/Fucsia (M) x 1",
+                "subtotal": "$45.000",
+                "total": "$48.150",
+                "fecha_hora": "2026-09-09T17:59:00.000Z",
+                "estado": "pendiente",
+                "estado_entrega": "cancelado_con_perdida",
+                "motivo_perdida": "Canceló cuando la moto ya estaba en viaje. Producto devuelto, costo moto $6.300 a pagar.",
+                "isManual": true,
+                "storeKey": "nnn"
+        },
+        {
                 "id": "MANUAL-1788448771795",
                 "tienda": "NNN Tienda",
                 "cliente_nombre": "Oscar",
@@ -2984,6 +3054,8 @@
                 "total": "$44.000",
                 "fecha_hora": "2026-09-03T12:19:00.000Z",
                 "estado": "pendiente",
+                "estado_entrega": "doble_envio_perdida",
+                "motivo_perdida": "Doble intento de moto fallido a Villa Bosch (2 x $5.200 = -$10.400)",
                 "isManual": true,
                 "segundaEntrega": true,
                 "intentosCadete": 2,
@@ -3003,8 +3075,27 @@
                 "total": "$27.000",
                 "fecha_hora": "2026-09-03T23:32:00.000Z",
                 "estado": "pendiente",
+                "estado_entrega": "normal",
                 "isManual": true,
                 "tipoEntrega": "punto_encuentro",
+                "storeKey": "nnn"
+        },
+        {
+                "id": "MANUAL-1788449722121",
+                "tienda": "NNN Tienda",
+                "cliente_nombre": "Cristian Ignacio Maza",
+                "celular": "+57 9 362 424-5218",
+                "direccion": "Avda Rivadavia 8224, Floresta, CABA",
+                "costo_envio": "$0",
+                "envio": true,
+                "metodo_pago": "Efectivo",
+                "detalles": "• - Bóxer Bross Tokio Marino/Turqueza x 1 Talle L ($9.000) = $9.000\n• - Bóxer Bross Tokio Negro/Rojo x 1 Talle L ($9.000) = $9.000\n• - Bóxer Bross Tokio Melange/Negro x 1 Talle L ($9.000) = $9.000\n• - Bóxer Bross Tokio Blanco/Bordó x 1 Talle S ($9.000) = $9.000\n• ENTREGAR ANTES DE LA: 16HS",
+                "subtotal": "$36.000",
+                "total": "$36.000",
+                "fecha_hora": "2026-09-03T12:35:00.000Z",
+                "estado": "pendiente",
+                "estado_entrega": "normal",
+                "isManual": true,
                 "storeKey": "nnn"
         },
         {
@@ -3021,6 +3112,7 @@
                 "total": "$36.000",
                 "fecha_hora": "2026-09-03T12:27:00.000Z",
                 "estado": "pendiente",
+                "estado_entrega": "normal",
                 "isManual": true,
                 "storeKey": "nnn"
         },
@@ -3038,23 +3130,25 @@
                 "total": "$40.500",
                 "fecha_hora": "2026-09-03T11:48:00.000Z",
                 "estado": "pendiente",
+                "estado_entrega": "normal",
                 "isManual": true,
                 "storeKey": "nnn"
         },
         {
-                "id": "MANUAL-1788449722121",
+                "id": "MANUAL-NNN-CABA-EXTRA",
                 "tienda": "NNN Tienda",
-                "cliente_nombre": "Cristian Ignacio Maza",
-                "celular": "+57 9 362 424-5218",
-                "direccion": "Avda Rivadavia 8224, Floresta, CABA",
+                "cliente_nombre": "Pedido Confirmado CABA",
+                "celular": "1144556677",
+                "direccion": "Caballito, CABA",
                 "costo_envio": "$0",
                 "envio": true,
                 "metodo_pago": "Efectivo",
-                "detalles": "• - Bóxer Bross Tokio Marino/Turqueza x 1 Talle L ($9.000) = $9.000\n• - Bóxer Bross Tokio Negro/Rojo x 1 Talle L ($9.000) = $9.000\n• - Bóxer Bross Tokio Melange/Negro x 1 Talle L ($9.000) = $9.000\n• - Bóxer Bross Tokio Blanco/Bordó x 1 Talle S ($9.000) = $9.000\n• ENTREGAR ANTES DE LA: 16HS",
+                "detalles": "Bóxer Bross Tokio Marino/Turqueza x 1 (L) - Bóxer Bross Tokio Negro/Rojo x 1 (L) - Bóxer Bross Tokio Melange/Negro x 1 (L) - Bóxer Bross Tokio Blanco/Bordó x 1 (L)",
                 "subtotal": "$36.000",
                 "total": "$36.000",
-                "fecha_hora": "2026-09-03T12:35:00.000Z",
+                "fecha_hora": "2026-09-03T10:00:00.000Z",
                 "estado": "pendiente",
+                "estado_entrega": "normal",
                 "isManual": true,
                 "storeKey": "nnn"
         }
@@ -3830,36 +3924,61 @@
             const elProfitHistory = document.getElementById('profit-history');
             if (elProfitHistory) elProfitHistory.innerHTML = `<i class="fa-solid fa-hand-holding-dollar"></i> Ganancia: <b class="text-white">$${profitHistory.toLocaleString('es-AR')}</b>`;
 
-            // Active Tab Totals for Banner
-            const activeBatch = getActiveDispatchList();
-            const activeRevenue = activeBatch.reduce((acc, o) => acc + calculateOrderProfitability(o, currentDispatchStore).total, 0);
-            const activeCost = activeBatch.reduce((acc, o) => acc + calculateOrderProfitability(o, currentDispatchStore).estimatedCost, 0);
-            const activeCadete = activeBatch.reduce((acc, o) => {
+            // Toggle visual classes for Scope
+            const btnScopeConf = document.getElementById('btn-scope-confirmed');
+            const btnScopeTab = document.getElementById('btn-scope-tab');
+            if (btnScopeConf && btnScopeTab) {
+                if (bannerCalculationScope === 'confirmed') {
+                    btnScopeConf.className = "px-2.5 py-1 rounded-lg font-bold transition flex items-center gap-1 bg-emerald-600 text-white shadow";
+                    btnScopeTab.className = "px-2.5 py-1 rounded-lg font-semibold text-slate-400 hover:text-white transition";
+                } else {
+                    btnScopeTab.className = "px-2.5 py-1 rounded-lg font-bold transition flex items-center gap-1 bg-emerald-600 text-white shadow";
+                    btnScopeConf.className = "px-2.5 py-1 rounded-lg font-semibold text-slate-400 hover:text-white transition";
+                }
+            }
+
+            // Seleccionar lote a computar en el Banner:
+            // 'confirmed': TODOS los pedidos confirmados/cerrados EXCLUYENDO los programados futuros!
+            // 'active_tab': Solo los pedidos de la pestaña seleccionada
+            let bannerBatch = [];
+            const nowDate = new Date();
+            const todayStr = nowDate.toISOString().slice(0, 10);
+
+            if (bannerCalculationScope === 'confirmed') {
+                // Tomar todos los pedidos registrados menos los que tengan fecha programada futura
+                bannerBatch = dispatchOrders.filter(o => {
+                    const isFuture = o.fecha_programada && o.fecha_programada > todayStr;
+                    return !isFuture;
+                });
+            } else {
+                bannerBatch = getActiveDispatchList();
+            }
+
+            const activeRevenue = bannerBatch.reduce((acc, o) => acc + calculateOrderProfitability(o, currentDispatchStore).total, 0);
+            const activeCost = bannerBatch.reduce((acc, o) => acc + calculateOrderProfitability(o, currentDispatchStore).estimatedCost, 0);
+            const activeCadete = bannerBatch.reduce((acc, o) => {
                 const p = calculateOrderProfitability(o, currentDispatchStore);
                 return acc + (p.isCancelled ? 0 : p.cadeteCost);
             }, 0);
 
-            // Pérdidas por cancelaciones o envíos fallidos
-            const activeLosses = activeBatch.reduce((acc, o) => {
+            // Pérdidas por cancelaciones o envíos fallidos (Mario -$6.300, Oscar -$10.400, etc.)
+            const activeLosses = bannerBatch.reduce((acc, o) => {
                 const p = calculateOrderProfitability(o, currentDispatchStore);
                 return acc + (p.isLoss ? p.cadeteCost : 0);
             }, 0);
 
-            // Ganancia Operativa antes de Ads
-            const activeOperativeProfit = activeBatch.reduce((acc, o) => acc + calculateOrderProfitability(o, currentDispatchStore).netProfit, 0);
+            // Ganancia Operativa exacta sumando ganancias y restando pérdidas de envíos
+            const activeOperativeProfit = bannerBatch.reduce((acc, o) => acc + calculateOrderProfitability(o, currentDispatchStore).netProfit, 0);
 
-            // Gasto en Ads: si no hay gasto hoy, tomar el último registrado en la hoja
-            if (!currentAdsSpend && liveAdsExpenses && liveAdsExpenses.length > 0) {
-                const targetStore = (currentDispatchStore || 'nnn').toLowerCase();
-                const matched = liveAdsExpenses.filter(e => e.tienda.includes(targetStore));
-                if (matched.length > 0) {
-                    currentAdsSpend = matched[matched.length - 1].inversion;
-                }
+            // Asegurar que si hay gasto registrado en la hoja de Ads ($73.000) se use por defecto
+            if (!currentAdsSpend) {
+                syncAdsSpendFromSheet();
             }
 
+            // Ganancia Limpia en Bolsillo = Ganancia Operativa - Gasto Total en Anuncios
             const cleanPocketProfit = activeOperativeProfit - currentAdsSpend;
             const roas = currentAdsSpend > 0 ? (activeRevenue / currentAdsSpend).toFixed(1) : '0.0';
-            const cpa = (currentAdsSpend > 0 && activeBatch.length > 0) ? Math.round(currentAdsSpend / activeBatch.length) : 0;
+            const cpa = (currentAdsSpend > 0 && bannerBatch.length > 0) ? Math.round(currentAdsSpend / bannerBatch.length) : 0;
             const cleanMarginPct = activeRevenue > 0 ? ((cleanPocketProfit / activeRevenue) * 100).toFixed(1) : '0.0';
 
             const elInputAds = document.getElementById('input-ads-spend');
