@@ -3247,7 +3247,19 @@
 
             const elSchedDate = document.getElementById('eo-scheduled-date');
             if (elSchedDate) elSchedDate.value = order.fecha_programada || '';
-            document.getElementById('eo-subtotal').value = order.subtotal || '';
+
+            const totalNum = parseMonto(order.total);
+            const envioNum = parseMonto(order.costo_envio);
+            const rawSubtotalNum = parseMonto(order.subtotal);
+            const netProductsCharged = Math.max(0, totalNum - envioNum);
+
+            let displaySubtotal = order.subtotal || '';
+            if (!order.isEdited && rawSubtotalNum > netProductsCharged && netProductsCharged > 0) {
+                // Priorizar el valor real con descuento que importa para el despacho
+                displaySubtotal = `$${netProductsCharged.toLocaleString('es-AR')}`;
+            }
+
+            document.getElementById('eo-subtotal').value = displaySubtotal;
             document.getElementById('eo-total').value = order.total || '';
             
             const isTransfer = (order.metodo_pago || '').toLowerCase().includes('transf');
@@ -4395,8 +4407,20 @@
                         </div>
 
                         <div class="text-xs text-slate-400 flex items-center justify-between pt-1 flex-wrap gap-2">
-                            <div class="flex items-center gap-3">
-                                <span>Subtotal: <b class="text-slate-200">${escapeHTML(order.subtotal || '$0')}</b></span>
+                            <div class="flex items-center gap-3 flex-wrap">
+                                <span>Subtotal: ${(() => {
+                                    const tot = parseMonto(order.total);
+                                    const env = parseMonto(order.costo_envio);
+                                    const rawSub = parseMonto(order.subtotal);
+                                    const netProd = Math.max(0, tot - env);
+                                    const hasDisc = rawSub > netProd && netProd > 0;
+                                    if (hasDisc) {
+                                        const discAmt = rawSub - netProd;
+                                        const discPct = Math.round((discAmt / rawSub) * 100);
+                                        return `<s class="text-slate-500 font-normal mr-1">$${rawSub.toLocaleString('es-AR')}</s><b class="text-emerald-400 font-bold">$${netProd.toLocaleString('es-AR')}</b> <span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold text-[10px]">(-$${discAmt.toLocaleString('es-AR')} | ${discPct}% OFF)</span>`;
+                                    }
+                                    return `<b class="text-slate-200">${escapeHTML(order.subtotal || '$' + netProd.toLocaleString('es-AR'))}</b>`;
+                                })()}</span>
                                 <span>Envío: <b class="text-slate-200">${escapeHTML(order.costo_envio)}</b></span>
                             </div>
                             <div class="flex items-center gap-1.5 text-xs">
@@ -4592,10 +4616,26 @@
                         </div>
                     </div>
 
-                    <div style="border-top:1px dashed #000; padding-top:8px; margin-bottom:10px; font-size:14px; display:flex; justify-content:space-between;">
-                        <span>Subtotal Productos: <b>${escapeHTML(order.subtotal || '$0')}</b></span>
-                        <span>Costo Envío: <b>${escapeHTML(order.costo_envio)}</b></span>
-                    </div>
+                    ${(() => {
+                        const tot = parseMonto(order.total);
+                        const env = parseMonto(order.costo_envio);
+                        const rawSub = parseMonto(order.subtotal);
+                        const netProd = Math.max(0, tot - env);
+                        const hasDisc = rawSub > netProd && netProd > 0;
+                        const discAmt = hasDisc ? (rawSub - netProd) : 0;
+                        const discPct = hasDisc ? Math.round((discAmt / rawSub) * 100) : 0;
+                        return `
+                        <div style="border-top:1px dashed #000; padding-top:8px; margin-bottom:8px; font-size:14px; display:flex; justify-content:space-between;">
+                            <span>Subtotal Productos: <b>${hasDisc ? `<s style="color:#666; font-size:12px;">$${rawSub.toLocaleString('es-AR')}</s> $${netProd.toLocaleString('es-AR')}` : escapeHTML(order.subtotal || '$0')}</b></span>
+                            <span>Costo Envío: <b>${escapeHTML(order.costo_envio)}</b></span>
+                        </div>
+                        ${hasDisc ? `
+                        <div style="background:#ecfdf5; border:1px solid #10b981; padding:6px 12px; border-radius:4px; margin-bottom:10px; font-size:13px; font-weight:bold; color:#047857; display:flex; justify-content:space-between; align-items:center;">
+                            <span>DESCUENTO APLICADO (${discPct}% OFF):</span>
+                            <span>-$${discAmt.toLocaleString('es-AR')}</span>
+                        </div>` : ''}
+                        `;
+                    })()}
 
                     <div style="background:#f9fafb; border:1px solid #000; padding:8px 12px; border-radius:4px; margin-bottom:10px; font-size:15px; font-weight:bold; display:flex; justify-content:space-between; align-items:center;">
                         <span>FORMA DE PAGO DECLARADA:</span>
@@ -4666,16 +4706,31 @@
                     </div>
                 </div>
 
-                <div style="border-bottom:1px dashed #000; padding-bottom:6px; margin-bottom:6px; font-size:14px;">
-                    <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
-                        <span>Subtotal:</span>
-                        <span><b>${escapeHTML(order.subtotal || '$0')}</b></span>
-                    </div>
-                    <div style="display:flex; justify-content:space-between;">
-                        <span>Envío:</span>
-                        <span><b>${escapeHTML(order.costo_envio)}</b></span>
-                    </div>
-                </div>
+                ${(() => {
+                    const tot = parseMonto(order.total);
+                    const env = parseMonto(order.costo_envio);
+                    const rawSub = parseMonto(order.subtotal);
+                    const netProd = Math.max(0, tot - env);
+                    const hasDisc = rawSub > netProd && netProd > 0;
+                    const discAmt = hasDisc ? (rawSub - netProd) : 0;
+                    const discPct = hasDisc ? Math.round((discAmt / rawSub) * 100) : 0;
+                    return `
+                    <div style="border-bottom:1px dashed #000; padding-bottom:6px; margin-bottom:6px; font-size:14px;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
+                            <span>Subtotal:</span>
+                            <span>${hasDisc ? `<s style="color:#666; font-size:12px;">$${rawSub.toLocaleString('es-AR')}</s> <b>$${netProd.toLocaleString('es-AR')}</b>` : `<b>${escapeHTML(order.subtotal || '$0')}</b>`}</span>
+                        </div>
+                        ${hasDisc ? `
+                        <div style="display:flex; justify-content:space-between; margin-bottom:2px; font-size:12px; color:#16a34a; font-weight:bold;">
+                            <span>Descuento (${discPct}% OFF):</span>
+                            <span>-$${discAmt.toLocaleString('es-AR')}</span>
+                        </div>` : ''}
+                        <div style="display:flex; justify-content:space-between;">
+                            <span>Envío:</span>
+                            <span><b>${escapeHTML(order.costo_envio)}</b></span>
+                        </div>
+                    </div>`;
+                })()}
 
                 <div style="border-bottom:2px solid #000; padding:6px 0; margin-bottom:6px; font-size:15px; font-weight:900; display:flex; justify-content:space-between; align-items:center;">
                     <span>PAGO:</span>
