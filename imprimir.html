@@ -560,19 +560,54 @@
                 </span>
             </div>
 
+            <!-- BANNER COMPLETO: SALDO ANTERIOR DE LA MOTO (100% VISIBLE Y SIN CORTAR) -->
+            <div id="cadete-prev-debt-banner" class="p-3 sm:p-4 bg-gradient-to-r from-amber-950/40 via-slate-900 to-amber-950/20 border-b border-amber-500/30 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 text-base shrink-0 shadow">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="font-bold text-amber-300 text-xs sm:text-sm">Saldo Pendiente Semana Anterior</span>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">Deuda Moto en Efectivo</span>
+                        </div>
+                        <p class="text-[11px] text-slate-400 mt-0.5">Si la moto te quedó debiendo plata de la liquidación previa, ingresala acá para que sume al saldo a rendir.</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 w-full md:w-auto flex-wrap">
+                    <div class="flex items-center bg-slate-950 px-3 py-1.5 rounded-xl border border-amber-500/50 shadow-inner">
+                        <span class="text-amber-400 text-xs font-bold mr-1.5">$</span>
+                        <input type="number" id="input-prev-debt-amount" step="100" min="0" placeholder="0" 
+                            oninput="setCadetePreviousDebt(currentActiveCadeteCycleKey, this.value)" 
+                            class="w-24 bg-transparent text-amber-300 font-mono font-black text-sm text-right focus:outline-none"
+                            title="Ingresá el monto que la moto te quedó debiendo en efectivo">
+                    </div>
+                    <div class="flex-1 md:w-60">
+                        <input type="text" id="input-prev-debt-notes" placeholder="Aclaración / motivo..." 
+                            onchange="setCadetePreviousDebtNotes(currentActiveCadeteCycleKey, this.value)" 
+                            class="w-full bg-slate-950 text-slate-200 text-xs px-3 py-2 rounded-xl border border-slate-800 focus:border-amber-400 focus:outline-none">
+                    </div>
+                    <button onclick="setCadetePreviousDebt(currentActiveCadeteCycleKey, 0); setCadetePreviousDebtNotes(currentActiveCadeteCycleKey, '');" 
+                        class="p-2 text-slate-400 hover:text-rose-400 rounded-xl bg-slate-950 border border-slate-800 transition" title="Limpiar deuda anterior ($0)">
+                        <i class="fa-solid fa-eraser text-xs"></i>
+                    </button>
+                </div>
+            </div>
+
             <div class="overflow-x-auto max-h-[600px]">
                 <table class="w-full text-left text-xs text-slate-300">
-                    <thead class="bg-slate-950 text-slate-400 uppercase font-semibold sticky top-0 border-b border-slate-800 z-10">
+                    <thead class="bg-slate-950 text-slate-400 uppercase font-semibold sticky top-0 border-b border-slate-800 z-10 text-[11px]">
                         <tr>
-                            <th class="p-3.5 whitespace-nowrap">Fecha</th>
-                            <th class="p-3.5 whitespace-nowrap">Cliente</th>
-                            <th class="p-3.5 min-w-[200px]">Domicilio & Localidad</th>
-                            <th class="p-3.5 text-center whitespace-nowrap">Viajes (Veces)</th>
-                            <th class="p-3.5 text-right whitespace-nowrap">Flete Moto ($)</th>
-                            <th class="p-3.5 text-center min-w-[260px]">Cobro / Opciones de Rendición</th>
-                            <th class="p-3.5 text-right whitespace-nowrap">Efectivo en Mano ($)</th>
-                            <th class="p-3.5 min-w-[140px]">Notas / Aclaraciones</th>
-                            <th class="p-3.5 text-center">Acciones</th>
+                            <th class="py-2.5 px-3 whitespace-nowrap text-center w-14">Fecha</th>
+                            <th class="py-2.5 px-3 whitespace-nowrap">Cliente</th>
+                            <th class="py-2.5 px-3">Domicilio & Localidad</th>
+                            <th class="py-2.5 px-2 text-center whitespace-nowrap w-24">Viajes</th>
+                            <th class="py-2.5 px-2 text-right whitespace-nowrap w-24">Flete Moto</th>
+                            <th class="py-2.5 px-3 text-center whitespace-nowrap w-44">Cobro / Rendición</th>
+                            <th class="py-2.5 px-3 text-right whitespace-nowrap w-28">Efectivo ($)</th>
+                            <th class="py-2.5 px-3 whitespace-nowrap w-36">Notas</th>
+                            <th class="py-2.5 px-2 text-center w-12">Ver</th>
                         </tr>
                     </thead>
                     <tbody id="cadete-table-body" class="divide-y divide-slate-800/60">
@@ -1843,7 +1878,7 @@
             }
 
             // 1er Cordón ($5200)
-            const c1 = ['hurlingham', 'villa bosch', 'bosch', 'caseros', 'ciudadela', 'santos lugares', 'saenz peña', 'sáenz peña', 'jose ingenieros', 'josé ingenieros', 'pablo podesta', 'pablo podestá', 'villa raffo', 'churruca', 'ciudad jardin', 'ciudad jardín', 'lomas del palomar', 'el palomar', 'palomar', 'martin coronado', 'martín coronado', 'coronado', 'loma hermosa', 'el libertador', 'tres de febrero', 'lanus', 'lanús', 'remedios de escalada', 'escalada', 'gerli', 'valentin alsina', 'valentín alsina', 'monte chingolo', 'chingolo', 'avellaneda', 'dock sud', 'crucecita', 'sarandi', 'sarandí', 'wilde', 'piñeyro', 'san martin', 'san martín', 'billinghurst', 'villa lynch', 'lynch', 'villa ballester', 'ballester', 'san andres', 'san andrés', 'jose leon suarez', 'josé león suárez', 'villa maipu', 'villa maipú', 'vicente lopez', 'vicente lópez', 'olivos', 'florida', 'munro', 'villa martelli', 'martelli', 'carapachay', 'la lucila', 'san isidro', 'acassuso', 'martinez', 'martínez', 'boulogne', 'villa adelina', 'moron', 'morón', 'haedo', 'villa sarmiento', 'castelar', 'san justo', 'ramos mejia', 'ramos mejía', 'lomas de zamora', 'banfield', 'temperley'];
+            const c1 = ['hurlingham', 'urlingham', 'villa bosch', 'bosch', 'caseros', 'ciudadela', 'santos lugares', 'saenz peña', 'sáenz peña', 'jose ingenieros', 'josé ingenieros', 'pablo podesta', 'pablo podestá', 'villa raffo', 'churruca', 'ciudad jardin', 'ciudad jardín', 'lomas del palomar', 'el palomar', 'palomar', 'martin coronado', 'martín coronado', 'coronado', 'loma hermosa', 'el libertador', 'tres de febrero', 'lanus', 'lanús', 'remedios de escalada', 'escalada', 'gerli', 'valentin alsina', 'valentín alsina', 'monte chingolo', 'chingolo', 'avellaneda', 'dock sud', 'crucecita', 'sarandi', 'sarandí', 'wilde', 'piñeyro', 'san martin', 'san martín', 'billinghurst', 'villa lynch', 'lynch', 'villa ballester', 'ballester', 'san andres', 'san andrés', 'jose leon suarez', 'josé león suárez', 'villa maipu', 'villa maipú', 'vicente lopez', 'vicente lópez', 'olivos', 'florida', 'munro', 'villa martelli', 'martelli', 'carapachay', 'la lucila', 'san isidro', 'acassuso', 'martinez', 'martínez', 'boulogne', 'villa adelina', 'moron', 'morón', 'haedo', 'villa sarmiento', 'castelar', 'san justo', 'ramos mejia', 'ramos mejía', 'lomas de zamora', 'banfield', 'temperley'];
             for (const kw of c1) {
                 if (dClean.includes(kw)) return { cost: 5200, zone: '1er Cordón ($5.200)' };
             }
@@ -6029,6 +6064,12 @@
             const elSaldoSub = document.getElementById('cadete-kpi-saldo-sub');
             const elSaldoCard = document.getElementById('cadete-kpi-saldo-card');
 
+            // Sincronizar inputs del banner de saldo anterior
+            const inpDebtAmt = document.getElementById('input-prev-debt-amount');
+            const inpDebtNotes = document.getElementById('input-prev-debt-notes');
+            if (inpDebtAmt && document.activeElement !== inpDebtAmt) inpDebtAmt.value = prevDebtAmount > 0 ? prevDebtAmount : '';
+            if (inpDebtNotes && document.activeElement !== inpDebtNotes) inpDebtNotes.value = prevDebtNotes || '';
+
             if (elCash) elCash.innerText = formatMoney(totalCashCollected);
             const prevDebtSubtext = prevDebtAmount > 0 ? ` (incluye +$${formatMoney(prevDebtAmount)} deuda previa)` : '';
             if (elCashOrders) elCashOrders.innerText = `${countEfvo + (countMeTransf > 0 ? countMeTransf : 0)} cobranzas registradas${prevDebtSubtext}`;
@@ -6106,78 +6147,7 @@
                 return;
             }
 
-            // FILA SUPERIOR DESTACADA: Saldo pendiente de la semana anterior adeudado por la moto
-            const cycleKey = currentActiveCadeteCycleKey || 'current';
-            const prevDebtKey = 'PREV_DEBT_' + cycleKey;
-            const prevDebtObj = cadeteOverrides[prevDebtKey] || { amount: 0, notes: '' };
-            const prevDebtAmount = parseFloat(prevDebtObj.amount) || 0;
-            const prevDebtNotes = prevDebtObj.notes || '';
-
-            let prevDebtRowHtml = '';
-            const matchesSearch = !q || 'saldo anterior deuda moto previo semana anterior'.includes(q) || prevDebtNotes.toLowerCase().includes(q);
-
-            if (matchesSearch && (currentCadeteFilter === 'all' || currentCadeteFilter === 'efectivo')) {
-                const prevDebtHighlightClass = prevDebtAmount > 0
-                    ? "text-amber-300 border-amber-500/60 bg-amber-950/40 font-black"
-                    : "text-slate-500 border-slate-800 bg-slate-950";
-
-                prevDebtRowHtml = `
-                    <tr class="bg-amber-950/20 border-b-2 border-amber-500/40 hover:bg-amber-950/30 transition group">
-                        <td class="p-3.5 whitespace-nowrap font-mono">
-                            <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[11px] font-bold border border-amber-500/30 flex items-center gap-1 w-max">
-                                <i class="fa-solid fa-clock-rotate-left text-[10px]"></i> Anterior
-                            </span>
-                        </td>
-                        <td class="p-3.5 whitespace-nowrap">
-                            <div class="font-black text-amber-300 flex items-center gap-1.5">
-                                <i class="fa-solid fa-hand-holding-dollar text-amber-400"></i>
-                                <span>Saldo / Deuda Semana Anterior</span>
-                            </div>
-                            <div class="text-[11px] text-amber-400/80 mt-0.5">
-                                Efectivo pendiente que la moto te debe de la semana previa
-                            </div>
-                        </td>
-                        <td class="p-3.5">
-                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-900/40 text-amber-300 border border-amber-700/50">
-                                Ajuste / Deuda Previa
-                            </span>
-                        </td>
-                        <td class="p-3.5 text-center text-slate-500 font-mono text-xs font-bold">
-                            -
-                        </td>
-                        <td class="p-3.5 text-right font-mono text-xs text-slate-500 font-bold">
-                            $0
-                        </td>
-                        <td class="p-3.5 text-center">
-                            <span class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 inline-flex items-center gap-1 shadow">
-                                <i class="fa-solid fa-arrow-trend-up"></i> Deuda Moto
-                            </span>
-                        </td>
-                        <td class="p-3.5 text-right whitespace-nowrap">
-                            <div class="flex items-center justify-end gap-1">
-                                <span class="text-amber-500 font-mono text-xs font-bold">$</span>
-                                <input type="number" step="100" min="0" placeholder="0" value="${prevDebtAmount || ''}" 
-                                    oninput="setCadetePreviousDebt('${cycleKey}', this.value)" 
-                                    class="w-24 ${prevDebtHighlightClass} font-mono text-xs p-1.5 rounded-lg border text-right focus:border-amber-400 focus:outline-none"
-                                    title="Escribí acá si la moto te quedó debiendo plata en mano de la semana anterior (suma directo a lo que te tiene que rendir)">
-                            </div>
-                        </td>
-                        <td class="p-3.5">
-                            <input type="text" placeholder="Ej: Quedó debiendo del lunes anterior..." value="${escapeHtml(prevDebtNotes)}" 
-                                onchange="setCadetePreviousDebtNotes('${cycleKey}', this.value)" 
-                                class="w-full bg-slate-950 text-amber-200 text-xs p-1.5 rounded-lg border border-amber-500/30 focus:border-amber-400 focus:outline-none"
-                                title="Aclaración de la deuda anterior">
-                        </td>
-                        <td class="p-3.5 text-center whitespace-nowrap">
-                            <button onclick="setCadetePreviousDebt('${cycleKey}', 0); setCadetePreviousDebtNotes('${cycleKey}', '');" class="p-1.5 text-slate-400 hover:text-rose-400 rounded-lg bg-slate-950 border border-slate-800 transition" title="Limpiar saldo anterior (dejar en $0)">
-                                <i class="fa-solid fa-eraser text-xs"></i>
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            }
-
-            tableBody.innerHTML = prevDebtRowHtml + filtered.map(item => {
+            tableBody.innerHTML = filtered.map(item => {
                 const o = item.order;
                 const dDate = new Date(o.fecha_programada || o.fecha_hora);
                 const pad = n => String(n).padStart(2, '0');
@@ -6211,74 +6181,74 @@
                     : "text-slate-500 border-slate-800 bg-slate-950";
 
                 return `
-                    <tr class="hover:bg-slate-800/40 transition group">
-                        <td class="p-3.5 whitespace-nowrap font-mono text-slate-300">
-                            <span class="px-2 py-0.5 rounded bg-slate-800 text-[11px] font-bold">${dateStr}</span>
+                    <tr class="hover:bg-slate-800/40 transition group border-b border-slate-800/40">
+                        <td class="py-2.5 px-3 whitespace-nowrap font-mono text-slate-300 text-center">
+                            <span class="px-1.5 py-0.5 rounded bg-slate-800 text-[10px] font-bold">${dateStr}</span>
                         </td>
-                        <td class="p-3.5 whitespace-nowrap">
-                            <div class="font-bold text-white">${escapeHtml(o.cliente_nombre)}</div>
-                            <a href="https://wa.me/${escapeHtml(o.celular)}" target="_blank" class="text-[11px] text-emerald-400 hover:underline flex items-center gap-1 mt-0.5">
+                        <td class="py-2.5 px-3">
+                            <div class="font-bold text-white text-xs truncate max-w-[140px]" title="${escapeHtml(o.cliente_nombre)}">${escapeHtml(o.cliente_nombre)}</div>
+                            <a href="https://wa.me/${escapeHtml(o.celular)}" target="_blank" class="text-[10px] text-emerald-400 hover:underline flex items-center gap-1 mt-0.5">
                                 <i class="fa-brands fa-whatsapp text-xs"></i> ${escapeHtml(o.celular)}
                             </a>
                         </td>
-                        <td class="p-3.5">
-                            <div class="text-slate-200 text-xs">${escapeHtml(o.direccion)}</div>
-                            <div class="mt-1">
-                                <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-cyan-950/60 text-cyan-300 border border-cyan-800/60">
+                        <td class="py-2.5 px-3">
+                            <div class="text-slate-300 text-xs line-clamp-1 max-w-[220px]" title="${escapeHtml(o.direccion)}">${escapeHtml(o.direccion)}</div>
+                            <div class="mt-0.5">
+                                <span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-cyan-950/60 text-cyan-300 border border-cyan-800/60">
                                     ${escapeHtml(item.zone || 'AMBA')}
                                 </span>
                             </div>
                         </td>
-                        <td class="p-3.5 text-center whitespace-nowrap">
+                        <td class="py-2.5 px-2 text-center whitespace-nowrap">
                             ${attemptsBtn}
                         </td>
-                        <td class="p-3.5 text-right whitespace-nowrap">
+                        <td class="py-2.5 px-2 text-right whitespace-nowrap">
                             <div class="flex items-center justify-end gap-1">
-                                <span class="text-slate-500 font-mono text-xs">$</span>
+                                <span class="text-slate-500 font-mono text-[11px]">$</span>
                                 <input type="number" step="100" value="${item.baseFlete}" 
                                     onchange="setCadeteRowCustomFlete('${item.orderId}', this.value)" 
-                                    class="w-20 bg-slate-950 text-cyan-300 font-mono font-bold text-xs p-1 rounded-lg border border-slate-800 text-right focus:border-cyan-500 focus:outline-none"
-                                    title="Costo flete unitario moto. Si fue 2 veces, se multiplica automáticamente.">
+                                    class="w-16 bg-slate-950 text-cyan-300 font-mono font-bold text-xs p-1 rounded-lg border border-slate-800 text-right focus:border-cyan-500 focus:outline-none"
+                                    title="Costo flete moto">
                             </div>
-                            ${item.attempts > 1 ? `<div class="text-[10px] text-amber-400 font-mono mt-0.5 font-bold">Total: $${formatMoney(item.orderFlete)}</div>` : ''}
+                            ${item.attempts > 1 ? `<div class="text-[9px] text-amber-400 font-mono font-bold text-right">Total: $${formatMoney(item.orderFlete)}</div>` : ''}
                         </td>
-                        <td class="p-3.5 text-center">
-                            <!-- 4 BOTONES RÁPIDOS INTERACTIVOS REQUERIDOS POR EL USUARIO -->
-                            <div class="flex items-center justify-center gap-1 flex-wrap">
-                                <button onclick="setCadeteRowPayment('${item.orderId}', 'efectivo')" class="${btnEfvoClass}" title="Cobró efectivo en mano -> Suma al saldo de la moto">
+                        <td class="py-2.5 px-3 text-center">
+                            <!-- 4 BOTONES RÁPIDOS EN GRID 2x2 ULTRA COMPACTO -->
+                            <div class="inline-grid grid-cols-2 gap-1">
+                                <button onclick="setCadeteRowPayment('${item.orderId}', 'efectivo')" class="${btnEfvoClass}" title="Cobró efectivo en mano">
                                     💵 Efvo
                                 </button>
-                                <button onclick="setCadeteRowPayment('${item.orderId}', 'transferencia')" class="${btnTransfClass}" title="Cliente transfirió directo a cuenta de Nico -> $0 efectivo en mano">
+                                <button onclick="setCadeteRowPayment('${item.orderId}', 'transferencia')" class="${btnTransfClass}" title="Transfirió a Nico">
                                     💳 Transf
                                 </button>
-                                <button onclick="setCadeteRowPayment('${item.orderId}', 'me_transfirio')" class="${btnMeTransfClass}" title="El cadete o cliente ya te transfirió directamente">
-                                    📲 Me Transfirió
+                                <button onclick="setCadeteRowPayment('${item.orderId}', 'me_transfirio')" class="${btnMeTransfClass}" title="Ya me transfirió">
+                                    📲 Me Transf
                                 </button>
-                                <button onclick="setCadeteRowPayment('${item.orderId}', 'cancelado')" class="${btnCancClass}" title="Pedido cancelado/fallido -> $0 efectivo, flete se paga">
+                                <button onclick="setCadeteRowPayment('${item.orderId}', 'cancelado')" class="${btnCancClass}" title="Cancelado">
                                     🔴 Canc
                                 </button>
                             </div>
-                            <div class="text-[10px] text-slate-500 mt-1 font-mono">
-                                Total Pedido: $${formatMoney(item.orderTotal)}
+                            <div class="text-[9px] text-slate-500 mt-0.5 font-mono text-center">
+                                Total: $${formatMoney(item.orderTotal)}
                             </div>
                         </td>
-                        <td class="p-3.5 text-right whitespace-nowrap">
+                        <td class="py-2.5 px-3 text-right whitespace-nowrap">
                             <div class="flex items-center justify-end gap-1">
-                                <span class="text-slate-500 font-mono text-xs">$</span>
+                                <span class="text-slate-500 font-mono text-[11px]">$</span>
                                 <input type="number" step="10" value="${item.collectedCash}" 
                                     oninput="setCadeteRowCash('${item.orderId}', this.value)" 
-                                    class="w-24 ${cashHighlightClass} font-mono text-xs p-1.5 rounded-lg border text-right focus:border-emerald-500 focus:outline-none"
-                                    title="Efectivo físico que tiene la moto en mano para rendir. Editable libremente si transfirió parcial.">
+                                    class="w-20 ${cashHighlightClass} font-mono text-xs p-1.5 rounded-lg border text-right focus:border-emerald-500 focus:outline-none"
+                                    title="Efectivo en mano de la moto">
                             </div>
                         </td>
-                        <td class="p-3.5">
-                            <input type="text" placeholder="Aclaración..." value="${escapeHtml(item.notes)}" 
+                        <td class="py-2.5 px-3">
+                            <input type="text" placeholder="Nota..." value="${escapeHtml(item.notes)}" 
                                 onchange="setCadeteRowNotes('${item.orderId}', this.value)" 
                                 class="w-full bg-slate-950 text-slate-200 text-xs p-1.5 rounded-lg border border-slate-800 focus:border-cyan-500 focus:outline-none"
-                                title="Nota o comentario para la rendición (ej: 'me transfirió', 'dejó con encargado')">
+                                title="Nota rápida">
                         </td>
-                        <td class="p-3.5 text-center whitespace-nowrap">
-                            <button onclick="openEditOrderModal('${item.orderId}')" class="p-1.5 text-slate-400 hover:text-white rounded-lg bg-slate-950 border border-slate-800 transition" title="Ver / Editar Pedido Completo">
+                        <td class="py-2.5 px-2 text-center whitespace-nowrap">
+                            <button onclick="openEditOrderModal('${item.orderId}')" class="p-1.5 text-slate-400 hover:text-white rounded-lg bg-slate-950 border border-slate-800 transition" title="Ver pedido">
                                 <i class="fa-solid fa-pen-to-square text-xs"></i>
                             </button>
                         </td>
