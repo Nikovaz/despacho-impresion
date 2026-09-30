@@ -4251,6 +4251,9 @@
                 dispatchOrders.sort((a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora));
 
                 renderDispatchDashboard();
+                if (typeof renderCadeteDashboard === 'function') {
+                    renderCadeteDashboard();
+                }
             } catch (err) {
                 console.error(err);
                 document.getElementById('orders-container').innerHTML = `
@@ -5705,6 +5708,21 @@
         /* ====================================================== */
         /* MÓDULO 4: RENDICIÓN DE MOTO & LOGÍSTICA (ENGINE)       */
         /* ====================================================== */
+        function formatMoney(num) {
+            if (isNaN(num) || num === null || num === undefined) return '0';
+            return Math.round(num).toLocaleString('es-AR');
+        }
+        function escapeHtml(str) {
+            if (typeof escapeHTML === 'function') return escapeHTML(str);
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
         let currentCadeteStore = 'nnn'; // 'nnn', 'nacha', 'all'
         let currentCadeteFilter = 'all'; // 'all', 'efectivo', 'transferencia', 'me_transfirio', 'cancelado'
 
@@ -5788,7 +5806,12 @@
                 else titleStore.innerText = 'Todas las Tiendas';
             }
 
-            renderCadeteDashboard();
+            if (storeKey !== 'all' && currentDispatchStore !== storeKey) {
+                currentDispatchStore = storeKey;
+                fetchDispatchOrders().then(() => renderCadeteDashboard());
+            } else {
+                renderCadeteDashboard();
+            }
         }
 
         function setCadeteFilterStatus(status) {
@@ -5813,6 +5836,8 @@
             const selectCycle = document.getElementById('select-cadete-cycle');
             const tableBody = document.getElementById('cadete-table-body');
             if (!tableBody) return;
+
+            try {
 
             // 1. Unificar todos los pedidos disponibles (dispatchOrders + manualOrders)
             const allOrders = [...dispatchOrders];
@@ -6031,6 +6056,12 @@
 
             // 6. Renderizar tabla con filtro
             filterCadeteTable();
+            } catch (err) {
+                console.error("⚠️ Error crítico en renderCadeteDashboard:", err);
+                if (tableBody) {
+                    tableBody.innerHTML = `<tr><td colspan="9" class="p-8 text-center text-rose-400 font-bold"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Error al calcular rendición: ${escapeHtml(err.message)}</td></tr>`;
+                }
+            }
         }
 
         function filterCadeteTable() {
