@@ -5725,6 +5725,7 @@
 
         let currentCadeteStore = 'nnn'; // 'nnn', 'nacha', 'all'
         let currentCadeteFilter = 'all'; // 'all', 'efectivo', 'transferencia', 'me_transfirio', 'cancelado'
+        let currentActiveCadeteCycleKey = 'current';
 
         // Semillas iniciales exactas verificadas de la hoja de rendición histórica
         const CADETE_DEFAULT_SEEDS = {
@@ -5933,7 +5934,15 @@
             });
 
             // 4. Calcular importes, cobranzas y estados
-            let totalCashCollected = 0;
+            const cycleKey = activeCycleObj ? activeCycleObj.key : 'current';
+            currentActiveCadeteCycleKey = cycleKey;
+            const prevDebtKey = 'PREV_DEBT_' + cycleKey;
+            const prevDebtObj = cadeteOverrides[prevDebtKey] || { amount: 0, notes: '' };
+            const prevDebtAmount = parseFloat(prevDebtObj.amount) || 0;
+            const prevDebtNotes = prevDebtObj.notes || '';
+
+            // El saldo anterior adeudado por la moto en efectivo suma directo al efectivo que debe rendir
+            let totalCashCollected = prevDebtAmount;
             let totalFletes = 0;
             let totalTrips = 0;
             let countEfvo = 0;
@@ -6021,7 +6030,8 @@
             const elSaldoCard = document.getElementById('cadete-kpi-saldo-card');
 
             if (elCash) elCash.innerText = formatMoney(totalCashCollected);
-            if (elCashOrders) elCashOrders.innerText = `${countEfvo + (countMeTransf > 0 ? countMeTransf : 0)} cobranzas registradas`;
+            const prevDebtSubtext = prevDebtAmount > 0 ? ` (incluye +$${formatMoney(prevDebtAmount)} deuda previa)` : '';
+            if (elCashOrders) elCashOrders.innerText = `${countEfvo + (countMeTransf > 0 ? countMeTransf : 0)} cobranzas registradas${prevDebtSubtext}`;
             if (elFletes) elFletes.innerText = `-${formatMoney(totalFletes)}`;
             if (elFletesTrips) elFletesTrips.innerText = `${totalTrips} viajes computados (${cadeteCalculatedList.length} pedidos)`;
 
@@ -6096,7 +6106,78 @@
                 return;
             }
 
-            tableBody.innerHTML = filtered.map(item => {
+            // FILA SUPERIOR DESTACADA: Saldo pendiente de la semana anterior adeudado por la moto
+            const cycleKey = currentActiveCadeteCycleKey || 'current';
+            const prevDebtKey = 'PREV_DEBT_' + cycleKey;
+            const prevDebtObj = cadeteOverrides[prevDebtKey] || { amount: 0, notes: '' };
+            const prevDebtAmount = parseFloat(prevDebtObj.amount) || 0;
+            const prevDebtNotes = prevDebtObj.notes || '';
+
+            let prevDebtRowHtml = '';
+            const matchesSearch = !q || 'saldo anterior deuda moto previo semana anterior'.includes(q) || prevDebtNotes.toLowerCase().includes(q);
+
+            if (matchesSearch && (currentCadeteFilter === 'all' || currentCadeteFilter === 'efectivo')) {
+                const prevDebtHighlightClass = prevDebtAmount > 0
+                    ? "text-amber-300 border-amber-500/60 bg-amber-950/40 font-black"
+                    : "text-slate-500 border-slate-800 bg-slate-950";
+
+                prevDebtRowHtml = `
+                    <tr class="bg-amber-950/20 border-b-2 border-amber-500/40 hover:bg-amber-950/30 transition group">
+                        <td class="p-3.5 whitespace-nowrap font-mono">
+                            <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[11px] font-bold border border-amber-500/30 flex items-center gap-1 w-max">
+                                <i class="fa-solid fa-clock-rotate-left text-[10px]"></i> Anterior
+                            </span>
+                        </td>
+                        <td class="p-3.5 whitespace-nowrap">
+                            <div class="font-black text-amber-300 flex items-center gap-1.5">
+                                <i class="fa-solid fa-hand-holding-dollar text-amber-400"></i>
+                                <span>Saldo / Deuda Semana Anterior</span>
+                            </div>
+                            <div class="text-[11px] text-amber-400/80 mt-0.5">
+                                Efectivo pendiente que la moto te debe de la semana previa
+                            </div>
+                        </td>
+                        <td class="p-3.5">
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-900/40 text-amber-300 border border-amber-700/50">
+                                Ajuste / Deuda Previa
+                            </span>
+                        </td>
+                        <td class="p-3.5 text-center text-slate-500 font-mono text-xs font-bold">
+                            -
+                        </td>
+                        <td class="p-3.5 text-right font-mono text-xs text-slate-500 font-bold">
+                            $0
+                        </td>
+                        <td class="p-3.5 text-center">
+                            <span class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 inline-flex items-center gap-1 shadow">
+                                <i class="fa-solid fa-arrow-trend-up"></i> Deuda Moto
+                            </span>
+                        </td>
+                        <td class="p-3.5 text-right whitespace-nowrap">
+                            <div class="flex items-center justify-end gap-1">
+                                <span class="text-amber-500 font-mono text-xs font-bold">$</span>
+                                <input type="number" step="100" min="0" placeholder="0" value="${prevDebtAmount || ''}" 
+                                    oninput="setCadetePreviousDebt('${cycleKey}', this.value)" 
+                                    class="w-24 ${prevDebtHighlightClass} font-mono text-xs p-1.5 rounded-lg border text-right focus:border-amber-400 focus:outline-none"
+                                    title="Escribí acá si la moto te quedó debiendo plata en mano de la semana anterior (suma directo a lo que te tiene que rendir)">
+                            </div>
+                        </td>
+                        <td class="p-3.5">
+                            <input type="text" placeholder="Ej: Quedó debiendo del lunes anterior..." value="${escapeHtml(prevDebtNotes)}" 
+                                onchange="setCadetePreviousDebtNotes('${cycleKey}', this.value)" 
+                                class="w-full bg-slate-950 text-amber-200 text-xs p-1.5 rounded-lg border border-amber-500/30 focus:border-amber-400 focus:outline-none"
+                                title="Aclaración de la deuda anterior">
+                        </td>
+                        <td class="p-3.5 text-center whitespace-nowrap">
+                            <button onclick="setCadetePreviousDebt('${cycleKey}', 0); setCadetePreviousDebtNotes('${cycleKey}', '');" class="p-1.5 text-slate-400 hover:text-rose-400 rounded-lg bg-slate-950 border border-slate-800 transition" title="Limpiar saldo anterior (dejar en $0)">
+                                <i class="fa-solid fa-eraser text-xs"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }
+
+            tableBody.innerHTML = prevDebtRowHtml + filtered.map(item => {
                 const o = item.order;
                 const dDate = new Date(o.fecha_programada || o.fecha_hora);
                 const pad = n => String(n).padStart(2, '0');
@@ -6272,6 +6353,28 @@
             pushCloudAppState();
         }
 
+        /* MANEJO DE DEUDA SEMANA ANTERIOR */
+        let cadeteDebtTimeout = null;
+        function setCadetePreviousDebt(cycleKey, val) {
+            const num = parseFloat(val) || 0;
+            cadeteOverrides['PREV_DEBT_' + cycleKey] = cadeteOverrides['PREV_DEBT_' + cycleKey] || {};
+            cadeteOverrides['PREV_DEBT_' + cycleKey].amount = num;
+            localStorage.setItem('croc_cadete_overrides', JSON.stringify(cadeteOverrides));
+
+            clearTimeout(cadeteDebtTimeout);
+            cadeteDebtTimeout = setTimeout(() => {
+                renderCadeteDashboard();
+                pushCloudAppState();
+            }, 500);
+        }
+
+        function setCadetePreviousDebtNotes(cycleKey, notes) {
+            cadeteOverrides['PREV_DEBT_' + cycleKey] = cadeteOverrides['PREV_DEBT_' + cycleKey] || {};
+            cadeteOverrides['PREV_DEBT_' + cycleKey].notes = notes.trim();
+            localStorage.setItem('croc_cadete_overrides', JSON.stringify(cadeteOverrides));
+            pushCloudAppState();
+        }
+
         /* EXPORTAR RESUMEN PARA WHATSAPP EN 1 CLIC */
         function copyCadeteWhatsApp() {
             if (!cadeteCalculatedList || cadeteCalculatedList.length === 0) {
@@ -6280,11 +6383,22 @@
             }
 
             const badge = document.getElementById('cadete-cycle-badge')?.innerText || 'Semana en curso';
+            const cycleKey = currentActiveCadeteCycleKey || 'current';
+            const prevDebtKey = 'PREV_DEBT_' + cycleKey;
+            const prevDebtObj = cadeteOverrides[prevDebtKey] || { amount: 0, notes: '' };
+            const prevDebtAmount = parseFloat(prevDebtObj.amount) || 0;
+            const prevDebtNotes = prevDebtObj.notes || '';
+
             let totalFletes = 0;
-            let totalCash = 0;
+            let totalCash = prevDebtAmount;
 
             let text = `🛵 *RENDICIÓN MOTO - ${badge.toUpperCase()}*\n`;
             text += `----------------------------------------\n`;
+
+            if (prevDebtAmount > 0) {
+                text += `⏮️ *SALDO ANTERIOR ADEUDADO:* +$${formatMoney(prevDebtAmount)} ${prevDebtNotes ? `(${prevDebtNotes})` : ''}\n`;
+                text += `----------------------------------------\n`;
+            }
 
             cadeteCalculatedList.forEach(item => {
                 const o = item.order;
