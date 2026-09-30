@@ -178,6 +178,9 @@
                         <button onclick="switchMainView('dispatch')" id="btn-nav-dispatch" class="px-3 sm:px-4 py-2 rounded-lg text-xs font-bold bg-emerald-600 text-white transition flex items-center gap-1.5 shadow">
                             <i class="fa-solid fa-print"></i> <span class="hidden sm:inline">Despacho</span>
                         </button>
+                        <button onclick="switchMainView('cadete')" id="btn-nav-cadete" class="px-3 sm:px-4 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-motorcycle text-cyan-400"></i> <span class="hidden sm:inline">Rendición Moto</span>
+                        </button>
                         <button onclick="switchMainView('analytics')" id="btn-nav-analytics" class="px-3 sm:px-4 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5">
                             <i class="fa-solid fa-chart-pie"></i> <span class="hidden sm:inline">Métricas</span>
                         </button>
@@ -420,6 +423,164 @@
 
             <div id="orders-container" class="divide-y divide-slate-800/80">
                 <div class="p-8 text-center text-slate-500">Cargando pedidos...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODULE 4: RENDICIÓN DE MOTO & LOGÍSTICA   -->
+    <!-- ========================================== -->
+    <div id="view-cadete" class="no-print max-w-7xl mx-auto p-4 md:p-6 hidden">
+        <!-- Header Rendición Moto -->
+        <header class="flex flex-col lg:flex-row items-start lg:items-center justify-between pb-6 border-b border-slate-800 gap-4">
+            <div>
+                <h1 class="text-xl sm:text-2xl font-bold text-white flex items-center gap-2.5 flex-wrap">
+                    <span class="p-2 bg-cyan-500/10 text-cyan-400 rounded-xl border border-cyan-500/20">
+                        <i class="fa-solid fa-motorcycle"></i>
+                    </span>
+                    <span id="title-cadete-store" class="text-white">NNN Tienda</span>
+                    <span class="text-slate-500 font-light">|</span>
+                    <span class="text-slate-300 font-semibold">Rendición de Moto & Logística</span>
+                </h1>
+                <p class="text-slate-400 text-xs sm:text-sm mt-1">
+                    Liquidación semanal de cobranzas y fletes. <strong class="text-cyan-400 font-medium">Corte de ciclo:</strong> Viernes 12:00 hs (después de las 12 hs pasa a liquidarse el próximo Lunes).
+                </p>
+            </div>
+
+            <div class="flex items-center gap-3 flex-wrap w-full lg:w-auto">
+                <!-- Selector de Tienda en Cadete -->
+                <div class="flex items-center bg-slate-900 rounded-xl p-1 border border-slate-800">
+                    <button onclick="switchCadeteStore('nnn')" id="btn-cadete-nnn" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-cyan-600 text-white transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-tag"></i> NNN
+                    </button>
+                    <button onclick="switchCadeteStore('nacha')" id="btn-cadete-nacha" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-house"></i> Nacha
+                    </button>
+                    <button onclick="switchCadeteStore('all')" id="btn-cadete-all" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-layer-group"></i> Todas
+                    </button>
+                </div>
+
+                <!-- Botón Copiar para WhatsApp -->
+                <button onclick="copyCadeteWhatsApp()" class="px-3.5 py-2 bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white rounded-xl font-bold text-xs flex items-center gap-2 border border-emerald-500/30 transition shadow-lg shadow-emerald-950/40" title="Copiar desglose completo formateado para enviar a la moto por WhatsApp">
+                    <i class="fa-brands fa-whatsapp text-sm text-emerald-400"></i> <span>Copiar para WhatsApp</span>
+                </button>
+
+                <!-- Botón Actualizar -->
+                <button onclick="fetchDispatchOrders().then(() => renderCadeteDashboard())" class="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl font-medium text-xs flex items-center gap-2 border border-slate-800 transition">
+                    <i class="fa-solid fa-rotate text-xs" id="refresh-icon-cadete"></i> Refrescar
+                </button>
+            </div>
+        </header>
+
+        <!-- Selector de Período Semanal y Filtros de Ciclo -->
+        <div class="my-6 p-4 rounded-2xl bg-slate-900/60 border border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div class="flex items-center gap-3 flex-wrap flex-1">
+                <div class="flex items-center bg-slate-950 rounded-xl px-3.5 py-2 border border-slate-800 shadow-inner">
+                    <label for="select-cadete-cycle" class="text-xs font-semibold text-slate-400 mr-2 flex items-center gap-1.5">
+                        <i class="fa-solid fa-calendar-week text-cyan-400"></i> Ciclo de Liquidación:
+                    </label>
+                    <select id="select-cadete-cycle" onchange="renderCadeteDashboard()" class="bg-transparent text-white text-xs font-bold focus:outline-none cursor-pointer">
+                        <!-- Generado dinámicamente con las semanas de corte viernes 12hs -->
+                    </select>
+                </div>
+
+                <div class="flex items-center gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs">
+                    <button onclick="setCadeteFilterStatus('all')" id="btn-cfilt-all" class="px-2.5 py-1 rounded-lg font-bold bg-cyan-600 text-white transition">Todos (<span id="cadete-count-all">0</span>)</button>
+                    <button onclick="setCadeteFilterStatus('efectivo')" id="btn-cfilt-efectivo" class="px-2.5 py-1 rounded-lg font-bold text-slate-400 hover:text-white transition">💵 Efectivo (<span id="cadete-count-efvo">0</span>)</button>
+                    <button onclick="setCadeteFilterStatus('transferencia')" id="btn-cfilt-transferencia" class="px-2.5 py-1 rounded-lg font-bold text-slate-400 hover:text-white transition">💳 Transf Nico (<span id="cadete-count-transf">0</span>)</button>
+                    <button onclick="setCadeteFilterStatus('me_transfirio')" id="btn-cfilt-me_transfirio" class="px-2.5 py-1 rounded-lg font-bold text-slate-400 hover:text-white transition">📲 Me Transfirió (<span id="cadete-count-metransf">0</span>)</button>
+                    <button onclick="setCadeteFilterStatus('cancelado')" id="btn-cfilt-cancelado" class="px-2.5 py-1 rounded-lg font-bold text-slate-400 hover:text-white transition">🔴 Cancelados (<span id="cadete-count-canc">0</span>)</button>
+                </div>
+            </div>
+
+            <!-- Buscador en tiempo real -->
+            <div class="relative w-full md:w-64">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-500 text-xs"></i>
+                <input type="text" id="cadete-table-search" oninput="filterCadeteTable()" placeholder="Buscar cliente, zona, nota..." class="w-full bg-slate-950 text-slate-200 text-xs rounded-xl pl-8 pr-3 py-2 border border-slate-800 focus:outline-none focus:border-cyan-500">
+            </div>
+        </div>
+
+        <!-- KPI CARDS: 3 CARDS DE CONCILIACIÓN EXACTA -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <!-- Card 1: Efectivo en Mano Moto (G10) -->
+            <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 shadow-lg flex items-center justify-between">
+                <div>
+                    <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400"></span> 💵 Total Efectivo en Mano (Moto)
+                    </p>
+                    <h2 id="cadete-kpi-cash" class="text-2xl sm:text-3xl font-black text-emerald-400 mt-1 font-mono">$0</h2>
+                    <p class="text-[11px] text-slate-400 mt-0.5" id="cadete-kpi-cash-orders">0 pedidos recaudados en efectivo</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 text-xl">
+                    <i class="fa-solid fa-money-bill-wave"></i>
+                </div>
+            </div>
+
+            <!-- Card 2: Total Fletes Cadetería (E10) -->
+            <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 shadow-lg flex items-center justify-between">
+                <div>
+                    <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-cyan-400"></span> 🏍️ Total Fletes a Pagar (Moto)
+                    </p>
+                    <h2 id="cadete-kpi-fletes" class="text-2xl sm:text-3xl font-black text-cyan-400 mt-1 font-mono">-$0</h2>
+                    <p class="text-[11px] text-slate-400 mt-0.5" id="cadete-kpi-fletes-trips">0 viajes a favor de la moto</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 text-xl">
+                    <i class="fa-solid fa-route"></i>
+                </div>
+            </div>
+
+            <!-- Card 3: Saldo Final a Rendir (G17 = G10 - E10) -->
+            <div id="cadete-kpi-saldo-card" class="bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 border border-emerald-500/40 rounded-2xl p-4 shadow-xl flex items-center justify-between">
+                <div>
+                    <p class="text-[11px] font-extrabold uppercase tracking-wider text-slate-300 flex items-center gap-1.5" id="cadete-kpi-saldo-label">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> 💰 SALDO A RENDIR A NICO
+                    </p>
+                    <h2 id="cadete-kpi-saldo" class="text-2xl sm:text-3xl font-black text-emerald-300 mt-1 font-mono">$0</h2>
+                    <p class="text-[11px] text-emerald-400/90 font-semibold mt-0.5" id="cadete-kpi-saldo-sub">Cálculo exacto: Efectivo - Fletes</p>
+                </div>
+                <div id="cadete-kpi-saldo-icon-wrap" class="w-12 h-12 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-300 text-xl shadow-inner">
+                    <i class="fa-solid fa-hand-holding-dollar" id="cadete-kpi-saldo-icon"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- TABLA INTERACTIVA DE PEDIDOS Y RENDICIONES -->
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+            <div class="p-4 border-b border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-slate-900/50">
+                <div>
+                    <h3 class="font-bold text-white text-base flex items-center gap-2">
+                        <i class="fa-solid fa-list-check text-cyan-400"></i> Desglose de Pedidos del Ciclo
+                    </h3>
+                    <p class="text-xs text-slate-400 mt-0.5">Hacé clic en los botones de cobro o viajes para actualizar la cuenta en tiempo real y sincronizar con tu celu.</p>
+                </div>
+                <span class="text-xs font-mono font-bold text-cyan-300 px-3 py-1 bg-cyan-950/60 border border-cyan-800/60 rounded-xl" id="cadete-cycle-badge">
+                    Semana en curso
+                </span>
+            </div>
+
+            <div class="overflow-x-auto max-h-[600px]">
+                <table class="w-full text-left text-xs text-slate-300">
+                    <thead class="bg-slate-950 text-slate-400 uppercase font-semibold sticky top-0 border-b border-slate-800 z-10">
+                        <tr>
+                            <th class="p-3.5 whitespace-nowrap">Fecha</th>
+                            <th class="p-3.5 whitespace-nowrap">Cliente</th>
+                            <th class="p-3.5 min-w-[200px]">Domicilio & Localidad</th>
+                            <th class="p-3.5 text-center whitespace-nowrap">Viajes (Veces)</th>
+                            <th class="p-3.5 text-right whitespace-nowrap">Flete Moto ($)</th>
+                            <th class="p-3.5 text-center min-w-[260px]">Cobro / Opciones de Rendición</th>
+                            <th class="p-3.5 text-right whitespace-nowrap">Efectivo en Mano ($)</th>
+                            <th class="p-3.5 min-w-[140px]">Notas / Aclaraciones</th>
+                            <th class="p-3.5 text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cadete-table-body" class="divide-y divide-slate-800/60">
+                        <tr>
+                            <td colspan="9" class="p-8 text-center text-slate-500">Cargando datos de logística...</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -1267,6 +1428,13 @@
                 localStorage.setItem('croc_banner_scope', bannerCalculationScope);
             }
 
+            // 9. Cadete Overrides (Estado de rendición de la moto: flete, viajes, pagos, efectivo en mano, notas)
+            if (cloudState.cadeteOverrides && typeof cloudState.cadeteOverrides === 'object') {
+                cadeteOverrides = { ...cadeteOverrides, ...cloudState.cadeteOverrides };
+                localStorage.setItem('croc_cadete_overrides', JSON.stringify(cadeteOverrides));
+                hasChanges = true;
+            }
+
             if (cloudState.updatedAt) {
                 lastCloudUpdateTs = cloudState.updatedAt;
                 localStorage.setItem('croc_cloud_last_synced', lastCloudUpdateTs);
@@ -1276,6 +1444,9 @@
                 console.log('🔄 Estado en la nube sincronizado con éxito. Refrescando vistas...');
                 if (typeof renderDispatchDashboard === 'function') {
                     renderDispatchDashboard();
+                }
+                if (typeof renderCadeteDashboard === 'function' && currentMainView === 'cadete') {
+                    renderCadeteDashboard();
                 }
             }
         }
@@ -1298,6 +1469,7 @@
                     bannerCalculationScope,
                     printedOrders: printedOrderIds,
                     customPaymentMethods,
+                    cadeteOverrides,
                     updatedAt: new Date().toISOString(),
                     updatedBy: currentUser?.username || 'usuario'
                 };
@@ -1665,13 +1837,13 @@
             }
 
             // 2do Cordón ($6300)
-            const c2 = ['la tablada', 'tablada', 'isidro casanova', 'casanova', 'gregorio de laferrere', 'laferrere', 'gonzalez catan', 'gonzález catán', 'catan', 'catán', 'rafael castillo', 'castillo', 'lomas del mirador', 'ciudad evita', 'tapiales', 'aldo bonzi', 'villa luzuriaga', 'luzuriaga', 'virrey del pino', 'villa celina', 'adrogue', 'adrogué', 'burzaco', 'glew', 'claypole', 'don orione', 'jose marmol', 'josé mármol', 'marmol', 'longchamps', 'malvinas argentinas', 'ministro rivadavia', 'rafael calzada', 'calzada', 'san jose', 'san josé', 'solano', 'francisco solano', 'ranelagh', 'ezpeleta', 'bernal', 'quilmes', 'berazategui', 'florencio varela', 'varela', 'bosques', 'hudson', 'platanos', 'plátanos', 'san fernando', 'virreyes', 'victoria', 'tigre', 'rincon de milberg', 'don torcuato', 'general pacheco', 'pacheco', 'benavidez', 'benavídez', 'nordelta', 'merlo', 'padua', 'moreno', 'paso del rey', 'trujui', 'alvarez', 'san miguel', 'bella vista', 'muñiz', 'jose c paz', 'josé c. paz', 'hurlingham', 'morris', 'villa tesei', 'ituzaingo', 'ituzaingó', 'parque leloir'];
+            const c2 = ['la tablada', 'tablada', 'isidro casanova', 'casanova', 'gregorio de laferrere', 'laferrere', 'gonzalez catan', 'gonzález catán', 'catan', 'catán', 'rafael castillo', 'castillo', 'lomas del mirador', 'ciudad evita', 'tapiales', 'aldo bonzi', 'villa luzuriaga', 'luzuriaga', 'virrey del pino', 'villa celina', 'adrogue', 'adrogué', 'burzaco', 'glew', 'claypole', 'don orione', 'jose marmol', 'josé mármol', 'marmol', 'longchamps', 'malvinas argentinas', 'ministro rivadavia', 'rafael calzada', 'calzada', 'san jose', 'san josé', 'solano', 'francisco solano', 'ranelagh', 'ezpeleta', 'bernal', 'quilmes', 'berazategui', 'florencio varela', 'varela', 'bosques', 'hudson', 'platanos', 'plátanos', 'san fernando', 'virreyes', 'victoria', 'tigre', 'rincon de milberg', 'don torcuato', 'general pacheco', 'pacheco', 'benavidez', 'benavídez', 'nordelta', 'merlo', 'padua', 'moreno', 'paso del rey', 'trujui', 'alvarez', 'san miguel', 'bella vista', 'muñiz', 'jose c paz', 'josé c. paz', 'morris', 'villa tesei', 'ituzaingo', 'ituzaingó', 'parque leloir', 'luis guillon', 'luis guillón', 'guillon', 'guillón', 'monte grande', 'ezeiza', 'spegazzini', 'esteban echeverria', 'esteban echeverría'];
             for (const kw of c2) {
                 if (dClean.includes(kw)) return { cost: 6300, zone: '2do Cordón ($6.300)' };
             }
 
             // 1er Cordón ($5200)
-            const c1 = ['villa bosch', 'bosch', 'caseros', 'ciudadela', 'santos lugares', 'saenz peña', 'sáenz peña', 'jose ingenieros', 'josé ingenieros', 'pablo podesta', 'pablo podestá', 'villa raffo', 'churruca', 'ciudad jardin', 'ciudad jardín', 'lomas del palomar', 'el palomar', 'palomar', 'martin coronado', 'martín coronado', 'coronado', 'loma hermosa', 'el libertador', 'tres de febrero', 'lanus', 'lanús', 'remedios de escalada', 'escalada', 'gerli', 'valentin alsina', 'valentín alsina', 'monte chingolo', 'chingolo', 'avellaneda', 'dock sud', 'crucecita', 'sarandi', 'sarandí', 'wilde', 'piñeyro', 'san martin', 'san martín', 'billinghurst', 'villa lynch', 'lynch', 'villa ballester', 'ballester', 'san andres', 'san andrés', 'jose leon suarez', 'josé león suárez', 'villa maipu', 'villa maipú', 'vicente lopez', 'vicente lópez', 'olivos', 'florida', 'munro', 'villa martelli', 'martelli', 'carapachay', 'la lucila', 'san isidro', 'acassuso', 'martinez', 'martínez', 'boulogne', 'villa adelina', 'moron', 'morón', 'haedo', 'villa sarmiento', 'castelar', 'san justo', 'ramos mejia', 'ramos mejía', 'lomas de zamora', 'banfield', 'temperley'];
+            const c1 = ['hurlingham', 'villa bosch', 'bosch', 'caseros', 'ciudadela', 'santos lugares', 'saenz peña', 'sáenz peña', 'jose ingenieros', 'josé ingenieros', 'pablo podesta', 'pablo podestá', 'villa raffo', 'churruca', 'ciudad jardin', 'ciudad jardín', 'lomas del palomar', 'el palomar', 'palomar', 'martin coronado', 'martín coronado', 'coronado', 'loma hermosa', 'el libertador', 'tres de febrero', 'lanus', 'lanús', 'remedios de escalada', 'escalada', 'gerli', 'valentin alsina', 'valentín alsina', 'monte chingolo', 'chingolo', 'avellaneda', 'dock sud', 'crucecita', 'sarandi', 'sarandí', 'wilde', 'piñeyro', 'san martin', 'san martín', 'billinghurst', 'villa lynch', 'lynch', 'villa ballester', 'ballester', 'san andres', 'san andrés', 'jose leon suarez', 'josé león suárez', 'villa maipu', 'villa maipú', 'vicente lopez', 'vicente lópez', 'olivos', 'florida', 'munro', 'villa martelli', 'martelli', 'carapachay', 'la lucila', 'san isidro', 'acassuso', 'martinez', 'martínez', 'boulogne', 'villa adelina', 'moron', 'morón', 'haedo', 'villa sarmiento', 'castelar', 'san justo', 'ramos mejia', 'ramos mejía', 'lomas de zamora', 'banfield', 'temperley'];
             for (const kw of c1) {
                 if (dClean.includes(kw)) return { cost: 5200, zone: '1er Cordón ($5.200)' };
             }
@@ -3839,34 +4011,46 @@
                 function switchMainView(view) {
             currentMainView = view;
             const btnDispatch = document.getElementById('btn-nav-dispatch');
+            const btnCadete = document.getElementById('btn-nav-cadete');
             const btnAnalytics = document.getElementById('btn-nav-analytics');
             const btnAdmin = document.getElementById('btn-nav-admin');
 
             const viewDispatch = document.getElementById('view-dispatch');
+            const viewCadete = document.getElementById('view-cadete');
             const viewAnalytics = document.getElementById('view-analytics');
             const viewAdmin = document.getElementById('view-admin');
 
-            const baseInactive = "px-3 sm:px-4 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition items-center gap-1.5";
+            const baseInactive = "px-3 sm:px-4 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5";
             
             if (btnDispatch) btnDispatch.className = baseInactive;
+            if (btnCadete) btnCadete.className = baseInactive;
             if (btnAnalytics) btnAnalytics.className = baseInactive;
             if (btnAdmin) btnAdmin.className = baseInactive;
 
-            viewDispatch.classList.add('hidden');
-            viewAnalytics.classList.add('hidden');
-            viewAdmin.classList.add('hidden');
+            if (viewDispatch) viewDispatch.classList.add('hidden');
+            if (viewCadete) viewCadete.classList.add('hidden');
+            if (viewAnalytics) viewAnalytics.classList.add('hidden');
+            if (viewAdmin) viewAdmin.classList.add('hidden');
 
             if (view === 'dispatch') {
-                if (btnDispatch) btnDispatch.className = "px-3 sm:px-4 py-2 rounded-lg text-xs font-bold bg-emerald-600 text-white transition items-center gap-1.5 shadow";
-                viewDispatch.classList.remove('hidden');
+                if (btnDispatch) btnDispatch.className = "px-3 sm:px-4 py-2 rounded-lg text-xs font-bold bg-emerald-600 text-white transition flex items-center gap-1.5 shadow";
+                if (viewDispatch) viewDispatch.classList.remove('hidden');
                 if (dispatchOrders.length === 0) fetchDispatchOrders();
+            } else if (view === 'cadete') {
+                if (btnCadete) btnCadete.className = "px-3 sm:px-4 py-2 rounded-lg text-xs font-bold bg-cyan-600 text-white transition flex items-center gap-1.5 shadow";
+                if (viewCadete) viewCadete.classList.remove('hidden');
+                if (dispatchOrders.length === 0) {
+                    fetchDispatchOrders().then(() => renderCadeteDashboard());
+                } else {
+                    renderCadeteDashboard();
+                }
             } else if (view === 'analytics') {
-                if (btnAnalytics) btnAnalytics.className = "px-3 sm:px-4 py-2 rounded-lg text-xs font-bold bg-indigo-600 text-white transition items-center gap-1.5 shadow";
-                viewAnalytics.classList.remove('hidden');
+                if (btnAnalytics) btnAnalytics.className = "px-3 sm:px-4 py-2 rounded-lg text-xs font-bold bg-indigo-600 text-white transition flex items-center gap-1.5 shadow";
+                if (viewAnalytics) viewAnalytics.classList.remove('hidden');
                 fetchAnalyticsData();
             } else if (view === 'admin') {
-                if (btnAdmin) btnAdmin.className = "px-3 sm:px-4 py-2 rounded-lg text-xs font-bold bg-amber-600 text-white transition items-center gap-1.5 shadow";
-                viewAdmin.classList.remove('hidden');
+                if (btnAdmin) btnAdmin.className = "px-3 sm:px-4 py-2 rounded-lg text-xs font-bold bg-amber-600 text-white transition flex items-center gap-1.5 shadow";
+                if (viewAdmin) viewAdmin.classList.remove('hidden');
                 loadAdminUsersList();
             }
         }
@@ -5515,6 +5699,607 @@
             });
 
             renderAnalyticsTable(filtered);
+        }
+
+
+        /* ====================================================== */
+        /* MÓDULO 4: RENDICIÓN DE MOTO & LOGÍSTICA (ENGINE)       */
+        /* ====================================================== */
+        let currentCadeteStore = 'nnn'; // 'nnn', 'nacha', 'all'
+        let currentCadeteFilter = 'all'; // 'all', 'efectivo', 'transferencia', 'me_transfirio', 'cancelado'
+
+        // Semillas iniciales exactas verificadas de la hoja de rendición histórica
+        const CADETE_DEFAULT_SEEDS = {
+            '5491127733238-2026-09-27': { paymentMode: 'me_transfirio', collectedCash: 42400, notes: 'Me transfirió', attempts: 1, cadeteCost: 5200 },
+            '5491155954847-2026-09-27': { paymentMode: 'cancelado', collectedCash: 0, notes: 'Cancelado (2 viajes)', attempts: 2, cadeteCost: 5200 },
+            '5491156613111-2026-09-28': { paymentMode: 'transferencia', collectedCash: 0, notes: '', attempts: 1, cadeteCost: 5200 },
+            '5491132846577-2026-09-28': { paymentMode: 'efectivo', collectedCash: 48150, notes: '', attempts: 1, cadeteCost: 6300 },
+            '5491123695639-2026-09-29': { paymentMode: 'transferencia', collectedCash: 0, notes: '', attempts: 1, cadeteCost: 4000 },
+            '5491134405850-2026-09-29': { paymentMode: 'efectivo', collectedCash: 48150, notes: '', attempts: 1, cadeteCost: 6300 },
+            '5491146736048-2026-09-29': { paymentMode: 'transferencia', collectedCash: 0, notes: '', attempts: 1, cadeteCost: 6300 }
+        };
+
+        let cadeteOverrides = JSON.parse(localStorage.getItem('croc_cadete_overrides') || '{}');
+        for (const [seedId, seedVal] of Object.entries(CADETE_DEFAULT_SEEDS)) {
+            if (!cadeteOverrides[seedId]) {
+                cadeteOverrides[seedId] = { ...seedVal };
+            }
+        }
+
+        /* Determinar ciclo semanal (Corte: Viernes 12:00 hs -> entra al lote del Lunes) */
+        function getCadeteCycleForDate(dateInput) {
+            const d = new Date(dateInput);
+            if (isNaN(d.getTime())) return null;
+
+            const day = d.getDay(); // 0 Dom, 1 Lun, ..., 5 Vie, 6 Sab
+            const hours = d.getHours();
+            
+            let daysUntilClosingFriday = 0;
+            if (day === 5) {
+                daysUntilClosingFriday = (hours >= 12) ? 7 : 0;
+            } else if (day === 6) {
+                daysUntilClosingFriday = 6;
+            } else {
+                daysUntilClosingFriday = 5 - day;
+            }
+
+            const closingFriday = new Date(d);
+            closingFriday.setDate(d.getDate() + daysUntilClosingFriday);
+            closingFriday.setHours(12, 0, 0, 0);
+
+            const openingFriday = new Date(closingFriday);
+            openingFriday.setDate(closingFriday.getDate() - 7);
+            openingFriday.setHours(12, 0, 0, 0);
+
+            const mondayDispatch = new Date(openingFriday);
+            mondayDispatch.setDate(openingFriday.getDate() + 3);
+            mondayDispatch.setHours(0, 0, 0, 0);
+
+            const pad = n => String(n).padStart(2, '0');
+            const key = openingFriday.toISOString().slice(0, 10);
+            const label = `Semana Lun ${pad(mondayDispatch.getDate())}/${pad(mondayDispatch.getMonth() + 1)} al Vie ${pad(closingFriday.getDate())}/${pad(closingFriday.getMonth() + 1)}`;
+
+            return {
+                key,
+                label,
+                start: openingFriday,
+                end: closingFriday,
+                monday: mondayDispatch
+            };
+        }
+
+        function switchCadeteStore(storeKey) {
+            currentCadeteStore = storeKey;
+            const btnNNN = document.getElementById('btn-cadete-nnn');
+            const btnNacha = document.getElementById('btn-cadete-nacha');
+            const btnAll = document.getElementById('btn-cadete-all');
+            const titleStore = document.getElementById('title-cadete-store');
+
+            const inactive = "px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5";
+            const active = "px-3 py-1.5 rounded-lg text-xs font-bold bg-cyan-600 text-white transition flex items-center gap-1.5";
+
+            if (btnNNN) btnNNN.className = storeKey === 'nnn' ? active : inactive;
+            if (btnNacha) btnNacha.className = storeKey === 'nacha' ? active : inactive;
+            if (btnAll) btnAll.className = storeKey === 'all' ? active : inactive;
+
+            if (titleStore) {
+                if (storeKey === 'nnn') titleStore.innerText = 'NNN Tienda';
+                else if (storeKey === 'nacha') titleStore.innerText = 'Nacha Home';
+                else titleStore.innerText = 'Todas las Tiendas';
+            }
+
+            renderCadeteDashboard();
+        }
+
+        function setCadeteFilterStatus(status) {
+            currentCadeteFilter = status;
+            const filters = ['all', 'efectivo', 'transferencia', 'me_transfirio', 'cancelado'];
+            filters.forEach(f => {
+                const btn = document.getElementById(`btn-cfilt-${f}`);
+                if (btn) {
+                    if (f === status) {
+                        btn.className = "px-2.5 py-1 rounded-lg font-bold bg-cyan-600 text-white transition";
+                    } else {
+                        btn.className = "px-2.5 py-1 rounded-lg font-bold text-slate-400 hover:text-white transition";
+                    }
+                }
+            });
+            filterCadeteTable();
+        }
+
+        let cadeteCalculatedList = [];
+
+        function renderCadeteDashboard() {
+            const selectCycle = document.getElementById('select-cadete-cycle');
+            const tableBody = document.getElementById('cadete-table-body');
+            if (!tableBody) return;
+
+            // 1. Unificar todos los pedidos disponibles (dispatchOrders + manualOrders)
+            const allOrders = [...dispatchOrders];
+            if (Array.isArray(manualOrders)) {
+                manualOrders.forEach(mo => {
+                    if (!allOrders.some(o => o.id === mo.id)) {
+                        allOrders.push(mo);
+                    }
+                });
+            }
+
+            // Filtrar eliminados
+            const activeOrders = allOrders.filter(o => !deletedOrderIds.includes(o.id));
+
+            // Filtrar por tienda si aplica
+            let storeFiltered = activeOrders;
+            if (currentCadeteStore === 'nnn') {
+                storeFiltered = activeOrders.filter(o => (o.tienda || '').toLowerCase().includes('nnn'));
+            } else if (currentCadeteStore === 'nacha') {
+                storeFiltered = activeOrders.filter(o => (o.tienda || '').toLowerCase().includes('nacha'));
+            }
+
+            // Excluir retiros en depósito o sin envío que no pasaron por moto
+            const motoOrders = storeFiltered.filter(o => {
+                if (!o.envio) return false;
+                const dClean = String(o.direccion || '').toLowerCase();
+                const envClean = String(o.costo_envio || '').toLowerCase();
+                if (dClean.includes('retiro en punto') || dClean.includes('depósito once') || dClean.includes('retiro en depósito')) return false;
+                return true;
+            });
+
+            // 2. Extraer todos los ciclos disponibles y poblar selectCycle si está vacío o cambió
+            const cyclesMap = new Map();
+            motoOrders.forEach(o => {
+                const dateToUse = o.fecha_programada || o.fecha_hora || new Date().toISOString();
+                const c = getCadeteCycleForDate(dateToUse);
+                if (c && !cyclesMap.has(c.key)) {
+                    cyclesMap.set(c.key, c);
+                }
+            });
+
+            // Ciclo actual del día de hoy por si no hay pedidos aún
+            const todayCycle = getCadeteCycleForDate(new Date());
+            if (todayCycle && !cyclesMap.has(todayCycle.key)) {
+                cyclesMap.set(todayCycle.key, todayCycle);
+            }
+
+            const sortedCycles = Array.from(cyclesMap.values()).sort((a, b) => b.start.getTime() - a.start.getTime());
+
+            const prevSelectedCycle = selectCycle ? selectCycle.value : '';
+            if (selectCycle) {
+                selectCycle.innerHTML = `
+                    <option value="current">⭐ Semana Actual (${todayCycle.label})</option>
+                    <optgroup label="📅 Semanas Anteriores">
+                        ${sortedCycles.map(c => `<option value="${c.key}">${c.label}</option>`).join('')}
+                    </optgroup>
+                    <option value="all">🌐 Todas las semanas (Histórico total)</option>
+                `;
+                if (prevSelectedCycle) selectCycle.value = prevSelectedCycle;
+            }
+
+            const activeCycleVal = selectCycle ? selectCycle.value : 'current';
+
+            // 3. Filtrar pedidos que pertenecen al ciclo seleccionado
+            let cycleFiltered = [];
+            let activeCycleObj = todayCycle;
+
+            if (activeCycleVal === 'all') {
+                cycleFiltered = motoOrders;
+                const badge = document.getElementById('cadete-cycle-badge');
+                if (badge) badge.innerText = '🌐 Histórico Total';
+            } else {
+                if (activeCycleVal === 'current') {
+                    activeCycleObj = todayCycle;
+                } else {
+                    activeCycleObj = cyclesMap.get(activeCycleVal) || todayCycle;
+                }
+                const badge = document.getElementById('cadete-cycle-badge');
+                if (badge) badge.innerText = activeCycleObj.label;
+
+                cycleFiltered = motoOrders.filter(o => {
+                    const dateToUse = o.fecha_programada || o.fecha_hora || new Date().toISOString();
+                    const d = new Date(dateToUse);
+                    return d >= activeCycleObj.start && d < activeCycleObj.end;
+                });
+            }
+
+            // Ordenar por fecha cronológica ascendente para ver el recorrido de la semana
+            cycleFiltered.sort((a, b) => {
+                const da = new Date(a.fecha_programada || a.fecha_hora || 0);
+                const db = new Date(b.fecha_programada || b.fecha_hora || 0);
+                return da.getTime() - db.getTime();
+            });
+
+            // 4. Calcular importes, cobranzas y estados
+            let totalCashCollected = 0;
+            let totalFletes = 0;
+            let totalTrips = 0;
+            let countEfvo = 0;
+            let countTransf = 0;
+            let countMeTransf = 0;
+            let countCanc = 0;
+
+            cadeteCalculatedList = cycleFiltered.map(order => {
+                const orderId = order.id;
+                const override = cadeteOverrides[orderId] || {};
+                const lossData = orderLosses[orderId] || {};
+
+                // Costo base flete moto según localidad
+                const matched = matchDeliveryCadeteCost(order.direccion, order.costo_envio);
+                const baseFlete = override.cadeteCost !== undefined ? override.cadeteCost : matched.cost;
+                const attempts = override.attempts !== undefined ? override.attempts : (lossData.status === 'doble_envio_perdida' ? 2 : 1);
+                const orderFlete = baseFlete * attempts;
+
+                // Modo de pago
+                let paymentMode = override.paymentMode;
+                if (!paymentMode) {
+                    if (lossData.status && lossData.status.includes('cancelado')) {
+                        paymentMode = 'cancelado';
+                    } else {
+                        const m = (order.metodo_pago || '').toLowerCase();
+                        if (m.includes('transf') && !m.includes('efectivo')) {
+                            paymentMode = 'transferencia';
+                        } else {
+                            paymentMode = 'efectivo';
+                        }
+                    }
+                }
+
+                // Monto efectivo en mano
+                const orderTotal = parseMonto(order.total);
+                let collectedCash = 0;
+                if (override.collectedCash !== undefined) {
+                    collectedCash = parseFloat(override.collectedCash) || 0;
+                } else {
+                    if (paymentMode === 'efectivo') {
+                        collectedCash = orderTotal;
+                    } else if (paymentMode === 'me_transfirio') {
+                        collectedCash = orderTotal;
+                    } else {
+                        collectedCash = 0;
+                    }
+                }
+
+                const notes = override.notes !== undefined ? override.notes : (lossData.comment || '');
+
+                // Contadores y totales
+                totalFletes += orderFlete;
+                totalTrips += attempts;
+                totalCashCollected += collectedCash;
+
+                if (paymentMode === 'efectivo') countEfvo++;
+                else if (paymentMode === 'transferencia') countTransf++;
+                else if (paymentMode === 'me_transfirio') countMeTransf++;
+                else if (paymentMode === 'cancelado') countCanc++;
+
+                return {
+                    order,
+                    orderId,
+                    baseFlete,
+                    attempts,
+                    orderFlete,
+                    paymentMode,
+                    collectedCash,
+                    notes,
+                    zone: matched.zone,
+                    orderTotal
+                };
+            });
+
+            // 5. Actualizar KPI Cards
+            const saldoFinal = totalCashCollected - totalFletes;
+
+            const elCash = document.getElementById('cadete-kpi-cash');
+            const elCashOrders = document.getElementById('cadete-kpi-cash-orders');
+            const elFletes = document.getElementById('cadete-kpi-fletes');
+            const elFletesTrips = document.getElementById('cadete-kpi-fletes-trips');
+            const elSaldo = document.getElementById('cadete-kpi-saldo');
+            const elSaldoLabel = document.getElementById('cadete-kpi-saldo-label');
+            const elSaldoSub = document.getElementById('cadete-kpi-saldo-sub');
+            const elSaldoCard = document.getElementById('cadete-kpi-saldo-card');
+
+            if (elCash) elCash.innerText = formatMoney(totalCashCollected);
+            if (elCashOrders) elCashOrders.innerText = `${countEfvo + (countMeTransf > 0 ? countMeTransf : 0)} cobranzas registradas`;
+            if (elFletes) elFletes.innerText = `-${formatMoney(totalFletes)}`;
+            if (elFletesTrips) elFletesTrips.innerText = `${totalTrips} viajes computados (${cadeteCalculatedList.length} pedidos)`;
+
+            if (elSaldo) {
+                if (saldoFinal >= 0) {
+                    elSaldo.innerText = `+${formatMoney(saldoFinal)}`;
+                    elSaldo.className = "text-2xl sm:text-3xl font-black text-emerald-300 mt-1 font-mono";
+                    if (elSaldoLabel) elSaldoLabel.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> 💰 MOTO DEBE TRANSFERIR A NICO`;
+                    if (elSaldoSub) elSaldoSub.innerText = `La moto tiene un saldo a favor tuyo de ${formatMoney(saldoFinal)}`;
+                    if (elSaldoCard) elSaldoCard.className = "bg-gradient-to-br from-emerald-950/40 via-slate-900 to-slate-950 border border-emerald-500/50 rounded-2xl p-4 shadow-xl flex items-center justify-between";
+                } else {
+                    elSaldo.innerText = `-${formatMoney(Math.abs(saldoFinal))}`;
+                    elSaldo.className = "text-2xl sm:text-3xl font-black text-rose-400 mt-1 font-mono";
+                    if (elSaldoLabel) elSaldoLabel.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-400 animate-pulse"></span> 💸 NICO DEBE PAGARLE A LA MOTO`;
+                    if (elSaldoSub) elSaldoSub.innerText = `Los fletes superan la cobranza. Debés abonarle a la moto ${formatMoney(Math.abs(saldoFinal))}`;
+                    if (elSaldoCard) elSaldoCard.className = "bg-gradient-to-br from-rose-950/40 via-slate-900 to-slate-950 border border-rose-500/50 rounded-2xl p-4 shadow-xl flex items-center justify-between";
+                }
+            }
+
+            // Actualizar contadores de filtros
+            const cAll = document.getElementById('cadete-count-all');
+            const cEfvo = document.getElementById('cadete-count-efvo');
+            const cTransf = document.getElementById('cadete-count-transf');
+            const cMeTransf = document.getElementById('cadete-count-metransf');
+            const cCanc = document.getElementById('cadete-count-canc');
+
+            if (cAll) cAll.innerText = cadeteCalculatedList.length;
+            if (cEfvo) cEfvo.innerText = countEfvo;
+            if (cTransf) cTransf.innerText = countTransf;
+            if (cMeTransf) cMeTransf.innerText = countMeTransf;
+            if (cCanc) cCanc.innerText = countCanc;
+
+            // 6. Renderizar tabla con filtro
+            filterCadeteTable();
+        }
+
+        function filterCadeteTable() {
+            const tableBody = document.getElementById('cadete-table-body');
+            const searchInput = document.getElementById('cadete-table-search');
+            if (!tableBody) return;
+
+            const q = searchInput ? searchInput.value.toLowerCase().trim() : '';
+
+            const filtered = cadeteCalculatedList.filter(item => {
+                // Filtro por estado
+                if (currentCadeteFilter !== 'all' && item.paymentMode !== currentCadeteFilter) {
+                    return false;
+                }
+                // Filtro por texto
+                if (q) {
+                    const text = `${item.order.cliente_nombre} ${item.order.celular} ${item.order.direccion} ${item.zone} ${item.notes}`.toLowerCase();
+                    if (!text.includes(q)) return false;
+                }
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="9" class="p-8 text-center text-slate-500">
+                            <i class="fa-solid fa-inbox text-2xl mb-2 text-slate-600 block"></i>
+                            No hay pedidos para este filtro o período seleccionado.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tableBody.innerHTML = filtered.map(item => {
+                const o = item.order;
+                const dDate = new Date(o.fecha_programada || o.fecha_hora);
+                const pad = n => String(n).padStart(2, '0');
+                const dateStr = !isNaN(dDate.getTime()) ? `${pad(dDate.getDate())}/${pad(dDate.getMonth() + 1)}` : 'S/F';
+
+                // Botones de Cobro / Modo
+                const btnEfvoClass = item.paymentMode === 'efectivo' 
+                    ? "px-2 py-1 rounded-lg text-[11px] font-bold bg-emerald-600 text-white shadow" 
+                    : "px-2 py-1 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white bg-slate-950 border border-slate-800 transition";
+
+                const btnTransfClass = item.paymentMode === 'transferencia' 
+                    ? "px-2 py-1 rounded-lg text-[11px] font-bold bg-indigo-600 text-white shadow" 
+                    : "px-2 py-1 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white bg-slate-950 border border-slate-800 transition";
+
+                const btnMeTransfClass = item.paymentMode === 'me_transfirio' 
+                    ? "px-2 py-1 rounded-lg text-[11px] font-bold bg-purple-600 text-white shadow" 
+                    : "px-2 py-1 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white bg-slate-950 border border-slate-800 transition";
+
+                const btnCancClass = item.paymentMode === 'cancelado' 
+                    ? "px-2 py-1 rounded-lg text-[11px] font-bold bg-rose-600 text-white shadow" 
+                    : "px-2 py-1 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white bg-slate-950 border border-slate-800 transition";
+
+                // Botón Viajes (1x vs 2x)
+                const attemptsBtn = item.attempts === 2
+                    ? `<button onclick="setCadeteRowAttempts('${item.orderId}', 1)" class="px-2 py-1 bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 rounded-lg font-bold border border-amber-500/30 transition text-[11px]" title="Clic para volver a 1 viaje">2x (Doble)</button>`
+                    : `<button onclick="setCadeteRowAttempts('${item.orderId}', 2)" class="px-2 py-1 bg-slate-950 text-slate-400 hover:text-white rounded-lg font-bold border border-slate-800 transition text-[11px]" title="Clic para marcar 2 viajes">1x Viaje</button>`;
+
+                // Resaltado de efectivo en mano
+                const cashHighlightClass = item.collectedCash > 0
+                    ? "text-emerald-400 border-emerald-500/40 bg-emerald-950/20 font-black"
+                    : "text-slate-500 border-slate-800 bg-slate-950";
+
+                return `
+                    <tr class="hover:bg-slate-800/40 transition group">
+                        <td class="p-3.5 whitespace-nowrap font-mono text-slate-300">
+                            <span class="px-2 py-0.5 rounded bg-slate-800 text-[11px] font-bold">${dateStr}</span>
+                        </td>
+                        <td class="p-3.5 whitespace-nowrap">
+                            <div class="font-bold text-white">${escapeHtml(o.cliente_nombre)}</div>
+                            <a href="https://wa.me/${escapeHtml(o.celular)}" target="_blank" class="text-[11px] text-emerald-400 hover:underline flex items-center gap-1 mt-0.5">
+                                <i class="fa-brands fa-whatsapp text-xs"></i> ${escapeHtml(o.celular)}
+                            </a>
+                        </td>
+                        <td class="p-3.5">
+                            <div class="text-slate-200 text-xs">${escapeHtml(o.direccion)}</div>
+                            <div class="mt-1">
+                                <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-cyan-950/60 text-cyan-300 border border-cyan-800/60">
+                                    ${escapeHtml(item.zone || 'AMBA')}
+                                </span>
+                            </div>
+                        </td>
+                        <td class="p-3.5 text-center whitespace-nowrap">
+                            ${attemptsBtn}
+                        </td>
+                        <td class="p-3.5 text-right whitespace-nowrap">
+                            <div class="flex items-center justify-end gap-1">
+                                <span class="text-slate-500 font-mono text-xs">$</span>
+                                <input type="number" step="100" value="${item.baseFlete}" 
+                                    onchange="setCadeteRowCustomFlete('${item.orderId}', this.value)" 
+                                    class="w-20 bg-slate-950 text-cyan-300 font-mono font-bold text-xs p-1 rounded-lg border border-slate-800 text-right focus:border-cyan-500 focus:outline-none"
+                                    title="Costo flete unitario moto. Si fue 2 veces, se multiplica automáticamente.">
+                            </div>
+                            ${item.attempts > 1 ? `<div class="text-[10px] text-amber-400 font-mono mt-0.5 font-bold">Total: $${formatMoney(item.orderFlete)}</div>` : ''}
+                        </td>
+                        <td class="p-3.5 text-center">
+                            <!-- 4 BOTONES RÁPIDOS INTERACTIVOS REQUERIDOS POR EL USUARIO -->
+                            <div class="flex items-center justify-center gap-1 flex-wrap">
+                                <button onclick="setCadeteRowPayment('${item.orderId}', 'efectivo')" class="${btnEfvoClass}" title="Cobró efectivo en mano -> Suma al saldo de la moto">
+                                    💵 Efvo
+                                </button>
+                                <button onclick="setCadeteRowPayment('${item.orderId}', 'transferencia')" class="${btnTransfClass}" title="Cliente transfirió directo a cuenta de Nico -> $0 efectivo en mano">
+                                    💳 Transf
+                                </button>
+                                <button onclick="setCadeteRowPayment('${item.orderId}', 'me_transfirio')" class="${btnMeTransfClass}" title="El cadete o cliente ya te transfirió directamente">
+                                    📲 Me Transfirió
+                                </button>
+                                <button onclick="setCadeteRowPayment('${item.orderId}', 'cancelado')" class="${btnCancClass}" title="Pedido cancelado/fallido -> $0 efectivo, flete se paga">
+                                    🔴 Canc
+                                </button>
+                            </div>
+                            <div class="text-[10px] text-slate-500 mt-1 font-mono">
+                                Total Pedido: $${formatMoney(item.orderTotal)}
+                            </div>
+                        </td>
+                        <td class="p-3.5 text-right whitespace-nowrap">
+                            <div class="flex items-center justify-end gap-1">
+                                <span class="text-slate-500 font-mono text-xs">$</span>
+                                <input type="number" step="10" value="${item.collectedCash}" 
+                                    oninput="setCadeteRowCash('${item.orderId}', this.value)" 
+                                    class="w-24 ${cashHighlightClass} font-mono text-xs p-1.5 rounded-lg border text-right focus:border-emerald-500 focus:outline-none"
+                                    title="Efectivo físico que tiene la moto en mano para rendir. Editable libremente si transfirió parcial.">
+                            </div>
+                        </td>
+                        <td class="p-3.5">
+                            <input type="text" placeholder="Aclaración..." value="${escapeHtml(item.notes)}" 
+                                onchange="setCadeteRowNotes('${item.orderId}', this.value)" 
+                                class="w-full bg-slate-950 text-slate-200 text-xs p-1.5 rounded-lg border border-slate-800 focus:border-cyan-500 focus:outline-none"
+                                title="Nota o comentario para la rendición (ej: 'me transfirió', 'dejó con encargado')">
+                        </td>
+                        <td class="p-3.5 text-center whitespace-nowrap">
+                            <button onclick="openEditOrderModal('${item.orderId}')" class="p-1.5 text-slate-400 hover:text-white rounded-lg bg-slate-950 border border-slate-800 transition" title="Ver / Editar Pedido Completo">
+                                <i class="fa-solid fa-pen-to-square text-xs"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        /* ACCIONES INTERACTIVAS DE LOS BOTONES */
+        function setCadeteRowPayment(orderId, mode) {
+            const item = cadeteCalculatedList.find(i => i.orderId === orderId);
+            if (!item) return;
+
+            cadeteOverrides[orderId] = cadeteOverrides[orderId] || {};
+            cadeteOverrides[orderId].paymentMode = mode;
+
+            if (mode === 'efectivo') {
+                cadeteOverrides[orderId].collectedCash = item.orderTotal;
+            } else if (mode === 'transferencia') {
+                cadeteOverrides[orderId].collectedCash = 0;
+            } else if (mode === 'me_transfirio') {
+                if (!cadeteOverrides[orderId].collectedCash || cadeteOverrides[orderId].collectedCash === 0) {
+                    cadeteOverrides[orderId].collectedCash = item.orderTotal;
+                }
+                cadeteOverrides[orderId].notes = cadeteOverrides[orderId].notes || 'Me transfirió';
+            } else if (mode === 'cancelado') {
+                cadeteOverrides[orderId].collectedCash = 0;
+                cadeteOverrides[orderId].notes = cadeteOverrides[orderId].notes || 'Cancelado';
+            }
+
+            localStorage.setItem('croc_cadete_overrides', JSON.stringify(cadeteOverrides));
+            renderCadeteDashboard();
+            pushCloudAppState();
+        }
+
+        function setCadeteRowAttempts(orderId, attempts) {
+            cadeteOverrides[orderId] = cadeteOverrides[orderId] || {};
+            cadeteOverrides[orderId].attempts = attempts;
+            localStorage.setItem('croc_cadete_overrides', JSON.stringify(cadeteOverrides));
+            renderCadeteDashboard();
+            pushCloudAppState();
+        }
+
+        function setCadeteRowCustomFlete(orderId, val) {
+            const num = parseFloat(val) || 0;
+            cadeteOverrides[orderId] = cadeteOverrides[orderId] || {};
+            cadeteOverrides[orderId].cadeteCost = num;
+            localStorage.setItem('croc_cadete_overrides', JSON.stringify(cadeteOverrides));
+            renderCadeteDashboard();
+            pushCloudAppState();
+        }
+
+        let cadeteCashTimeout = null;
+        function setCadeteRowCash(orderId, val) {
+            const num = parseFloat(val) || 0;
+            cadeteOverrides[orderId] = cadeteOverrides[orderId] || {};
+            cadeteOverrides[orderId].collectedCash = num;
+            localStorage.setItem('croc_cadete_overrides', JSON.stringify(cadeteOverrides));
+            
+            // Recalcular KPIs en vivo sin rehacer el DOM para no perder foco
+            clearTimeout(cadeteCashTimeout);
+            cadeteCashTimeout = setTimeout(() => {
+                renderCadeteDashboard();
+                pushCloudAppState();
+            }, 600);
+        }
+
+        function setCadeteRowNotes(orderId, text) {
+            cadeteOverrides[orderId] = cadeteOverrides[orderId] || {};
+            cadeteOverrides[orderId].notes = text.trim();
+            localStorage.setItem('croc_cadete_overrides', JSON.stringify(cadeteOverrides));
+            pushCloudAppState();
+        }
+
+        /* EXPORTAR RESUMEN PARA WHATSAPP EN 1 CLIC */
+        function copyCadeteWhatsApp() {
+            if (!cadeteCalculatedList || cadeteCalculatedList.length === 0) {
+                alert('No hay pedidos en el ciclo actual para generar el resumen.');
+                return;
+            }
+
+            const badge = document.getElementById('cadete-cycle-badge')?.innerText || 'Semana en curso';
+            let totalFletes = 0;
+            let totalCash = 0;
+
+            let text = `🛵 *RENDICIÓN MOTO - ${badge.toUpperCase()}*\n`;
+            text += `----------------------------------------\n`;
+
+            cadeteCalculatedList.forEach(item => {
+                const o = item.order;
+                totalFletes += item.orderFlete;
+                totalCash += item.collectedCash;
+
+                const attemptsStr = item.attempts > 1 ? `(${item.attempts}x)` : `(1x)`;
+                let statusDetail = '';
+                if (item.paymentMode === 'efectivo') {
+                    statusDetail = `Cobrado efvo: $${formatMoney(item.collectedCash)}`;
+                } else if (item.paymentMode === 'transferencia') {
+                    statusDetail = `Transf a Nico: $0 efvo`;
+                } else if (item.paymentMode === 'me_transfirio') {
+                    statusDetail = `Rendido: $${formatMoney(item.collectedCash)} (Me transfirió)`;
+                } else if (item.paymentMode === 'cancelado') {
+                    statusDetail = `Cancelado: $0 efvo`;
+                }
+
+                if (item.notes && !statusDetail.includes(item.notes)) {
+                    statusDetail += ` [${item.notes}]`;
+                }
+
+                text += `📍 *${o.cliente_nombre}* (${o.direccion})\n`;
+                text += `   • Flete: $${formatMoney(item.orderFlete)} ${attemptsStr} | ${statusDetail}\n`;
+            });
+
+            const saldo = totalCash - totalFletes;
+            text += `----------------------------------------\n`;
+            text += `💵 *Total Efectivo en Mano Moto:* $${formatMoney(totalCash)}\n`;
+            text += `🏍️ *Total Fletes Cadetería:* -$${formatMoney(totalFletes)}\n`;
+            if (saldo >= 0) {
+                text += `💰 *TOTAL A TRANSFERIR A NICO:* $${formatMoney(saldo)}\n`;
+            } else {
+                text += `💸 *TOTAL A ABONAR A LA MOTO:* $${formatMoney(Math.abs(saldo))}\n`;
+            }
+            text += `----------------------------------------\n`;
+            text += `_Generado automáticamente por CrocScale Logistics_`;
+
+            // Unescape newlines for clipboard
+            const cleanText = text.replace(/\\n/g, '\n');
+
+            navigator.clipboard.writeText(cleanText).then(() => {
+                alert('✅ ¡Resumen copiado para WhatsApp! Ya podés pegarlo en el chat de la moto.');
+            }).catch(err => {
+                prompt('Copiá el texto manualmente:', cleanText);
+            });
         }
 
         // Inicializar aplicación
