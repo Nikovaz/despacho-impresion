@@ -262,7 +262,42 @@
             </div>
         </header>
 
-        <!-- Stats & Tabs (Hoy, Siguiente, Programados, Historial) -->
+        <!-- Barra de Ciclo Activo y Renovación Mensual del Despacho -->
+        <div class="p-3.5 bg-slate-900/80 border border-slate-800 rounded-2xl mb-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 shadow-lg">
+            <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-xs font-bold text-slate-300 flex items-center gap-1.5 mr-1">
+                    <i class="fa-regular fa-calendar-days text-indigo-400"></i> Ciclo Despacho:
+                </span>
+                <div class="inline-flex rounded-xl bg-slate-950 p-1 border border-slate-800 text-xs font-bold shadow-inner flex-wrap">
+                    <button onclick="setDispatchCyclePeriod('current_month')" id="btn-cycle-current" class="px-3 py-1.5 rounded-lg transition bg-indigo-600 text-white shadow" title="Mostrar únicamente los pedidos de Octubre 2026">
+                        🗓️ Este Mes (Octubre)
+                    </button>
+                    <button onclick="setDispatchCyclePeriod('prev_month')" id="btn-cycle-prev" class="px-3 py-1.5 rounded-lg transition text-slate-400 hover:text-white" title="Mostrar pedidos de Septiembre 2026">
+                        ⏮️ Mes Pasado (Septiembre)
+                    </button>
+                    <button onclick="setDispatchCyclePeriod('all')" id="btn-cycle-all" class="px-3 py-1.5 rounded-lg transition text-slate-400 hover:text-white" title="Mostrar todo el historial desde el día 1">
+                        🌐 Historial Completo
+                    </button>
+                    <button onclick="toggleDispatchCustomCutoff()" id="btn-cycle-custom" class="px-3 py-1.5 rounded-lg transition text-slate-400 hover:text-white" title="Definir manualmente desde qué fecha contar">
+                        ⚙️ Corte Manual
+                    </button>
+                </div>
+            </div>
+
+            <!-- Controles de Corte Manual -->
+            <div id="dispatch-custom-cutoff-box" class="hidden items-center gap-2 bg-slate-950 px-3 py-1.5 rounded-xl border border-indigo-500/40">
+                <span class="text-[11px] text-slate-400 font-bold">Desde:</span>
+                <input type="date" id="input-dispatch-cutoff-date" onchange="onDispatchCutoffDateChange(this.value)" class="bg-slate-900 text-white text-xs font-bold rounded-lg px-2 py-1 border border-slate-700 focus:outline-none focus:border-indigo-500">
+                <button onclick="applyDispatchCustomCutoff()" class="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg transition">Aplicar</button>
+            </div>
+
+            <div class="text-[11px] text-slate-400 flex items-center gap-2" id="dispatch-cycle-summary-label">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>Período en curso: <b class="text-emerald-300" id="label-active-cycle-name">Octubre 2026</b></span>
+            </div>
+        </div>
+
+        <!-- Stats & Tabs (Hoy, Siguiente, Programados, Historial Adaptativo) -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 my-6">
             <!-- Tab Lote Activo -->
             <div onclick="switchDispatchTab('today')" id="tab-today-card" class="cursor-pointer p-4 rounded-xl border-2 border-emerald-500 bg-slate-900/90 shadow-md transition">
@@ -305,17 +340,17 @@
                 <div class="text-[11px] text-slate-400 mt-0.5">Envíos para fechas futuras (ej. 24/25)</div>
             </div>
 
-            <!-- Tab Historial -->
+            <!-- Tab Historial / Ciclo Mensual Adaptativo -->
             <div onclick="switchDispatchTab('history')" id="tab-history-card" class="cursor-pointer p-4 rounded-xl border border-slate-800 bg-slate-900/40 hover:bg-slate-900 transition">
                 <div class="flex justify-between items-center">
-                    <span class="text-xs font-semibold uppercase tracking-wider text-indigo-400">Historial Completo</span>
+                    <span class="text-xs font-semibold uppercase tracking-wider text-indigo-400" id="label-tab-history">Este Mes (Octubre)</span>
                     <span id="badge-history" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-500/20 text-indigo-300">0</span>
                 </div>
                 <div class="text-2xl font-bold text-white mt-2" id="total-history">$0</div>
                 <div class="text-xs font-bold text-emerald-400 mt-1 flex items-center gap-1.5" id="profit-history">
                     <i class="fa-solid fa-hand-holding-dollar"></i> Ganancia: $0
                 </div>
-                <div class="text-[11px] text-slate-400 mt-0.5">Todos los pedidos registrados</div>
+                <div class="text-[11px] text-slate-400 mt-0.5" id="desc-tab-history">Pedidos del mes en curso</div>
             </div>
         </div>
 
@@ -721,9 +756,12 @@
                         </optgroup>
                         <optgroup label="⏱️ Períodos Rápidos">
                             <option value="today">⚡ Hoy</option>
+                            <option value="thisWeek">📆 Esta Semana (Lunes a Hoy)</option>
+                            <option value="lastWeek">⏮️ Semana Anterior</option>
+                            <option value="thisMonth">🗓️ Mes Actual (Octubre)</option>
+                            <option value="prevMonth">⏮️ Mes Anterior (Septiembre)</option>
                             <option value="last7">📆 Últimos 7 días</option>
                             <option value="last30">📆 Últimos 30 días</option>
-                            <option value="thisMonth">🗓️ Mes Calendario Actual (1 al fin de mes)</option>
                         </optgroup>
                         <optgroup label="🎯 Personalizado">
                             <option value="custom">🎯 Elegir Rango de Fechas Libre...</option>
@@ -808,6 +846,32 @@
                 </div>
                 <div class="text-3xl font-black text-amber-300 mt-2" id="kpi-margin-pct">0%</div>
                 <div class="text-xs text-slate-400 mt-1" id="kpi-avg-ticket-sub">Ticket prom: <b id="kpi-avg-ticket" class="text-white">$0</b></div>
+            </div>
+        </div>
+
+        <!-- KPI Scorecards: Ganancia Neta por Semanas -->
+        <div class="mb-6 p-4 rounded-2xl bg-gradient-to-r from-indigo-950/40 via-slate-900 to-slate-900 border border-indigo-500/30 shadow-xl space-y-3">
+            <div class="flex items-center justify-between flex-wrap gap-2">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-sm font-bold border border-indigo-500/30">
+                        <i class="fa-solid fa-calendar-week"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xs sm:text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
+                            <span>Ganancia Neta por Semanas</span>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] bg-emerald-500/20 text-emerald-300 font-extrabold border border-emerald-500/30">Lunes a Domingo</span>
+                        </h3>
+                        <p class="text-[11px] text-slate-400">Desglose exacto de facturación, costo de fábrica y ganancia limpia de cada semana</p>
+                    </div>
+                </div>
+                <div class="text-[11px] text-indigo-300 font-bold bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-1 rounded-xl">
+                    <i class="fa-solid fa-hand-pointer text-[10px]"></i> Clic en una semana para aislar en los gráficos
+                </div>
+            </div>
+
+            <!-- Contenedor dinámico de tarjetas de cada semana -->
+            <div id="weekly-profit-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
+                <!-- Inyectado por renderWeeklyProfitsBreakdown -->
             </div>
         </div>
 
@@ -1797,43 +1861,34 @@
             pushCloudAppState();
         }
 
-        function parseExactBrossItemsCost(detallesText, subtotal) {
-            if (!detallesText) return Math.round(subtotal * (4728 / 9000));
-            const text = String(detallesText);
+        // Costos Históricos Fijos de Bross (Vigentes hasta Septiembre 2026 inclusive)
+        const HISTORIC_BROSS_COSTS_SEPTEMBER = {
+            costBoxerEspecialEstampado: 5924,
+            costBoxerEspecialLiso: 5460,
+            costBoxerStandardEstampado: 4728,
+            costBoxerStandardLiso: 4464,
+            costBoxerNiño: 2888,
+            costBoxerLargo: 8628,
+            costDeportivo: 7452,
+            costMedias3002: 3696,
+            costMedias3003: 1584,
+            costMedias3052: 1672,
+            costMedias3053: 1936,
+            costRemera: 6380,
+            costPijama: 23920
+        };
 
-            // Dynamic lookup helper if live catalog loaded from Sheets
-            const getCatalogCost = (keywords, defaultCost) => {
-                if (liveBrossCatalog && liveBrossCatalog.length > 0) {
-                    const item = liveBrossCatalog.find(b => {
-                        const combined = `${b.producto} ${b.medida} ${b.articulo}`.toLowerCase();
-                        return keywords.every(k => combined.includes(k));
-                    });
-                    if (item && item.precioConDesc > 0) return item.precioConDesc;
-                }
-                return defaultCost;
-            };
+        // Fecha de entrada en vigencia del aumento de costos de fábrica (1 de Octubre de 2026)
+        let brossPriceIncreaseCutoffDate = localStorage.getItem('croc_bross_cost_cutoff') || '2026-10-01';
 
-            const costBoxerEspecialEstampado = getCatalogCost(['3xl', 'estampado'], 5924);
-            const costBoxerEspecialLiso = getCatalogCost(['3xl', 'liso'], 5460);
-            const costBoxerStandardEstampado = getCatalogCost(['estampados'], 4728);
-            const costBoxerStandardLiso = getCatalogCost(['lisos'], 4464);
-            const costBoxerNiño = getCatalogCost(['niño'], 2888);
-            const costBoxerLargo = getCatalogCost(['largo'], 8628);
-            const costDeportivo = getCatalogCost(['deportivo'], 7452);
-            const costMedias3002 = getCatalogCost(['3002'], 3696);
-            const costMedias3003 = getCatalogCost(['3003'], 1584);
-            const costMedias3052 = getCatalogCost(['3052'], 1672);
-            const costMedias3053 = getCatalogCost(['3053'], 1936);
-            const costRemera = getCatalogCost(['remera'], 6380);
-            const costPijama = getCatalogCost(['pijama'], 23920);
-
+        function calculateBrossCostWithTable(text, subtotal, costs) {
             // 1. Check overall string pattern like "4 boxer Military 3XL..."
             const overallMatch = text.match(/^\s*(\d+)\s*(?:b[oó]xer|boxers)/i);
             if (overallMatch) {
                 const qty = parseInt(overallMatch[1], 10) || 1;
                 const isSpecial = /3xl|4xl|especial/i.test(text);
                 const isLiso = /liso/i.test(text);
-                const unitCost = isSpecial ? (isLiso ? costBoxerEspecialLiso : costBoxerEspecialEstampado) : (isLiso ? costBoxerStandardLiso : costBoxerStandardEstampado);
+                const unitCost = isSpecial ? (isLiso ? costs.costBoxerEspecialLiso : costs.costBoxerEspecialEstampado) : (isLiso ? costs.costBoxerStandardLiso : costs.costBoxerStandardEstampado);
                 return qty * unitCost;
             }
 
@@ -1861,27 +1916,27 @@
                 let unitCost = 0;
 
                 if (lLower.includes('3xl') || lLower.includes('4xl') || lLower.includes('especial')) {
-                    unitCost = lLower.includes('liso') ? costBoxerEspecialLiso : costBoxerEspecialEstampado;
+                    unitCost = lLower.includes('liso') ? costs.costBoxerEspecialLiso : costs.costBoxerEspecialEstampado;
                 } else if (lLower.includes('niñ')) {
-                    unitCost = costBoxerNiño;
+                    unitCost = costs.costBoxerNiño;
                 } else if (lLower.includes('largo') || lLower.includes('t[eé]rmic') || lLower.includes('termic')) {
-                    unitCost = costBoxerLargo;
+                    unitCost = costs.costBoxerLargo;
                 } else if (lLower.includes('deportiv')) {
-                    unitCost = costDeportivo;
+                    unitCost = costs.costDeportivo;
                 } else if (lLower.includes('3002')) {
-                    unitCost = costMedias3002;
+                    unitCost = costs.costMedias3002;
                 } else if (lLower.includes('3052')) {
-                    unitCost = costMedias3052;
+                    unitCost = costs.costMedias3052;
                 } else if (lLower.includes('3053')) {
-                    unitCost = costMedias3053;
+                    unitCost = costs.costMedias3053;
                 } else if (lLower.includes('media')) {
-                    unitCost = costMedias3003;
+                    unitCost = costs.costMedias3003;
                 } else if (lLower.includes('remera') || lLower.includes('chomba')) {
-                    unitCost = costRemera;
+                    unitCost = costs.costRemera;
                 } else if (lLower.includes('pijama')) {
-                    unitCost = costPijama;
+                    unitCost = costs.costPijama;
                 } else if (lLower.includes('boxer') || lLower.includes('bóxer') || lLower.includes('botanic') || lLower.includes('tokio') || lLower.includes('military') || lLower.includes('batik') || lLower.includes('planta') || lLower.includes('vintage')) {
-                    unitCost = lLower.includes('liso') ? costBoxerStandardLiso : costBoxerStandardEstampado;
+                    unitCost = lLower.includes('liso') ? costs.costBoxerStandardLiso : costs.costBoxerStandardEstampado;
                 } else {
                     continue;
                 }
@@ -1891,10 +1946,62 @@
 
             if (totalCost === 0 && subtotal > 0) {
                 const numItems = Math.max(1, Math.round(subtotal / 9000));
-                totalCost = numItems * costBoxerStandardEstampado;
+                totalCost = numItems * costs.costBoxerStandardEstampado;
             }
 
             return totalCost;
+        }
+
+        function parseExactBrossItemsCost(detallesText, subtotal, orderDateStr) {
+            if (!detallesText) return Math.round(subtotal * (4728 / 9000));
+            const text = String(detallesText);
+
+            // Comprobar vigencia temporal: si el pedido es anterior a la fecha de aumento de costos, usar costos históricos congelados
+            let isHistoricOrder = false;
+            if (orderDateStr) {
+                try {
+                    const oDate = new Date(orderDateStr);
+                    const cutoff = new Date(brossPriceIncreaseCutoffDate + 'T00:00:00');
+                    if (!isNaN(oDate.getTime()) && oDate < cutoff) {
+                        isHistoricOrder = true;
+                    }
+                } catch(e) {}
+            }
+
+            if (isHistoricOrder) {
+                // Costos exactos que rigieron en Septiembre
+                return calculateBrossCostWithTable(text, subtotal, HISTORIC_BROSS_COSTS_SEPTEMBER);
+            }
+
+            // Para pedidos de Octubre en adelante: buscar en la hoja de Precios Bross en vivo (con los nuevos precios de fábrica)
+            const getCatalogCost = (keywords, defaultCost) => {
+                if (liveBrossCatalog && liveBrossCatalog.length > 0) {
+                    const item = liveBrossCatalog.find(b => {
+                        const combined = `${b.producto} ${b.medida} ${b.articulo}`.toLowerCase();
+                        return keywords.every(k => combined.includes(k));
+                    });
+                    if (item && item.precioConDesc > 0) return item.precioConDesc;
+                }
+                return defaultCost;
+            };
+
+            const currentCosts = {
+                costBoxerEspecialEstampado: getCatalogCost(['3xl', 'estampado'], 5924),
+                costBoxerEspecialLiso: getCatalogCost(['3xl', 'liso'], 5460),
+                costBoxerStandardEstampado: getCatalogCost(['estampados'], 4728),
+                costBoxerStandardLiso: getCatalogCost(['lisos'], 4464),
+                costBoxerNiño: getCatalogCost(['niño'], 2888),
+                costBoxerLargo: getCatalogCost(['largo'], 8628),
+                costDeportivo: getCatalogCost(['deportivo'], 7452),
+                costMedias3002: getCatalogCost(['3002'], 3696),
+                costMedias3003: getCatalogCost(['3003'], 1584),
+                costMedias3052: getCatalogCost(['3052'], 1672),
+                costMedias3053: getCatalogCost(['3053'], 1936),
+                costRemera: getCatalogCost(['remera'], 6380),
+                costPijama: getCatalogCost(['pijama'], 23920)
+            };
+
+            return calculateBrossCostWithTable(text, subtotal, currentCosts);
         }
 
         function matchDeliveryCadeteCost(direccion, costoEnvio) {
@@ -1969,7 +2076,7 @@
             // 1. Costo Fábrica / Mercadería Exacto según Precios Bross / Precios JC
             let estimatedCost = 0;
             if (storeKey === 'nnn') {
-                estimatedCost = parseExactBrossItemsCost(order.detalles, subtotal);
+                estimatedCost = parseExactBrossItemsCost(order.detalles, subtotal, order.fecha_hora || order.fecha);
             } else if (storeKey === 'nacha') {
                 const raw = (order.detalles || '').toLowerCase();
                 if (raw.includes('edred') || raw.includes('acolchado')) estimatedCost = Math.round(subtotal * 0.738);
@@ -4403,6 +4510,134 @@
             return { currentBatchStart, currentBatchEnd, tabTodayLabel, tabTodayDesc, tabTomorrowLabel, tabTomorrowDesc };
         }
 
+        /* ====================================================== */
+        /* GESTIÓN DE CICLO MENSUAL Y RENOVACIÓN DEL DESPACHO     */
+        /* ====================================================== */
+        let dispatchCyclePeriod = localStorage.getItem('croc_dispatch_cycle') || 'current_month';
+        let dispatchCustomCutoffDate = localStorage.getItem('croc_dispatch_cutoff') || '2026-10-01';
+
+        function setDispatchCyclePeriod(period) {
+            dispatchCyclePeriod = period;
+            localStorage.setItem('croc_dispatch_cycle', period);
+
+            const customBox = document.getElementById('dispatch-custom-cutoff-box');
+            if (customBox) {
+                if (period === 'custom') customBox.classList.remove('hidden');
+                else customBox.classList.add('hidden');
+            }
+
+            updateCycleButtonStyles();
+            renderDispatchDashboard();
+            renderDispatchList();
+            pushCloudAppState();
+        }
+
+        function toggleDispatchCustomCutoff() {
+            const customBox = document.getElementById('dispatch-custom-cutoff-box');
+            if (customBox) {
+                const isHidden = customBox.classList.contains('hidden');
+                if (isHidden) {
+                    setDispatchCyclePeriod('custom');
+                } else {
+                    setDispatchCyclePeriod('current_month');
+                }
+            }
+        }
+
+        function onDispatchCutoffDateChange(val) {
+            if (val) {
+                dispatchCustomCutoffDate = val;
+                localStorage.setItem('croc_dispatch_cutoff', val);
+            }
+        }
+
+        function applyDispatchCustomCutoff() {
+            const inp = document.getElementById('input-dispatch-cutoff-date');
+            if (inp && inp.value) {
+                dispatchCustomCutoffDate = inp.value;
+                localStorage.setItem('croc_dispatch_cutoff', inp.value);
+            }
+            setDispatchCyclePeriod('custom');
+        }
+
+        function updateCycleButtonStyles() {
+            const btns = {
+                'current_month': document.getElementById('btn-cycle-current'),
+                'prev_month': document.getElementById('btn-cycle-prev'),
+                'all': document.getElementById('btn-cycle-all'),
+                'custom': document.getElementById('btn-cycle-custom')
+            };
+
+            Object.entries(btns).forEach(([k, btn]) => {
+                if (!btn) return;
+                if (k === dispatchCyclePeriod) {
+                    btn.className = "px-3 py-1.5 rounded-lg transition bg-indigo-600 text-white shadow font-bold";
+                } else {
+                    btn.className = "px-3 py-1.5 rounded-lg transition text-slate-400 hover:text-white";
+                }
+            });
+
+            const summaryLabel = document.getElementById('label-active-cycle-name');
+            const cardTitle = document.getElementById('label-tab-history');
+            const cardDesc = document.getElementById('desc-tab-history');
+
+            const now = new Date();
+            const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+            const curMonthName = MESES[now.getMonth()];
+            const prevMonthName = MESES[(now.getMonth() - 1 + 12) % 12];
+
+            if (dispatchCyclePeriod === 'current_month') {
+                if (summaryLabel) summaryLabel.innerText = `${curMonthName} ${now.getFullYear()} (Mes Actual)`;
+                if (cardTitle) cardTitle.innerText = `Este Mes (${curMonthName})`;
+                if (cardDesc) cardDesc.innerText = `Pedidos del 1 al fin de ${curMonthName}`;
+            } else if (dispatchCyclePeriod === 'prev_month') {
+                if (summaryLabel) summaryLabel.innerText = `${prevMonthName} (Mes Anterior)`;
+                if (cardTitle) cardTitle.innerText = `Mes Anterior (${prevMonthName})`;
+                if (cardDesc) cardDesc.innerText = `Pedidos cerrados de ${prevMonthName}`;
+            } else if (dispatchCyclePeriod === 'custom') {
+                const cDateParts = dispatchCustomCutoffDate.split('-');
+                const formattedCutoff = cDateParts.length === 3 ? `${cDateParts[2]}/${cDateParts[1]}` : dispatchCustomCutoffDate;
+                if (summaryLabel) summaryLabel.innerText = `Desde ${formattedCutoff} (Corte Manual)`;
+                if (cardTitle) cardTitle.innerText = `Desde ${formattedCutoff}`;
+                if (cardDesc) cardDesc.innerText = `Pedidos posteriores al corte`;
+            } else {
+                if (summaryLabel) summaryLabel.innerText = "Historial Completo (Todos los meses)";
+                if (cardTitle) cardTitle.innerText = "Historial Completo";
+                if (cardDesc) cardDesc.innerText = "Todos los pedidos registrados";
+            }
+        }
+
+        function filterOrdersByDispatchCycle(orders) {
+            if (!orders || orders.length === 0) return [];
+            if (dispatchCyclePeriod === 'all') return [...orders];
+
+            const now = new Date();
+            const curYear = now.getFullYear();
+            const curMonth = now.getMonth();
+
+            if (dispatchCyclePeriod === 'current_month') {
+                return orders.filter(o => {
+                    const d = new Date(o.fecha_hora);
+                    return !isNaN(d.getTime()) && d.getFullYear() === curYear && d.getMonth() === curMonth;
+                });
+            } else if (dispatchCyclePeriod === 'prev_month') {
+                const prevYear = curMonth === 0 ? curYear - 1 : curYear;
+                const prevMonth = curMonth === 0 ? 11 : curMonth - 1;
+                return orders.filter(o => {
+                    const d = new Date(o.fecha_hora);
+                    return !isNaN(d.getTime()) && d.getFullYear() === prevYear && d.getMonth() === prevMonth;
+                });
+            } else if (dispatchCyclePeriod === 'custom') {
+                const cutoff = new Date(dispatchCustomCutoffDate + 'T00:00:00');
+                return orders.filter(o => {
+                    const d = new Date(o.fecha_hora);
+                    return !isNaN(d.getTime()) && d >= cutoff;
+                });
+            }
+
+            return [...orders];
+        }
+
         function categorizeDispatchOrders(orders) {
             const { currentBatchStart, currentBatchEnd, tabTodayLabel, tabTodayDesc, tabTomorrowLabel, tabTomorrowDesc } = getBatchConfig();
 
@@ -4419,7 +4654,9 @@
             const todayBatch = [];
             const tomorrowBatch = [];
             const scheduledBatch = [];
-            const historyBatch = [...orders];
+            
+            // Filtrar historyBatch según el ciclo seleccionado (current_month, prev_month, all, custom)
+            const historyBatch = filterOrdersByDispatchCycle(orders);
 
             const nowDate = new Date();
             const todayStr = nowDate.toISOString().slice(0, 10);
@@ -4482,6 +4719,7 @@
         function renderDispatchDashboard() {
             const { todayBatch, tomorrowBatch, scheduledBatch, historyBatch } = categorizeDispatchOrders(dispatchOrders);
 
+            updateCycleButtonStyles();
             document.getElementById('badge-today').innerText = todayBatch.length;
             document.getElementById('badge-tomorrow').innerText = tomorrowBatch.length;
             const elBadgeSched = document.getElementById('badge-scheduled');
@@ -4537,8 +4775,9 @@
             const todayStr = nowDate.toISOString().slice(0, 10);
 
             if (bannerCalculationScope === 'confirmed') {
-                // Tomar todos los pedidos registrados menos los que tengan fecha programada futura
-                bannerBatch = dispatchOrders.filter(o => {
+                // Si el ciclo es mensual o personalizado, computar solo los pedidos de dicho ciclo (no arrastrar meses pasados)
+                const baseCycleOrders = filterOrdersByDispatchCycle(dispatchOrders);
+                bannerBatch = baseCycleOrders.filter(o => {
                     const isFuture = o.fecha_programada && o.fecha_programada > todayStr;
                     return !isFuture;
                 });
@@ -5305,10 +5544,31 @@
                 const past30 = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
                 document.getElementById('input-date-from').value = past30.toISOString().split('T')[0];
                 document.getElementById('input-date-to').value = now.toISOString().split('T')[0];
+            } else if (selectedPeriodKey === 'thisWeek') {
+                const now = new Date();
+                const day = now.getDay();
+                const diff = (day === 0 ? -6 : 1) - day;
+                const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + diff);
+                document.getElementById('input-date-from').value = monday.toISOString().split('T')[0];
+                document.getElementById('input-date-to').value = now.toISOString().split('T')[0];
+            } else if (selectedPeriodKey === 'lastWeek') {
+                const now = new Date();
+                const day = now.getDay();
+                const diff = (day === 0 ? -6 : 1) - day;
+                const prevMonday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + diff - 7);
+                const prevSunday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + diff - 1);
+                document.getElementById('input-date-from').value = prevMonday.toISOString().split('T')[0];
+                document.getElementById('input-date-to').value = prevSunday.toISOString().split('T')[0];
             } else if (selectedPeriodKey === 'thisMonth') {
                 const now = new Date();
                 const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
                 const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+                document.getElementById('input-date-from').value = firstDay.toISOString().split('T')[0];
+                document.getElementById('input-date-to').value = lastDay.toISOString().split('T')[0];
+            } else if (selectedPeriodKey === 'prevMonth') {
+                const now = new Date();
+                const firstDay = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                const lastDay = new Date(now.getFullYear(), now.getMonth(), 0);
                 document.getElementById('input-date-from').value = firstDay.toISOString().split('T')[0];
                 document.getElementById('input-date-to').value = lastDay.toISOString().split('T')[0];
             } else if (selectedPeriodKey === 'all') {
@@ -5417,6 +5677,28 @@
                 else totalRetiros++;
             });
 
+            let totalCost = 0;
+            let totalProfit = 0;
+
+            orders.forEach(o => {
+                if (o.isConfirmed) {
+                    // Adaptar objeto de orden para calculateOrderProfitability
+                    const orderObj = {
+                        id: o.id,
+                        total: o.totalMonto,
+                        subtotal: o.subtotal,
+                        detalles: o.productos,
+                        costo_envio: o.costoEnvio,
+                        direccion: o.direccionRaw,
+                        fecha_hora: o.fecha ? o.fecha.toISOString() : ''
+                    };
+                    const prof = calculateOrderProfitability(orderObj, currentAnalyticsStore);
+                    totalCost += prof.estimatedCost;
+                    totalProfit += prof.netProfit;
+                }
+            });
+
+            const marginPct = confirmedRevenue > 0 ? ((totalProfit / confirmedRevenue) * 100).toFixed(1) : '0.0';
             const conversionRate = totalRegistered > 0 ? ((confirmedCount / totalRegistered) * 100).toFixed(1) : 0;
             const avgTicket = confirmedCount > 0 ? Math.round(confirmedRevenue / confirmedCount) : 0;
 
@@ -5427,12 +5709,21 @@
             document.getElementById('kpi-rate').innerText = `${conversionRate}%`;
             document.getElementById('kpi-avg-ticket').innerText = `$${avgTicket.toLocaleString('es-AR')}`;
 
+            // Actualizar KPIs de Costo Mercadería y Ganancia Neta Real en Métricas
+            const elCost = document.getElementById('kpi-cost');
+            if (elCost) elCost.innerText = `$${totalCost.toLocaleString('es-AR')}`;
+            const elProfit = document.getElementById('kpi-profit');
+            if (elProfit) elProfit.innerText = `$${totalProfit.toLocaleString('es-AR')}`;
+            const elMargin = document.getElementById('kpi-margin-pct');
+            if (elMargin) elMargin.innerText = `${marginPct}%`;
+
             renderEvolutionChart(orders);
             renderTopProductsChart(orders);
             renderStatusDonutChart(orders, confirmedCount, totalRegistered);
             renderDeliveryDonutChart(totalEnvios, totalRetiros);
             renderLocalitiesList(orders);
             renderAnalyticsTable(orders);
+            renderWeeklyProfitsBreakdown(orders);
         }
 
         function renderEvolutionChart(orders) {
@@ -5723,6 +6014,127 @@
                 `;
             }
 
+        }
+
+
+        function renderWeeklyProfitsBreakdown(orders) {
+            const container = document.getElementById('weekly-profit-container');
+            if (!container) return;
+
+            // Agrupar órdenes confirmadas por semana (Lunes a Domingo)
+            const weeksMap = new Map();
+
+            // Usar todas las órdenes de la tienda para mostrar las semanas del mes o período
+            const allStoreOrders = analyticsRawOrders.filter(o => o.isConfirmed);
+
+            allStoreOrders.forEach(o => {
+                const d = o.fecha;
+                if (!d || isNaN(d.getTime())) return;
+
+                // Encontrar el lunes de la semana
+                const day = d.getDay();
+                const diffToMonday = (day === 0 ? -6 : 1) - day;
+                const monday = new Date(d.getFullYear(), d.getMonth(), d.getDate() + diffToMonday, 0, 0, 0);
+                const sunday = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + 6, 23, 59, 59);
+
+                const weekKey = monday.toISOString().slice(0, 10);
+                if (!weeksMap.has(weekKey)) {
+                    weeksMap.set(weekKey, {
+                        monday,
+                        sunday,
+                        revenue: 0,
+                        cost: 0,
+                        profit: 0,
+                        ordersCount: 0
+                    });
+                }
+
+                const w = weeksMap.get(weekKey);
+                w.revenue += o.totalMonto;
+                w.ordersCount += 1;
+
+                const orderObj = {
+                    id: o.id,
+                    total: o.totalMonto,
+                    subtotal: o.subtotal,
+                    detalles: o.productos,
+                    costo_envio: o.costoEnvio,
+                    direccion: o.direccionRaw,
+                    fecha_hora: o.fecha.toISOString()
+                };
+                const p = calculateOrderProfitability(orderObj, currentAnalyticsStore);
+                w.cost += p.estimatedCost;
+                w.profit += p.netProfit;
+            });
+
+            const sortedWeeks = Array.from(weeksMap.values()).sort((a, b) => b.monday - a.monday);
+
+            if (sortedWeeks.length === 0) {
+                container.innerHTML = `<div class="col-span-full text-xs text-slate-500 py-3 text-center">No hay semanas registradas para esta tienda.</div>`;
+                return;
+            }
+
+            const pad = n => String(n).padStart(2, '0');
+            const now = new Date();
+
+            container.innerHTML = sortedWeeks.map((w, idx) => {
+                const isCurrentWeek = now >= w.monday && now <= w.sunday;
+                const mStr = `${pad(w.monday.getDate())}/${pad(w.monday.getMonth() + 1)}`;
+                const sStr = `${pad(w.sunday.getDate())}/${pad(w.sunday.getMonth() + 1)}`;
+                const margin = w.revenue > 0 ? ((w.profit / w.revenue) * 100).toFixed(1) : 0;
+
+                const fromIso = w.monday.toISOString().slice(0, 10);
+                const toIso = w.sunday.toISOString().slice(0, 10);
+
+                return `
+                    <div onclick="filterToSpecificWeek('${fromIso}', '${toIso}')" 
+                        class="p-3.5 rounded-xl border transition cursor-pointer hover:scale-[1.02] shadow flex flex-col justify-between ${isCurrentWeek ? 'bg-gradient-to-br from-emerald-950/60 to-slate-900 border-emerald-500/50 shadow-emerald-950/50' : 'bg-slate-950/80 border-slate-800 hover:border-slate-700'}">
+                        <div>
+                            <div class="flex items-center justify-between gap-1 mb-1.5">
+                                <span class="text-xs font-black text-white flex items-center gap-1.5">
+                                    <span>🗓️ ${mStr} al ${sStr}</span>
+                                    ${isCurrentWeek ? '<span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-emerald-500 text-slate-950">EN CURSO</span>' : ''}
+                                </span>
+                                <span class="text-[10px] font-bold text-slate-400 bg-slate-900 px-2 py-0.5 rounded-full border border-slate-800">
+                                    ${w.ordersCount} ped.
+                                </span>
+                            </div>
+
+                            <div class="flex items-baseline justify-between mt-2">
+                                <span class="text-[11px] text-slate-400">Ganancia Neta:</span>
+                                <span class="text-base font-black font-mono text-emerald-400">+$${w.profit.toLocaleString('es-AR')}</span>
+                            </div>
+
+                            <div class="flex items-baseline justify-between text-[11px] text-slate-500 mt-1">
+                                <span>Facturación:</span>
+                                <span class="font-mono text-slate-300 font-bold">$${w.revenue.toLocaleString('es-AR')}</span>
+                            </div>
+
+                            <div class="flex items-baseline justify-between text-[11px] text-slate-500 mt-0.5">
+                                <span>Costo Fábrica:</span>
+                                <span class="font-mono text-rose-400/80">$${w.cost.toLocaleString('es-AR')}</span>
+                            </div>
+                        </div>
+
+                        <div class="mt-2.5 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px]">
+                            <span class="text-amber-400 font-bold font-mono">Margen: ${margin}%</span>
+                            <span class="text-indigo-400 font-semibold flex items-center gap-1 hover:underline">Ver detalle <i class="fa-solid fa-arrow-right text-[8px]"></i></span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function filterToSpecificWeek(fromStr, toStr) {
+            document.getElementById('select-cycle').value = 'custom';
+            selectedPeriodKey = 'custom';
+            document.getElementById('input-date-from').value = fromStr;
+            document.getElementById('input-date-to').value = toStr;
+            renderAnalyticsDashboard();
+
+            // Smooth scroll down to charts
+            const chartEl = document.getElementById('chart-evolution');
+            if (chartEl) chartEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
         function renderAnalyticsTable(orders) {
