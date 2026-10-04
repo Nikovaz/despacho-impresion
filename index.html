@@ -4796,6 +4796,8 @@
             if (elProfitHistory) elProfitHistory.innerHTML = `<i class="fa-solid fa-hand-holding-dollar"></i> Ganancia: <b class="text-white">$${profitHistory.toLocaleString('es-AR')}</b>`;
 
             // Seleccionar lote a computar en el Banner:
+            const nowDate = new Date();
+            const todayStr = nowDate.toISOString().slice(0, 10);
             const activeTabList = getActiveDispatchList();
             const baseCycleOrders = filterOrdersByDispatchCycle(dispatchOrders);
             const confirmedCycleOrders = baseCycleOrders.filter(o => {
