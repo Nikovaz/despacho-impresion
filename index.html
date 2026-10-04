@@ -4795,9 +4795,25 @@
             const elProfitHistory = document.getElementById('profit-history');
             if (elProfitHistory) elProfitHistory.innerHTML = `<i class="fa-solid fa-hand-holding-dollar"></i> Ganancia: <b class="text-white">$${profitHistory.toLocaleString('es-AR')}</b>`;
 
-            // Toggle visual classes for Scope
+            // Seleccionar lote a computar en el Banner:
+            const activeTabList = getActiveDispatchList();
+            const baseCycleOrders = filterOrdersByDispatchCycle(dispatchOrders);
+            const confirmedCycleOrders = baseCycleOrders.filter(o => {
+                const isFuture = o.fecha_programada && o.fecha_programada > todayStr;
+                return !isFuture;
+            });
+
+            // Actualizar etiquetas claras en los botones con conteo de pedidos
             const btnScopeConf = document.getElementById('btn-scope-confirmed');
             const btnScopeTab = document.getElementById('btn-scope-tab');
+            if (btnScopeConf) {
+                const cycleShortName = dispatchCyclePeriod === 'current_month' ? 'Mes' : (dispatchCyclePeriod === 'prev_month' ? 'Mes Pasado' : (dispatchCyclePeriod === 'all' ? 'Historial' : 'Corte'));
+                btnScopeConf.innerHTML = `<span>📊 Todo el ${cycleShortName} (${confirmedCycleOrders.length})</span>`;
+            }
+            if (btnScopeTab) {
+                btnScopeTab.innerHTML = `<span>📦 Solo este Lote (${activeTabList.length})</span>`;
+            }
+
             if (btnScopeConf && btnScopeTab) {
                 if (bannerCalculationScope === 'confirmed') {
                     btnScopeConf.className = "px-2.5 py-1 rounded-lg font-bold transition flex items-center gap-1 bg-emerald-600 text-white shadow";
@@ -4808,23 +4824,7 @@
                 }
             }
 
-            // Seleccionar lote a computar en el Banner:
-            // 'confirmed': TODOS los pedidos confirmados/cerrados EXCLUYENDO los programados futuros!
-            // 'active_tab': Solo los pedidos de la pestaña seleccionada
-            let bannerBatch = [];
-            const nowDate = new Date();
-            const todayStr = nowDate.toISOString().slice(0, 10);
-
-            if (bannerCalculationScope === 'confirmed') {
-                // Si el ciclo es mensual o personalizado, computar solo los pedidos de dicho ciclo (no arrastrar meses pasados)
-                const baseCycleOrders = filterOrdersByDispatchCycle(dispatchOrders);
-                bannerBatch = baseCycleOrders.filter(o => {
-                    const isFuture = o.fecha_programada && o.fecha_programada > todayStr;
-                    return !isFuture;
-                });
-            } else {
-                bannerBatch = getActiveDispatchList();
-            }
+            let bannerBatch = (bannerCalculationScope === 'confirmed') ? confirmedCycleOrders : activeTabList;
 
             const activeRevenue = bannerBatch.reduce((acc, o) => acc + calculateOrderProfitability(o, currentDispatchStore).total, 0);
             const activeCost = bannerBatch.reduce((acc, o) => acc + calculateOrderProfitability(o, currentDispatchStore).estimatedCost, 0);
