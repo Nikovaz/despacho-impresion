@@ -1816,28 +1816,60 @@
         }
 
         function syncAdsSpendFromSheet() {
-            const customStored = localStorage.getItem('croc_ads_spend_custom');
+            const targetStore = (currentDispatchStore || 'nnn').toLowerCase();
+            const cycleKey = (typeof dispatchCyclePeriod !== 'undefined' ? dispatchCyclePeriod : 'current_month');
+            const customKey = `croc_ads_spend_${targetStore}_${cycleKey}`;
+
+            // Si el usuario guardó un valor manual específico para este ciclo
+            const customStored = localStorage.getItem(customKey);
             if (customStored !== null && customStored !== '' && !isNaN(parseFloat(customStored))) {
                 currentAdsSpend = parseFloat(customStored);
                 return;
             }
 
-            if (!liveAdsExpenses || liveAdsExpenses.length === 0) return;
-
-            const targetStore = (currentDispatchStore || 'nnn').toLowerCase();
+            if (!liveAdsExpenses || liveAdsExpenses.length === 0) {
+                currentAdsSpend = 0;
+                return;
+            }
 
             // Filtrar todas las entradas de la tienda actual
-            const matchedEntries = liveAdsExpenses.filter(e => {
+            const storeEntries = liveAdsExpenses.filter(e => {
                 const s = (e.tienda || '').toLowerCase();
                 return s.includes(targetStore) || (targetStore === 'nnn' && s.includes('nnn')) || (targetStore === 'nacha' && s.includes('nacha'));
             });
 
-            if (matchedEntries.length > 0) {
-                // SUMA TOTAL ACUMULADA DE TODAS LAS CAMPAÑAS DE LA TIENDA (Ej: 13000 + 40000 + 20000 = $73.000)
-                const totalAdsSum = matchedEntries.reduce((sum, item) => sum + (parseFloat(item.inversion) || 0), 0);
-                currentAdsSpend = totalAdsSum;
-                localStorage.setItem('croc_ads_spend_today', String(totalAdsSum));
+            const now = new Date();
+            const curYear = now.getFullYear();
+            const curMonth = now.getMonth();
+
+            let matchedEntries = [];
+            if (cycleKey === 'all') {
+                matchedEntries = storeEntries;
+            } else if (cycleKey === 'current_month') {
+                matchedEntries = storeEntries.filter(e => {
+                    if (!e.fecha) return false;
+                    const d = new Date(e.fecha + 'T12:00:00');
+                    return !isNaN(d.getTime()) && d.getFullYear() === curYear && d.getMonth() === curMonth;
+                });
+            } else if (cycleKey === 'prev_month') {
+                const prevYear = curMonth === 0 ? curYear - 1 : curYear;
+                const prevMonth = curMonth === 0 ? 11 : curMonth - 1;
+                matchedEntries = storeEntries.filter(e => {
+                    if (!e.fecha) return false;
+                    const d = new Date(e.fecha + 'T12:00:00');
+                    return !isNaN(d.getTime()) && d.getFullYear() === prevYear && d.getMonth() === prevMonth;
+                });
+            } else if (cycleKey === 'custom') {
+                const cutoff = (typeof dispatchCustomCutoffDate !== 'undefined' ? dispatchCustomCutoffDate : '2026-10-01');
+                matchedEntries = storeEntries.filter(e => {
+                    return e.fecha && e.fecha >= cutoff;
+                });
+            } else {
+                matchedEntries = storeEntries;
             }
+
+            const totalAdsSum = matchedEntries.reduce((sum, item) => sum + (parseFloat(item.inversion) || 0), 0);
+            currentAdsSpend = totalAdsSum;
         }
 
         // Call on startup
@@ -1847,14 +1879,22 @@
             const num = parseFloat(val) || 0;
             currentAdsSpend = num;
             isAdsSpendManualOverride = true;
-            localStorage.setItem('croc_ads_spend_custom', String(num));
-            localStorage.setItem('croc_ads_spend_today', String(num));
+            const targetStore = (currentDispatchStore || 'nnn').toLowerCase();
+            const cycleKey = (typeof dispatchCyclePeriod !== 'undefined' ? dispatchCyclePeriod : 'current_month');
+            const customKey = `croc_ads_spend_${targetStore}_${cycleKey}`;
+            localStorage.setItem(customKey, String(num));
+            localStorage.removeItem('croc_ads_spend_custom'); // Limpiar override viejo global
             renderDispatchDashboard();
             pushCloudAppState();
         }
 
         function resetAdsSpendToSheet() {
+            const targetStore = (currentDispatchStore || 'nnn').toLowerCase();
+            const cycleKey = (typeof dispatchCyclePeriod !== 'undefined' ? dispatchCyclePeriod : 'current_month');
+            const customKey = `croc_ads_spend_${targetStore}_${cycleKey}`;
+            localStorage.removeItem(customKey);
             localStorage.removeItem('croc_ads_spend_custom');
+            localStorage.removeItem('croc_ads_spend_today');
             isAdsSpendManualOverride = false;
             syncAdsSpendFromSheet();
             renderDispatchDashboard();
@@ -4527,6 +4567,7 @@
             }
 
             updateCycleButtonStyles();
+            syncAdsSpendFromSheet();
             renderDispatchDashboard();
             renderDispatchList();
             pushCloudAppState();
@@ -4801,10 +4842,8 @@
             // Ganancia Operativa exacta sumando ganancias y restando pérdidas de envíos
             const activeOperativeProfit = bannerBatch.reduce((acc, o) => acc + calculateOrderProfitability(o, currentDispatchStore).netProfit, 0);
 
-            // Asegurar que si hay gasto registrado en la hoja de Ads ($73.000) se use por defecto
-            if (!currentAdsSpend) {
-                syncAdsSpendFromSheet();
-            }
+            // Sincronizar automáticamente el gasto en Meta Ads correspondiente al ciclo activo
+            syncAdsSpendFromSheet();
 
             // Ganancia Limpia en Bolsillo = Ganancia Operativa - Gasto Total en Anuncios
             const cleanPocketProfit = activeOperativeProfit - currentAdsSpend;
