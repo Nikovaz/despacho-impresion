@@ -1921,71 +1921,85 @@
         // Fecha de entrada en vigencia del aumento de costos de fábrica (1 de Octubre de 2026)
         let brossPriceIncreaseCutoffDate = localStorage.getItem('croc_bross_cost_cutoff') || '2026-10-01';
 
+        function splitItemsSmart(text) {
+            if (!text) return [];
+            text = String(text).replace(/\*/g, '');
+            let cleaned = '';
+            let inParen = 0;
+            for (const ch of text) {
+                if (ch === '(') inParen++;
+                else if (ch === ')') inParen = Math.max(0, inParen - 1);
+                if (ch === ',' && inParen > 0) cleaned += '___COMMA___';
+                else cleaned += ch;
+            }
+            const parts = cleaned.split(/[\r\n\u2022]+|\s+-\s+|,/);
+            const res = [];
+            for (let p of parts) {
+                p = p.replace(/___COMMA___/g, ',').trim();
+                p = p.replace(/^[-–\s]+|[-–\s]+$/g, '');
+                if (p && p.length >= 3) res.push(p);
+            }
+            return res;
+        }
+
         function calculateBrossCostWithTable(text, subtotal, costs) {
-            // 1. Check overall string pattern like "4 boxer Military 3XL..."
-            const overallMatch = text.match(/^\s*(\d+)\s*(?:b[oó]xer|boxers)/i);
-            if (overallMatch) {
-                const qty = parseInt(overallMatch[1], 10) || 1;
-                const isSpecial = /3xl|4xl|especial/i.test(text);
-                const isLiso = /liso/i.test(text);
-                const unitCost = isSpecial ? (isLiso ? costs.costBoxerEspecialLiso : costs.costBoxerEspecialEstampado) : (isLiso ? costs.costBoxerStandardLiso : costs.costBoxerStandardEstampado);
-                return qty * unitCost;
+            if (!text) {
+                const numItems = Math.max(1, Math.round(subtotal / 9500));
+                return numItems * costs.costBoxerStandardEstampado;
             }
 
-            // 2. Split line by line or bullet by bullet
-            const lines = text.split(/[\r\n,•-]+/);
+            const items = splitItemsSmart(text);
             let totalCost = 0;
 
-            for (const line of lines) {
-                const l = line.trim();
-                if (!l || l.length < 3) continue;
-                if (/entregar|horario|antes de|nota|hs\b/i.test(l) && !/b[oó]xer|boxer|media|remera|pijama/i.test(l)) {
+            for (const it of items) {
+                if (/entregar|horario|antes de|nota|hs\b/i.test(it) && !/b[oó]xer|boxer|media|remera|pijama|pack/i.test(it)) {
                     continue;
                 }
 
                 let qty = 1;
-                const qm1 = l.match(/x\s*(\d+)/i);
-                const qm2 = l.match(/^(\d+)\s*x/i);
-                const qm3 = l.match(/\b(\d+)\s*(?:b[oó]xer|boxer|medias|media|remera)/i);
+                const qm1 = it.match(/x\s*(\d+)/i);
+                const qm2 = it.match(/^(\d+)\s*x/i);
+                const qm3 = it.match(/\b(\d+)\s*(?:b[oó]xer|boxer|medias|media|remera|unidades|prendas|art)/i);
+                const qm4 = it.match(/-\s*(\d+)\s+[A-Za-z]/i);
 
                 if (qm1) qty = parseInt(qm1[1], 10) || 1;
                 else if (qm2) qty = parseInt(qm2[1], 10) || 1;
                 else if (qm3) qty = parseInt(qm3[1], 10) || 1;
+                else if (qm4) qty = parseInt(qm4[1], 10) || 1;
 
-                const lLower = l.toLowerCase();
+                const itLower = it.toLowerCase();
                 let unitCost = 0;
 
-                if (lLower.includes('3xl') || lLower.includes('4xl') || lLower.includes('especial')) {
-                    unitCost = lLower.includes('liso') ? costs.costBoxerEspecialLiso : costs.costBoxerEspecialEstampado;
-                } else if (lLower.includes('niñ')) {
+                if (itLower.includes('3xl') || itLower.includes('4xl') || itLower.includes('especial')) {
+                    unitCost = itLower.includes('liso') ? costs.costBoxerEspecialLiso : costs.costBoxerEspecialEstampado;
+                } else if (itLower.includes('niñ')) {
                     unitCost = costs.costBoxerNiño;
-                } else if (lLower.includes('largo') || lLower.includes('t[eé]rmic') || lLower.includes('termic')) {
+                } else if (itLower.includes('largo') || itLower.includes('t[eé]rmic') || itLower.includes('termic')) {
                     unitCost = costs.costBoxerLargo;
-                } else if (lLower.includes('deportiv')) {
+                } else if (itLower.includes('deportiv')) {
                     unitCost = costs.costDeportivo;
-                } else if (lLower.includes('3002')) {
+                } else if (itLower.includes('3002')) {
                     unitCost = costs.costMedias3002;
-                } else if (lLower.includes('3052')) {
+                } else if (itLower.includes('3052')) {
                     unitCost = costs.costMedias3052;
-                } else if (lLower.includes('3053')) {
+                } else if (itLower.includes('3053')) {
                     unitCost = costs.costMedias3053;
-                } else if (lLower.includes('media')) {
+                } else if (itLower.includes('media')) {
                     unitCost = costs.costMedias3003;
-                } else if (lLower.includes('remera') || lLower.includes('chomba')) {
+                } else if (itLower.includes('remera') || itLower.includes('chomba')) {
                     unitCost = costs.costRemera;
-                } else if (lLower.includes('pijama')) {
+                } else if (itLower.includes('pijama')) {
                     unitCost = costs.costPijama;
-                } else if (lLower.includes('boxer') || lLower.includes('bóxer') || lLower.includes('botanic') || lLower.includes('tokio') || lLower.includes('military') || lLower.includes('batik') || lLower.includes('planta') || lLower.includes('vintage')) {
-                    unitCost = lLower.includes('liso') ? costs.costBoxerStandardLiso : costs.costBoxerStandardEstampado;
                 } else {
-                    continue;
+                    // Boxers estándar (lisos o estampados)
+                    unitCost = itLower.includes('liso') ? costs.costBoxerStandardLiso : costs.costBoxerStandardEstampado;
                 }
 
                 totalCost += (qty * unitCost);
             }
 
             if (totalCost === 0 && subtotal > 0) {
-                const numItems = Math.max(1, Math.round(subtotal / 9000));
+                const numItems = Math.max(1, Math.round(subtotal / 9500));
                 totalCost = numItems * costs.costBoxerStandardEstampado;
             }
 
@@ -5450,7 +5464,7 @@
 
                     let orderUnitsCount = 0;
                     if (productos) {
-                        const items = productos.split(/,|\n/);
+                        const items = splitItemsSmart(productos);
                         items.forEach(it => {
                             if (it.trim()) orderUnitsCount += extractItemQuantity(it);
                         });
@@ -5867,7 +5881,7 @@
 
             orders.forEach(o => {
                 if (!o.productos) return;
-                const items = o.productos.split(/,|\n/);
+                const items = splitItemsSmart(o.productos);
                 items.forEach(rawItem => {
                     const canonical = extractCanonicalProduct(rawItem);
                     const qty = extractItemQuantity(rawItem);
