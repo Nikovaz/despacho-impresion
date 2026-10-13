@@ -4735,20 +4735,16 @@
                 }
             });
 
-            // If todayBatch has few items or after 12hs corte, make sure today's latest non-scheduled orders are visible in todayBatch
+            // Si hubo pedidos entrados hoy fuera del rango estricto pero no son de mañana ni programados, asegurar que estén en lote
             orders.forEach(order => {
                 if (order.fecha_programada && order.fecha_programada > todayStr) return;
                 const oDate = new Date(order.fecha_hora);
                 if (oDate.toISOString().slice(0, 10) === todayStr) {
-                    if (!todayBatch.some(o => o.id === order.id)) {
+                    if (!todayBatch.some(o => o.id === order.id) && !tomorrowBatch.some(o => o.id === order.id)) {
                         todayBatch.unshift(order);
                     }
                 }
             });
-
-            if (todayBatch.length === 0 && orders.length > 0) {
-                return { todayBatch: orders.filter(o => !(o.fecha_programada && o.fecha_programada > todayStr)).slice(0, 15), tomorrowBatch, scheduledBatch, historyBatch };
-            }
 
             return { todayBatch, tomorrowBatch, scheduledBatch, historyBatch };
         }
