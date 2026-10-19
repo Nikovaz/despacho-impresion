@@ -3731,7 +3731,7 @@
                 celular: phone,
                 direccion: address,
                 costo_envio: shipping,
-                envio: deliveryType === 'cadete' && !shipping.toUpperCase().includes('NO'),
+                envio: deliveryType === 'cadete' && !/\bno\b|\bretira|\bretiro/i.test(shipping),
                 tipoEntrega: deliveryType,
                 intentosCadete: attempts,
                 segundaEntrega: attempts === 2,
@@ -3956,7 +3956,7 @@
                 celular: phone,
                 direccion: address,
                 costo_envio: shipping,
-                envio: deliveryType === 'cadete' && !shipping.toUpperCase().includes('NO'),
+                envio: deliveryType === 'cadete' && !/\bno\b|\bretira|\bretiro/i.test(shipping),
                 tipoEntrega: deliveryType,
                 intentosCadete: attempts,
                 segundaEntrega: attempts === 2,
@@ -4455,7 +4455,7 @@
                     }
 
                     const fechaParsed = parseGoogleDate(rawFecha);
-                    const isEnvio = !costoEnvio.toUpperCase().includes('NO') && !costoEnvio.toUpperCase().includes('RETIRA');
+                    const isEnvio = !/\bno\b|\bretira|\bretiro/i.test(costoEnvio);
 
                     let metodo = customPaymentMethods[ticketId];
                     if (!metodo) {
@@ -4494,10 +4494,19 @@
                 });
 
                 
-                // Apply any manual edits made to orders
+                // Apply any manual edits made to orders (with auto-healing for Moreno / Norte / Hornos bug)
                 dispatchOrders = dispatchOrders.map(o => {
                     if (editedOrders[o.id]) {
-                        return { ...o, ...editedOrders[o.id], isEdited: true };
+                        const ed = { ...editedOrders[o.id] };
+                        if (ed.tipoEntrega === 'cadete' && ed.envio === false && !/\bno\b|\bretira|\bretiro/i.test(ed.costo_envio || '')) {
+                            ed.envio = true;
+                            editedOrders[o.id].envio = true;
+                        }
+                        if (o.id === '542215403699-2026-10-14' && (ed.direccion || '').includes('Retiro en Dep')) {
+                            ed.direccion = 'Calle 73 entre 151 y 152, Los Hornos (La Plata) - Apt #7';
+                            editedOrders[o.id].direccion = ed.direccion;
+                        }
+                        return { ...o, ...ed, isEdited: true };
                     }
                     return o;
                 });
@@ -5473,7 +5482,7 @@
                     const fechaParsed = parseGoogleDate(rawFecha);
                     
                     const isConfirmed = confirmoStr !== 'NO' && (confirmoStr === 'SI' || confirmoStr === 'S' || confirmoStr === 'CONFIRMADO' || confirmoStr === 'TRUE' || confirmoStr === 'EFECTIVO' || confirmoStr === 'TRANSFERENCIA' || confirmoStr === '' || parseMonto(totalStr) > 0);
-                    const isEnvio = !costoEnvio.toUpperCase().includes('NO') && !costoEnvio.toUpperCase().includes('RETIRA');
+                    const isEnvio = !/\bno\b|\bretira|\bretiro/i.test(costoEnvio);
                     const totalMonto = parseMonto(totalStr);
                     const locality = extractLocalityName(currentAnalyticsStore, direccionRaw, costoEnvio);
 
