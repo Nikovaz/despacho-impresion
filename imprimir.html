@@ -1924,6 +1924,16 @@
         // Fecha de entrada en vigencia del aumento de costos de fábrica (1 de Octubre de 2026)
         let brossPriceIncreaseCutoffDate = localStorage.getItem('croc_bross_cost_cutoff') || '2026-10-01';
 
+                function formatProductsForEditor(text) {
+            if (!text) return '';
+            const str = String(text);
+            const lines = str.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+            if (lines.length > 1) {
+                return lines.join('\n');
+            }
+            return splitItemsSmart(str).join('\n');
+        }
+
         function splitItemsSmart(text) {
             if (!text) return [];
             text = String(text).replace(/\*/g, '');
@@ -3651,7 +3661,7 @@
             document.getElementById('eo-phone').value = order.celular || '';
             document.getElementById('eo-address').value = order.direccion || '';
             document.getElementById('eo-shipping').value = order.costo_envio || '';
-            document.getElementById('eo-products').value = order.detalles || '';
+            document.getElementById('eo-products').value = formatProductsForEditor(order.detalles);
             
             const isPunto = order.tipoEntrega === 'punto_encuentro' || (order.direccion || '').toLowerCase().includes('encuentro') || (order.costo_envio || '').toLowerCase().includes('encuentro');
             const elDelType = document.getElementById('eo-delivery-type');
@@ -3669,7 +3679,7 @@
             const netProductsCharged = Math.max(0, totalNum - envioNum);
 
             let displaySubtotal = order.subtotal || '';
-            if (!order.isEdited && rawSubtotalNum > netProductsCharged && netProductsCharged > 0) {
+            if (!order.isEdited && rawSubtotalNum > netProductsCharged && netProductsCharged > 0 && (rawSubtotalNum - netProductsCharged) > 50) {
                 // Priorizar el valor real con descuento que importa para el despacho
                 displaySubtotal = `$${netProductsCharged.toLocaleString('es-AR')}`;
             }
@@ -3700,7 +3710,10 @@
             const phone = document.getElementById('eo-phone').value.trim();
             const address = document.getElementById('eo-address').value.trim();
             const shipping = document.getElementById('eo-shipping').value.trim();
-            const products = document.getElementById('eo-products').value.trim();
+            const rawProductsInput = document.getElementById('eo-products').value.trim();
+            const products = rawProductsInput.includes('\n')
+                ? rawProductsInput.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0).join(', ')
+                : rawProductsInput;
             let subtotal = document.getElementById('eo-subtotal').value.trim();
             let total = document.getElementById('eo-total').value.trim();
             const payment = document.getElementById('eo-payment').value;
@@ -3920,7 +3933,10 @@
             const phone = document.getElementById('mo-phone').value.trim();
             const address = document.getElementById('mo-address').value.trim();
             const shipping = document.getElementById('mo-shipping').value.trim();
-            const products = document.getElementById('mo-products').value.trim();
+            const rawManualProducts = document.getElementById('mo-products').value.trim();
+            const products = rawManualProducts.includes('\n')
+                ? rawManualProducts.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0).join(', ')
+                : rawManualProducts;
             let subtotal = document.getElementById('mo-subtotal').value.trim();
             let total = document.getElementById('mo-total').value.trim();
             const payment = document.getElementById('mo-payment').value;
@@ -4972,9 +4988,9 @@
                                     const env = parseMonto(order.costo_envio);
                                     const rawSub = parseMonto(order.subtotal);
                                     const netProd = Math.max(0, tot - env);
-                                    const hasDisc = rawSub > netProd && netProd > 0;
+                                    const discAmt = rawSub - netProd;
+                                    const hasDisc = discAmt > 50 && netProd > 0;
                                     if (hasDisc) {
-                                        const discAmt = rawSub - netProd;
                                         const discPct = Math.round((discAmt / rawSub) * 100);
                                         return `<s class="text-slate-500 font-normal mr-1">$${rawSub.toLocaleString('es-AR')}</s><b class="text-emerald-400 font-bold">$${netProd.toLocaleString('es-AR')}</b> <span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold text-[10px]">(-$${discAmt.toLocaleString('es-AR')} | ${discPct}% OFF)</span>`;
                                     }
@@ -5180,8 +5196,8 @@
                         const env = parseMonto(order.costo_envio);
                         const rawSub = parseMonto(order.subtotal);
                         const netProd = Math.max(0, tot - env);
-                        const hasDisc = rawSub > netProd && netProd > 0;
-                        const discAmt = hasDisc ? (rawSub - netProd) : 0;
+                        const discAmt = rawSub - netProd;
+                        const hasDisc = discAmt > 50 && netProd > 0;
                         const discPct = hasDisc ? Math.round((discAmt / rawSub) * 100) : 0;
                         return `
                         <div style="border-top:1px dashed #000; padding-top:8px; margin-bottom:8px; font-size:14px; display:flex; justify-content:space-between;">
@@ -5270,8 +5286,8 @@
                     const env = parseMonto(order.costo_envio);
                     const rawSub = parseMonto(order.subtotal);
                     const netProd = Math.max(0, tot - env);
-                    const hasDisc = rawSub > netProd && netProd > 0;
-                    const discAmt = hasDisc ? (rawSub - netProd) : 0;
+                    const discAmt = rawSub - netProd;
+                    const hasDisc = discAmt > 50 && netProd > 0;
                     const discPct = hasDisc ? Math.round((discAmt / rawSub) * 100) : 0;
                     return `
                     <div style="border-bottom:1px dashed #000; padding-bottom:6px; margin-bottom:6px; font-size:14px;">
