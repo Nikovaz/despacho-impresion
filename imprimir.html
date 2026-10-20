@@ -184,6 +184,9 @@
                         <button onclick="switchMainView('analytics')" id="btn-nav-analytics" class="px-3 sm:px-4 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5">
                             <i class="fa-solid fa-chart-pie"></i> <span class="hidden sm:inline">Métricas</span>
                         </button>
+                        <button onclick="switchMainView('autopublisher')" id="btn-nav-autopublisher" class="px-3 sm:px-4 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5">
+                            <i class="fa-brands fa-instagram text-pink-400"></i> <span class="hidden sm:inline">Autopublicador</span>
+                        </button>
                         <!-- Pestaña de SuperAdmin para gestionar clientes -->
                         <button onclick="switchMainView('admin')" id="btn-nav-admin" class="px-3 sm:px-4 py-2 rounded-lg text-xs font-bold text-amber-400 hover:text-amber-300 transition flex items-center gap-1.5 hidden">
                             <i class="fa-solid fa-users-gear"></i> <span class="hidden sm:inline">Clientes & Poderes</span>
@@ -1041,6 +1044,551 @@
     </div>
 
     <!-- ========================================== -->
+    <!-- MODULE 2.5: AUTOPUBLICADOR IA (SAAS STUDIO) -->
+    <!-- ========================================== -->
+    <div id="view-autopublisher" class="no-print max-w-7xl mx-auto p-4 md:p-6 hidden">
+        <!-- Header Autopublicador -->
+        <header class="flex flex-col lg:flex-row items-start lg:items-center justify-between pb-6 border-b border-slate-800 gap-4">
+            <div>
+                <h1 class="text-xl sm:text-2xl font-bold text-white flex items-center gap-2.5 flex-wrap">
+                    <span class="p-2 bg-gradient-to-tr from-pink-500/20 to-amber-500/20 text-pink-400 rounded-xl border border-pink-500/30 shadow-lg shadow-pink-500/10">
+                        <i class="fa-brands fa-instagram"></i>
+                    </span>
+                    <span id="ap-title-store" class="text-white">NNN / Bross London</span>
+                    <span class="text-slate-500 font-light">|</span>
+                    <span class="bg-gradient-to-r from-pink-400 via-fuchsia-400 to-amber-300 bg-clip-text text-transparent font-extrabold">Estudio Autopublicador IA</span>
+                    <span class="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Drive + Sheets + Meta API
+                    </span>
+                </h1>
+                <p class="text-slate-400 text-xs sm:text-sm mt-1" id="ap-subtitle-schedule">
+                    Subí tu foto o video, elegí el producto del catálogo y la fecha: el sistema lo renombra solo con el SKU exacto y lo guarda en tu Google Drive para publicar en Feed y Stories.
+                </p>
+            </div>
+
+            <div class="flex items-center gap-2.5 flex-wrap w-full lg:w-auto">
+                <!-- Selector de Marca (NNN vs NachaHome) -->
+                <div id="ap-store-selector-wrap" class="flex items-center bg-slate-900 rounded-xl p-1 border border-slate-800 shadow-inner">
+                    <button onclick="switchAutopublisherStore('nnn')" id="btn-ap-store-nnn" class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-pink-600 to-fuchsia-600 text-white transition flex items-center gap-1.5 shadow">
+                        <i class="fa-solid fa-shirt"></i> NNN / Bross
+                    </button>
+                    <button onclick="switchAutopublisherStore('nacha')" id="btn-ap-store-nacha" class="px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-house"></i> Nacha Home
+                    </button>
+                </div>
+
+                <!-- Botón Sincronizar Catálogo e Historial -->
+                <button onclick="refreshAutopublisherData(true)" class="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl font-bold text-xs flex items-center gap-1.5 border border-slate-800 transition" title="Refrescar catálogo y publicaciones desde Google Sheets">
+                    <i class="fa-solid fa-rotate" id="ap-refresh-icon"></i> <span>Sincronizar Sheets</span>
+                </button>
+
+                <!-- Botón Configurar Webhook / Carpetas Drive -->
+                <button onclick="toggleApConfigPanel()" class="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-amber-400 rounded-xl font-bold text-xs flex items-center gap-1.5 border border-slate-800 transition" title="Configurar Webhook n8n y Carpetas de Google Drive">
+                    <i class="fa-solid fa-sliders"></i> <span class="hidden sm:inline">Conexión n8n & Drive</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Panel Desplegable de Configuración Técnica (Webhook n8n + Links directos a Drive/Sheets) -->
+        <div id="ap-config-panel" class="hidden my-4 p-4 rounded-2xl bg-slate-900/95 border border-amber-500/30 shadow-xl space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-800">
+                <div>
+                    <h3 class="text-xs font-extrabold uppercase tracking-wider text-amber-400 flex items-center gap-2">
+                        <i class="fa-solid fa-plug-circle-Bolt"></i> Configuración de Conexión con n8n & Google Drive (Multi-Cliente SaaS)
+                    </h3>
+                    <p class="text-[11px] text-slate-400 mt-0.5">
+                        Cuando subís contenido desde esta página, se envía al Webhook de n8n junto con el ID de la carpeta de Drive y el nombre auto-formateado (<span class="font-mono text-emerald-300">DD-MM SKU.jpg</span> o <span class="font-mono text-emerald-300">NumXXX_DD.MM.jpg</span>).
+                    </p>
+                </div>
+                <button onclick="toggleApConfigPanel()" class="text-slate-400 hover:text-white text-xs self-end sm:self-auto px-2 py-1">
+                    <i class="fa-solid fa-xmark"></i> Cerrar
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="md:col-span-2">
+                    <label class="block text-[11px] font-bold text-slate-300 mb-1">URL del Webhook Receptor en n8n (Subida a Drive & Disparo):</label>
+                    <div class="flex gap-2">
+                        <input type="url" id="ap-input-webhook-url" placeholder="https://n8n.nicovaz.tech/webhook/autopublicador-upload" class="flex-1 bg-slate-950 text-white text-xs font-mono rounded-xl px-3 py-2 border border-slate-800 focus:outline-none focus:border-amber-500">
+                        <button onclick="saveApWebhookConfig()" class="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold rounded-xl transition shadow">
+                            Guardar URL
+                        </button>
+                    </div>
+                    <p class="text-[10px] text-slate-500 mt-1">
+                        💡 Importá en tu n8n el archivo <span class="font-mono text-slate-300">Autopublicador_Webhook_Portal_PROD.json</span> para activar este endpoint en 1 clic.
+                    </p>
+                </div>
+
+                <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 flex flex-col justify-between">
+                    <div class="text-[11px] font-bold text-slate-300 mb-2 flex items-center justify-between">
+                        <span>📂 Accesos Rápidos de la Marca:</span>
+                        <span id="ap-config-store-badge" class="text-[10px] px-2 py-0.5 rounded bg-pink-500/20 text-pink-300 font-bold">NNN</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 text-[11px]">
+                        <a id="ap-link-drive-feed" href="https://drive.google.com/drive/folders/1Tqu0lGDDETlIwtpAA5w7zsjkgLtU8SVv" target="_blank" class="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-emerald-400 border border-slate-800 flex items-center gap-1.5 truncate">
+                            <i class="fa-brands fa-google-drive"></i> <span>Drive Feed</span>
+                        </a>
+                        <a id="ap-link-drive-story" href="https://drive.google.com/drive/folders/1WDQSvu9qvL7MadLJDuJwhrgf2XdRXd1T" target="_blank" class="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-cyan-400 border border-slate-800 flex items-center gap-1.5 truncate">
+                            <i class="fa-brands fa-google-drive"></i> <span>Drive Story</span>
+                        </a>
+                        <a id="ap-link-sheet-history" href="https://docs.google.com/spreadsheets/d/13OZcCBHrVufQSB4HcZu1Vgnu6uYAGLFpWrwW-x347aw/edit#gid=1194881315" target="_blank" class="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-indigo-400 border border-slate-800 flex items-center gap-1.5 truncate">
+                            <i class="fa-solid fa-table"></i> <span>Historial Sheets</span>
+                        </a>
+                        <a id="ap-link-sheet-catalog" href="https://docs.google.com/spreadsheets/d/1dlWKIScKbKtwNcU0ETTbR06VerGG-OPpAgYQCwRzyMA/edit#gid=1859150881" target="_blank" class="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-amber-400 border border-slate-800 flex items-center gap-1.5 truncate">
+                            <i class="fa-solid fa-boxes-stacked"></i> <span>Catálogo Precios</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPIs de Estado del Autopublicador -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3.5 my-5">
+            <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-lg flex items-center justify-between">
+                <div>
+                    <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Productos en Catálogo</div>
+                    <div class="text-2xl font-black text-white mt-1" id="ap-kpi-catalog-count">0</div>
+                    <div class="text-[11px] text-emerald-400 font-medium mt-0.5" id="ap-kpi-catalog-sub">Sincronizado con Sheets</div>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 text-lg">
+                    <i class="fa-solid fa-tags"></i>
+                </div>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-lg flex items-center justify-between">
+                <div>
+                    <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Programados en Cola</div>
+                    <div class="text-2xl font-black text-pink-400 mt-1" id="ap-kpi-scheduled-count">0</div>
+                    <div class="text-[11px] text-slate-400 mt-0.5" id="ap-kpi-next-slot">Próximo: Hoy 18:00 hs</div>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-pink-500/10 border border-pink-500/20 flex items-center justify-center text-pink-400 text-lg">
+                    <i class="fa-regular fa-calendar-check"></i>
+                </div>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-lg flex items-center justify-between">
+                <div>
+                    <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Publicados en IG</div>
+                    <div class="text-2xl font-black text-indigo-400 mt-1" id="ap-kpi-published-count">0</div>
+                    <div class="text-[11px] text-slate-400 mt-0.5" id="ap-kpi-published-sub">Historial en Contenido</div>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 text-lg">
+                    <i class="fa-brands fa-instagram"></i>
+                </div>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-lg flex items-center justify-between">
+                <div>
+                    <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Pendientes de Subir</div>
+                    <div class="text-2xl font-black text-amber-400 mt-1" id="ap-kpi-unposted-count">0</div>
+                    <div class="text-[11px] text-slate-400 mt-0.5">Artículos aún no publicados</div>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 text-lg">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- WORKSPACE PRINCIPAL: CARGA INTERACTIVA + PREVIEW IG       -->
+        <!-- ========================================================= -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
+            
+            <!-- COLUMNA IZQUIERDA (7 cols): CREADOR Y SUBIDA A DRIVE -->
+            <div class="lg:col-span-7 bg-slate-900/80 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-2xl space-y-5">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3.5">
+                    <div class="flex items-center gap-2.5">
+                        <span class="w-7 h-7 rounded-lg bg-pink-500/20 text-pink-400 font-black text-xs flex items-center justify-center border border-pink-500/30">1</span>
+                        <h2 class="font-extrabold text-white text-base">Programar Nuevo Post / Reel / Story</h2>
+                    </div>
+                    <span id="ap-badge-rule" class="text-[11px] font-mono bg-slate-950 text-emerald-400 px-2.5 py-1 rounded-lg border border-slate-800">
+                        Regla: DD-MM SKU.jpg
+                    </span>
+                </div>
+
+                <!-- PASO 1: BUSCADOR DE PRODUCTO / SKU DEL CATÁLOGO EN VIVO -->
+                <div class="space-y-2.5">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <label class="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                            <i class="fa-solid fa-magnifying-glass text-pink-400"></i> 1. Elegí el Producto del Catálogo (Cruza Precio y Descripción solo)
+                        </label>
+                        <div class="flex items-center gap-1.5">
+                            <button type="button" onclick="filterApCatalogByUnposted()" id="btn-ap-filter-unposted" class="text-[11px] px-2.5 py-1 rounded-lg bg-slate-950 hover:bg-slate-800 text-amber-300 border border-amber-500/30 font-semibold transition">
+                                ⚡ Ver solo no publicados
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Buscador rápido + Selector desplegable -->
+                    <div class="grid grid-cols-1 sm:grid-cols-12 gap-2.5">
+                        <div class="sm:col-span-5 relative">
+                            <i class="fa-solid fa-barcode absolute left-3 top-3 text-slate-500 text-xs"></i>
+                            <input type="text" id="ap-product-search" oninput="onApProductSearchInput(this.value)" placeholder="Buscar por SKU, Num o nombre (ej: CRG-035, Binario, Ginebra)..." class="w-full bg-slate-950 text-white text-xs rounded-xl pl-8 pr-3 py-2.5 border border-slate-800 focus:outline-none focus:border-pink-500">
+                        </div>
+                        <div class="sm:col-span-7">
+                            <select id="ap-product-select" onchange="onApProductSelectChange(this.value)" class="w-full bg-slate-950 text-white text-xs font-semibold rounded-xl px-3 py-2.5 border border-slate-800 focus:outline-none focus:border-pink-500 cursor-pointer">
+                                <option value="">📦 Seleccioná un artículo del catálogo en vivo...</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Ficha Resumen del Producto Seleccionado (Editable si quiere ajustar precio/detalle) -->
+                    <div id="ap-selected-product-card" class="p-3.5 rounded-2xl bg-slate-950/90 border border-slate-800/90 space-y-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Código SKU / Num (Para el archivo) *</label>
+                                <input type="text" id="ap-input-sku" oninput="updateApGeneratedFilename(); generateApSmartCaption();" placeholder="Ej: CRG-035 o Num001" class="w-full bg-slate-900 text-emerald-400 font-mono font-bold text-xs rounded-lg px-2.5 py-2 border border-slate-800 focus:outline-none focus:border-emerald-500">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Nombre del Producto *</label>
+                                <input type="text" id="ap-input-product-name" oninput="generateApSmartCaption()" placeholder="Ej: Organizador de Ollas Vertical" class="w-full bg-slate-900 text-white font-semibold text-xs rounded-lg px-2.5 py-2 border border-slate-800 focus:outline-none focus:border-pink-500">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Precio a Mostrar en el Post *</label>
+                                <input type="text" id="ap-input-price" oninput="generateApSmartCaption()" placeholder="Ej: $31.999" class="w-full bg-slate-900 text-amber-300 font-bold text-xs rounded-lg px-2.5 py-2 border border-slate-800 focus:outline-none focus:border-amber-500">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Medidas / Talles / Variantes</label>
+                                <input type="text" id="ap-input-variants" oninput="generateApSmartCaption()" placeholder="Ej: S al XXL / Queen y King / Acero" class="w-full bg-slate-900 text-slate-200 text-xs rounded-lg px-2.5 py-1.5 border border-slate-800 focus:outline-none focus:border-pink-500">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Características / Incluye</label>
+                                <input type="text" id="ap-input-features" oninput="generateApSmartCaption()" placeholder="Ej: Estantes regulables, acero al carbono..." class="w-full bg-slate-900 text-slate-200 text-xs rounded-lg px-2.5 py-1.5 border border-slate-800 focus:outline-none focus:border-pink-500">
+                            </div>
+                        </div>
+
+                        <!-- Si el catálogo (ej. NachaHome) ya tiene links de Drive cargados en la fila -->
+                        <div id="ap-catalog-drive-links-box" class="hidden pt-2 border-t border-slate-800/80 flex items-center justify-between flex-wrap gap-2">
+                            <span class="text-[11px] text-cyan-300 font-semibold flex items-center gap-1.5">
+                                <i class="fa-brands fa-google-drive"></i> Este producto ya tiene multimedia en el Sheets:
+                            </span>
+                            <div id="ap-catalog-drive-links-list" class="flex items-center gap-1.5 flex-wrap"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PASO 2: FECHA Y FORMATO / DESTINO (FEED, CARRUSEL, STORY 09HS/20HS) -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label class="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                                <i class="fa-regular fa-calendar-days text-pink-400"></i> 2. Fecha de Publicación
+                            </label>
+                            <button type="button" onclick="pickNextFreeApDate()" class="text-[11px] text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1">
+                                <i class="fa-solid fa-forward-step"></i> Próximo día libre
+                            </button>
+                        </div>
+                        <input type="date" id="ap-input-date" onchange="updateApGeneratedFilename()" class="w-full bg-slate-950 text-white text-xs font-bold rounded-xl px-3.5 py-2.5 border border-slate-800 focus:outline-none focus:border-pink-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-200 mb-1.5 flex items-center gap-1.5">
+                            <i class="fa-solid fa-layer-group text-pink-400"></i> 3. Destino y Horario Automático
+                        </label>
+                        <select id="ap-input-target" onchange="updateApGeneratedFilename()" class="w-full bg-slate-950 text-white text-xs font-bold rounded-xl px-3.5 py-2.5 border border-slate-800 focus:outline-none focus:border-pink-500 cursor-pointer">
+                            <option value="both">🔥 Pack Completo: Feed / Carrusel + Story Sincronizada</option>
+                            <option value="feed">📸 Solo Feed / Reel / Carrusel (Carpeta Publicaciones)</option>
+                            <option value="story_09">🌅 Solo Story Mañana — 09:30 hs (Tag 09HS)</option>
+                            <option value="story_20">🌙 Solo Story Noche — 20:30 hs (Tag 20HS)</option>
+                            <option value="story">📱 Solo Story del Día (Sincronizada por SKU)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- VISTA EN VIVO DEL NOMBRE DE ARCHIVO QUE SE GUARDARÁ EN GOOGLE DRIVE -->
+                <div class="p-3 rounded-2xl bg-emerald-950/25 border border-emerald-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-sm">
+                            <i class="fa-solid fa-file-signature"></i>
+                        </div>
+                        <div>
+                            <div class="text-[10px] uppercase tracking-wider font-extrabold text-emerald-400">Nombre Oficial Auto-Generado para Drive</div>
+                            <div class="text-xs sm:text-sm font-mono font-black text-white" id="ap-preview-filename">20-10 CRG-035.jpg</div>
+                        </div>
+                    </div>
+                    <div class="text-[11px] text-slate-400 sm:text-right" id="ap-preview-folder-label">
+                        Destino: <span class="text-emerald-300 font-semibold">NNN.Public.2026 + NNN.Story.2026</span>
+                    </div>
+                </div>
+
+                <!-- PASO 3: ZONA DRAG & DROP DE IMÁGENES / VIDEOS (SOPORTA CARRUSEL) -->
+                <div class="space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <label class="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                            <i class="fa-solid fa-cloud-arrow-up text-pink-400"></i> 4. Subí tus Fotos o Videos (1 foto = Post | 2+ fotos = Carrusel | MP4 = Reel)
+                        </label>
+                        <button type="button" onclick="clearApSelectedFiles()" id="btn-ap-clear-files" class="hidden text-[11px] text-rose-400 hover:text-rose-300 font-bold">
+                            <i class="fa-solid fa-trash-can"></i> Limpiar archivos
+                        </button>
+                    </div>
+
+                    <div id="ap-dropzone" 
+                         ondragover="handleApDragOver(event)" 
+                         ondragleave="handleApDragLeave(event)" 
+                         ondrop="handleApDrop(event)"
+                         onclick="document.getElementById('ap-file-input').click()"
+                         class="border-2 border-dashed border-slate-700 hover:border-pink-500/70 bg-slate-950/70 hover:bg-slate-950 rounded-2xl p-6 text-center cursor-pointer transition group">
+                        <input type="file" id="ap-file-input" multiple accept="image/*,video/mp4,video/quicktime" onchange="handleApFileSelect(event)" class="hidden">
+                        <div class="w-12 h-12 rounded-2xl bg-pink-500/10 border border-pink-500/20 text-pink-400 flex items-center justify-center mx-auto mb-2.5 group-hover:scale-110 transition">
+                            <i class="fa-solid fa-images text-xl"></i>
+                        </div>
+                        <p class="text-xs sm:text-sm font-bold text-white">
+                            Arrastrá tus fotos o videos acá o <span class="text-pink-400 underline">hacé clic para buscar</span>
+                        </p>
+                        <p class="text-[11px] text-slate-400 mt-1">
+                            Soporta JPG, PNG, MP4 y MOV &bull; Si seleccionás varias imágenes, el bot armará un <b>Carrusel automático</b> en Instagram
+                        </p>
+                    </div>
+
+                    <!-- Miniaturas de archivos cargados -->
+                    <div id="ap-files-preview-grid" class="hidden grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-2"></div>
+                </div>
+
+                <!-- PASO 4: REDACCIÓN Y EDICIÓN DE COPY CON IA -->
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between flex-wrap gap-2">
+                        <label class="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                            <i class="fa-solid fa-pen-nib text-pink-400"></i> 5. Copy de Instagram (Generado con las Reglas de tu Marca)
+                        </label>
+                        <div class="flex items-center gap-1.5">
+                            <button type="button" onclick="generateApSmartCaption(true)" class="px-2.5 py-1 rounded-lg bg-pink-500/15 hover:bg-pink-500/25 text-pink-300 border border-pink-500/30 text-[11px] font-bold transition flex items-center gap-1">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> Regenerar Copy IA
+                            </button>
+                            <button type="button" onclick="copyApCaptionToClipboard()" class="px-2.5 py-1 rounded-lg bg-slate-950 hover:bg-slate-800 text-slate-300 border border-slate-800 text-[11px] font-semibold transition flex items-center gap-1">
+                                <i class="fa-regular fa-copy"></i> Copiar
+                            </button>
+                        </div>
+                    </div>
+                    <textarea id="ap-input-caption" rows="5" oninput="updateApInstagramPreview()" placeholder="Seleccioná un producto arriba para generar automáticamente el copy con precio, características y hashtags..." class="w-full bg-slate-950 text-slate-100 text-xs rounded-2xl p-3.5 border border-slate-800 focus:outline-none focus:border-pink-500 leading-relaxed"></textarea>
+                </div>
+
+                <!-- PASO 5: BOTONES DE ACCIÓN (SUBIR A DRIVE VIA N8N / PUBLICAR AHORA / DESCARGAR RENOMBRADO) -->
+                <div id="ap-upload-status-banner" class="hidden p-3.5 rounded-2xl text-xs font-bold"></div>
+
+                <div class="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+                    <button type="button" onclick="submitAutopublisherJob(false)" id="btn-ap-submit-schedule" class="flex-1 py-3 px-4 bg-gradient-to-r from-pink-600 via-fuchsia-600 to-indigo-600 hover:from-pink-500 hover:to-indigo-500 text-white rounded-xl font-extrabold text-xs sm:text-sm shadow-lg shadow-pink-950/50 transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        <span>Subir a Drive & Programar Fecha</span>
+                    </button>
+
+                    <button type="button" onclick="submitAutopublisherJob(true)" id="btn-ap-submit-now" class="py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-extrabold text-xs sm:text-sm shadow-lg shadow-emerald-950/40 transition flex items-center justify-center gap-1.5" title="Sube a Drive y ejecuta la publicación inmediata en Instagram">
+                        <i class="fa-solid fa-bolt"></i>
+                        <span>Publicar Ahora</span>
+                    </button>
+
+                    <button type="button" onclick="downloadApRenamedFiles()" class="py-3 px-3.5 bg-slate-950 hover:bg-slate-800 text-slate-300 rounded-xl font-bold text-xs border border-slate-800 transition flex items-center justify-center gap-1.5" title="Descarga los archivos ya renombrados con el formato exacto por si querés subirlos manualmente a Drive">
+                        <i class="fa-solid fa-download"></i>
+                        <span class="sm:hidden lg:inline">Bajar Renombrado</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- COLUMNA DERECHA (5 cols): SIMULADOR DE INSTAGRAM EN VIVO -->
+            <div class="lg:col-span-5 flex flex-col gap-5">
+                <div class="bg-slate-900/80 border border-slate-800 rounded-3xl p-5 shadow-2xl flex-1 flex flex-col">
+                    <div class="flex items-center justify-between pb-3.5 mb-4 border-b border-slate-800">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-mobile-screen-button text-pink-400"></i>
+                            <h3 class="font-extrabold text-white text-sm">Vista Previa en Vivo (Instagram)</h3>
+                        </div>
+                        <div class="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 text-[11px] font-bold">
+                            <button type="button" onclick="setApPreviewMode('feed')" id="btn-ap-prev-feed" class="px-2.5 py-1 rounded-lg bg-pink-600 text-white transition">
+                                Feed / Carrusel
+                            </button>
+                            <button type="button" onclick="setApPreviewMode('story')" id="btn-ap-prev-story" class="px-2.5 py-1 rounded-lg text-slate-400 hover:text-white transition">
+                                Story 9:16
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Mockup de Teléfono Instagram -->
+                    <div class="my-auto mx-auto w-full max-w-[340px] bg-slate-950 border-4 border-slate-800 rounded-[34px] overflow-hidden shadow-2xl">
+                        <!-- Top Phone Speaker -->
+                        <div class="bg-slate-950 pt-2.5 pb-1.5 px-5 flex items-center justify-between text-[10px] text-slate-400 border-b border-slate-900">
+                            <span class="font-bold" id="ap-ig-mock-time">18:00</span>
+                            <div class="w-16 h-3 bg-slate-900 rounded-full"></div>
+                            <div class="flex items-center gap-1">
+                                <i class="fa-solid fa-signal"></i>
+                                <i class="fa-solid fa-wifi"></i>
+                                <i class="fa-solid fa-battery-full"></i>
+                            </div>
+                        </div>
+
+                        <!-- MODO FEED / CARRUSEL -->
+                        <div id="ap-ig-mock-feed-view">
+                            <!-- IG Post Header -->
+                            <div class="p-3 flex items-center justify-between border-b border-slate-900">
+                                <div class="flex items-center gap-2.5">
+                                    <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-amber-500 via-pink-500 to-purple-600 p-0.5">
+                                        <div class="w-full h-full bg-slate-950 rounded-full flex items-center justify-center text-xs font-black text-white" id="ap-ig-avatar">
+                                            N
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="text-xs font-bold text-white flex items-center gap-1">
+                                            <span id="ap-ig-username">nnntienda.ar</span>
+                                            <i class="fa-solid fa-circle-check text-sky-400 text-[10px]"></i>
+                                        </div>
+                                        <div class="text-[10px] text-slate-400" id="ap-ig-location">Buenos Aires, Argentina</div>
+                                    </div>
+                                </div>
+                                <i class="fa-solid fa-ellipsis text-slate-400 text-xs"></i>
+                            </div>
+
+                            <!-- IG Media Container -->
+                            <div class="relative aspect-square bg-slate-900 flex items-center justify-center overflow-hidden" id="ap-ig-media-stage">
+                                <div id="ap-ig-empty-placeholder" class="text-center p-6 space-y-2">
+                                    <div class="w-14 h-14 rounded-2xl bg-slate-800/80 text-slate-500 flex items-center justify-center mx-auto text-2xl">
+                                        <i class="fa-brands fa-instagram"></i>
+                                    </div>
+                                    <p class="text-xs font-bold text-slate-400">Subí una foto o video para previsualizar el post</p>
+                                    <p class="text-[10px] text-slate-500 font-mono" id="ap-ig-placeholder-sku">SKU: Sin seleccionar</p>
+                                </div>
+                                <img id="ap-ig-preview-img" src="" alt="Preview" class="hidden w-full h-full object-cover">
+                                <video id="ap-ig-preview-video" src="" controls playsinline class="hidden w-full h-full object-cover"></video>
+
+                                <!-- Badge Carrusel / Contador -->
+                                <div id="ap-ig-carousel-badge" class="hidden absolute top-3 right-3 bg-slate-950/80 backdrop-blur px-2.5 py-1 rounded-full text-[10px] font-bold text-white border border-slate-700">
+                                    1 / 3
+                                </div>
+
+                                <!-- Flechas Carrusel -->
+                                <button type="button" onclick="stepApPreviewCarousel(-1)" id="btn-ap-prev-slide" class="hidden absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-slate-950/75 text-white text-xs flex items-center justify-center hover:bg-slate-950">
+                                    <i class="fa-solid fa-chevron-left"></i>
+                                </button>
+                                <button type="button" onclick="stepApPreviewCarousel(1)" id="btn-ap-next-slide" class="hidden absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-slate-950/75 text-white text-xs flex items-center justify-center hover:bg-slate-950">
+                                    <i class="fa-solid fa-chevron-right"></i>
+                                </button>
+                            </div>
+
+                            <!-- IG Action Icons -->
+                            <div class="px-3.5 pt-3 pb-2 flex items-center justify-between text-base text-white">
+                                <div class="flex items-center gap-3.5">
+                                    <i class="fa-regular fa-heart hover:text-rose-500 cursor-pointer"></i>
+                                    <i class="fa-regular fa-comment"></i>
+                                    <i class="fa-regular fa-paper-plane"></i>
+                                </div>
+                                <i class="fa-regular fa-bookmark"></i>
+                            </div>
+
+                            <!-- IG Caption Preview -->
+                            <div class="px-3.5 pb-4 max-h-48 overflow-y-auto text-[11px] text-slate-200 space-y-1 leading-relaxed">
+                                <div>
+                                    <span class="font-bold text-white mr-1.5" id="ap-ig-caption-user">nnntienda.ar</span>
+                                    <span id="ap-ig-caption-text" class="whitespace-pre-line text-slate-300">Elegí un producto del catálogo para ver cómo redacta la IA el pie de foto con precio y detalles reales...</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- MODO STORY (9:16) -->
+                        <div id="ap-ig-mock-story-view" class="hidden relative aspect-[9/16] bg-slate-900 flex items-center justify-center overflow-hidden">
+                            <div class="absolute top-3 inset-x-3 z-10 space-y-2">
+                                <div class="h-1 bg-white/30 rounded-full overflow-hidden">
+                                    <div class="h-full w-2/3 bg-white rounded-full"></div>
+                                </div>
+                                <div class="flex items-center justify-between text-white text-xs">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-6 h-6 rounded-full bg-pink-600 flex items-center justify-center text-[10px] font-black">N</div>
+                                        <span class="font-bold text-[11px] drop-shadow" id="ap-ig-story-user">nnntienda.ar</span>
+                                        <span class="text-[10px] text-slate-300" id="ap-ig-story-slot-label">09:30 hs</span>
+                                    </div>
+                                    <i class="fa-solid fa-xmark"></i>
+                                </div>
+                            </div>
+                            <img id="ap-ig-story-img" src="" alt="Story Preview" class="hidden w-full h-full object-cover">
+                            <div id="ap-ig-story-placeholder" class="text-center p-6 text-slate-400 text-xs">
+                                Vista previa formato Historia 9:16
+                            </div>
+                            <div class="absolute bottom-4 inset-x-4 flex items-center gap-2">
+                                <div class="flex-1 rounded-full border border-white/40 bg-black/40 backdrop-blur px-3 py-1.5 text-[11px] text-white/80">
+                                    Enviar mensaje...
+                                </div>
+                                <i class="fa-regular fa-heart text-white text-base"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- PESTAÑAS INFERIORES: COLA PROGRAMADA | HISTORIAL | STOCK  -->
+        <!-- ========================================================= -->
+        <div class="bg-slate-900/80 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
+            <div class="p-4 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900/60">
+                <div class="flex items-center gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800 flex-wrap">
+                    <button type="button" onclick="switchApSubTab('queue')" id="btn-aptab-queue" class="px-3.5 py-2 rounded-lg text-xs font-bold bg-pink-600 text-white transition flex items-center gap-1.5 shadow">
+                        <i class="fa-regular fa-calendar-check"></i>
+                        <span>Cola Programada (<span id="ap-tab-count-queue">0</span>)</span>
+                    </button>
+                    <button type="button" onclick="switchApSubTab('history')" id="btn-aptab-history" class="px-3.5 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5">
+                        <i class="fa-brands fa-instagram"></i>
+                        <span>Historial Publicado en Sheets (<span id="ap-tab-count-history">0</span>)</span>
+                    </button>
+                    <button type="button" onclick="switchApSubTab('catalog')" id="btn-aptab-catalog" class="px-3.5 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-boxes-stacked"></i>
+                        <span>Semáforo de Catálogo (<span id="ap-tab-count-catalog">0</span>)</span>
+                    </button>
+                </div>
+
+                <div class="text-xs text-slate-400 flex items-center gap-2">
+                    <i class="fa-solid fa-circle-info text-pink-400"></i>
+                    <span id="ap-subtab-helper-text">El bot de n8n revisa la carpeta de Drive todos los días y publica el archivo que coincida con la fecha del día.</span>
+                </div>
+            </div>
+
+            <!-- SUB-TAB 1: COLA PROGRAMADA (CALENDARIO / LISTA DE PRÓXIMOS POSTS) -->
+            <div id="ap-subview-queue" class="p-4 sm:p-6">
+                <div id="ap-queue-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            </div>
+
+            <!-- SUB-TAB 2: HISTORIAL PUBLICADO EN GOOGLE SHEETS (ContenidoNNN / Contenido) -->
+            <div id="ap-subview-history" class="hidden overflow-x-auto">
+                <table class="w-full text-left text-xs text-slate-300">
+                    <thead class="bg-slate-950 text-slate-400 uppercase font-semibold border-b border-slate-800">
+                        <tr>
+                            <th class="p-3.5">Fecha / Registro</th>
+                            <th class="p-3.5">Archivo en Drive</th>
+                            <th class="p-3.5">SKU / Producto Detectado</th>
+                            <th class="p-3.5">ID Post Feed (Meta)</th>
+                            <th class="p-3.5">ID Story (Meta)</th>
+                            <th class="p-3.5 text-right">Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ap-history-table-body" class="divide-y divide-slate-800/60">
+                        <tr>
+                            <td colspan="6" class="p-8 text-center text-slate-500">Cargando historial desde Google Sheets...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- SUB-TAB 3: SEMÁFORO DEL CATÁLOGO (QUÉ FALTA PUBLICAR Y CARGA EN 1 CLIC) -->
+            <div id="ap-subview-catalog" class="hidden overflow-x-auto">
+                <table class="w-full text-left text-xs text-slate-300">
+                    <thead class="bg-slate-950 text-slate-400 uppercase font-semibold border-b border-slate-800">
+                        <tr>
+                            <th class="p-3.5">Código / SKU</th>
+                            <th class="p-3.5">Producto</th>
+                            <th class="p-3.5">Categoría / Rubro</th>
+                            <th class="p-3.5">Precio</th>
+                            <th class="p-3.5 text-center">Estado en Instagram</th>
+                            <th class="p-3.5 text-right">Acción Rápida</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ap-catalog-status-table-body" class="divide-y divide-slate-800/60">
+                        <tr>
+                            <td colspan="6" class="p-8 text-center text-slate-500">Cargando catálogo...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
     <!-- MODULE 3: PANEL SUPERADMIN (CLIENTES)       -->
     <!-- ========================================== -->
     <div id="view-admin" class="no-print max-w-7xl mx-auto p-4 md:p-6 hidden">
@@ -1408,7 +1956,7 @@
 
                 <div>
                     <label class="block text-xs font-semibold text-slate-300 mb-1.5">Módulos Habilitados</label>
-                    <div class="grid grid-cols-2 gap-2">
+                    <div class="grid grid-cols-3 gap-2">
                         <label class="flex items-center gap-2 p-2.5 bg-slate-950 rounded-xl border border-slate-800 cursor-pointer text-xs">
                             <input type="checkbox" id="modal-check-dispatch" class="rounded bg-slate-900 text-emerald-500 focus:ring-0">
                             <span>📦 Despacho</span>
@@ -1416,6 +1964,10 @@
                         <label class="flex items-center gap-2 p-2.5 bg-slate-950 rounded-xl border border-slate-800 cursor-pointer text-xs">
                             <input type="checkbox" id="modal-check-analytics" checked class="rounded bg-slate-900 text-emerald-500 focus:ring-0">
                             <span>📈 Métricas</span>
+                        </label>
+                        <label class="flex items-center gap-2 p-2.5 bg-slate-950 rounded-xl border border-slate-800 cursor-pointer text-xs">
+                            <input type="checkbox" id="modal-check-autopublisher" checked class="rounded bg-slate-900 text-pink-500 focus:ring-0">
+                            <span>📲 Autopubli</span>
                         </label>
                     </div>
                 </div>
@@ -1578,6 +2130,12 @@
                 hasChanges = true;
             }
 
+            // 10. Autopublisher Scheduled Queue
+            if (Array.isArray(cloudState.autopublisherQueue) && typeof mergeCloudAutopublisherQueue === 'function') {
+                mergeCloudAutopublisherQueue(cloudState.autopublisherQueue);
+                hasChanges = true;
+            }
+
             if (cloudState.updatedAt) {
                 lastCloudUpdateTs = cloudState.updatedAt;
                 localStorage.setItem('croc_cloud_last_synced', lastCloudUpdateTs);
@@ -1593,6 +2151,9 @@
                 }
                 if (typeof renderAnalyticsDashboard === 'function' && currentMainView === 'analytics') {
                     renderAnalyticsDashboard();
+                }
+                if (typeof renderAutopublisherDashboard === 'function' && currentMainView === 'autopublisher') {
+                    renderAutopublisherDashboard();
                 }
             }
         }
@@ -1616,6 +2177,7 @@
                     printedOrders: printedOrderIds,
                     customPaymentMethods,
                     cadeteOverrides,
+                    autopublisherQueue: (typeof autopublisherQueue !== 'undefined' ? autopublisherQueue : []),
                     updatedAt: new Date().toISOString(),
                     updatedBy: currentUser?.username || 'usuario'
                 };
@@ -2464,7 +3026,7 @@
                             company_name: sessionData.company_name || (isSuper ? 'CrocScale Agency' : 'Cliente'),
                             role: sessionData.role || (isSuper ? 'superadmin' : 'client'),
                             store_key: sessionData.store_key || null,
-                            modules_allowed: sessionData.modules_allowed || (isSuper ? ['dispatch', 'analytics', 'admin'] : ['dispatch', 'analytics']),
+                            modules_allowed: sessionData.modules_allowed || (isSuper ? ['dispatch', 'analytics', 'autopublisher', 'admin'] : ['dispatch', 'analytics', 'autopublisher']),
                             authHash: sessionData.authHash || ''
                         };
                         applyUserPermissions();
@@ -2525,7 +3087,7 @@
                             company_name: 'CrocScale Agency',
                             role: 'superadmin',
                             is_active: true,
-                            modules_allowed: ['dispatch', 'analytics', 'admin'],
+                            modules_allowed: ['dispatch', 'analytics', 'autopublisher', 'admin'],
                             store_key: null
                         };
                         authenticated = true;
@@ -2535,7 +3097,7 @@
                             company_name: STORES_CONFIG[usernameInput].name,
                             role: 'client',
                             is_active: true,
-                            modules_allowed: ['dispatch', 'analytics'],
+                            modules_allowed: ['dispatch', 'analytics', 'autopublisher'],
                             store_key: usernameInput
                         };
                         authenticated = true;
@@ -2553,7 +3115,7 @@
                     company_name: userData.company_name,
                     role: userData.role,
                     store_key: userData.store_key || null,
-                    modules_allowed: userData.modules_allowed || ['dispatch', 'analytics'],
+                    modules_allowed: userData.modules_allowed || ['dispatch', 'analytics', 'autopublisher'],
                     authHash: passHash
                 }));
 
@@ -2589,8 +3151,10 @@
             const btnAdmin = document.getElementById('btn-nav-admin');
             const btnDispatch = document.getElementById('btn-nav-dispatch');
             const btnAnalytics = document.getElementById('btn-nav-analytics');
+            const btnAutopublisher = document.getElementById('btn-nav-autopublisher');
             const dispatchStoreWrap = document.getElementById('dispatch-store-selector-wrap');
             const analyticsStoreWrap = document.getElementById('analytics-store-selector-wrap');
+            const apStoreWrap = document.getElementById('ap-store-selector-wrap');
 
             const isSuperAdmin = currentUser.role === 'superadmin';
             const allowedModules = currentUser.modules_allowed || ['analytics'];
@@ -2599,6 +3163,9 @@
             if (currentUser.store_key && STORES_CONFIG[currentUser.store_key]) {
                 currentDispatchStore = currentUser.store_key;
                 currentAnalyticsStore = currentUser.store_key;
+                if (typeof currentApStore !== 'undefined' && (currentUser.store_key === 'nnn' || currentUser.store_key === 'nacha')) {
+                    currentApStore = currentUser.store_key;
+                }
                 const storeObj = STORES_CONFIG[currentUser.store_key];
                 
                 const titleStore = document.getElementById('title-store');
@@ -2617,22 +3184,28 @@
                 btnAdmin.style.display = 'flex';
                 if (dispatchStoreWrap) dispatchStoreWrap.style.display = 'flex';
                 if (analyticsStoreWrap) analyticsStoreWrap.style.display = 'flex';
+                if (apStoreWrap) apStoreWrap.style.display = 'flex';
             } else {
                 btnAdmin.style.display = 'none';
                 if (dispatchStoreWrap) dispatchStoreWrap.style.display = 'none';
                 if (analyticsStoreWrap) analyticsStoreWrap.style.display = 'none';
+                if (apStoreWrap) apStoreWrap.style.display = 'none';
             }
 
             // Permisos de módulos
             const canDispatch = isSuperAdmin || allowedModules.includes('dispatch');
             const canAnalytics = isSuperAdmin || allowedModules.includes('analytics');
+            const canAutopublisher = isSuperAdmin || allowedModules.includes('autopublisher') || currentUser.store_key === 'nnn' || currentUser.store_key === 'nacha';
 
             btnDispatch.style.display = canDispatch ? 'flex' : 'none';
             btnAnalytics.style.display = canAnalytics ? 'flex' : 'none';
+            if (btnAutopublisher) btnAutopublisher.style.display = canAutopublisher ? 'flex' : 'none';
 
             // Abrir la vista permitida
             if (!canDispatch && canAnalytics) {
                 switchMainView('analytics');
+            } else if (!canDispatch && !canAnalytics && canAutopublisher) {
+                switchMainView('autopublisher');
             } else {
                 switchMainView('dispatch');
             }
@@ -3517,7 +4090,7 @@
                         ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">👑 SuperAdmin</span>`
                         : `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700">🏢 Cliente</span>`;
 
-                    const modulesStr = (u.modules_allowed || []).map(m => m === 'dispatch' ? '📦 Despacho' : '📈 Métricas').join(', ') || 'Ninguno';
+                    const modulesStr = (u.modules_allowed || []).map(m => m === 'dispatch' ? '📦 Despacho' : (m === 'autopublisher' ? '📲 Autopubli' : '📈 Métricas')).join(', ') || 'Ninguno';
 
                     return `
                     <tr class="hover:bg-slate-800/40 transition">
@@ -3591,6 +4164,8 @@
             document.getElementById('modal-input-password').value = '';
             document.getElementById('modal-check-dispatch').checked = true;
             document.getElementById('modal-check-analytics').checked = true;
+            const checkAp = document.getElementById('modal-check-autopublisher');
+            if (checkAp) checkAp.checked = true;
             document.getElementById('modal-user').classList.remove('hidden');
         }
 
@@ -3606,10 +4181,12 @@
             const storeKey = document.getElementById('modal-select-store').value;
             const canDispatch = document.getElementById('modal-check-dispatch').checked;
             const canAnalytics = document.getElementById('modal-check-analytics').checked;
+            const canAutopublisher = document.getElementById('modal-check-autopublisher')?.checked;
 
             const modules = [];
             if (canDispatch) modules.push('dispatch');
             if (canAnalytics) modules.push('analytics');
+            if (canAutopublisher) modules.push('autopublisher');
 
             const btnSubmit = document.getElementById('modal-btn-submit');
             btnSubmit.disabled = true;
@@ -4496,11 +5073,13 @@
             const btnDispatch = document.getElementById('btn-nav-dispatch');
             const btnCadete = document.getElementById('btn-nav-cadete');
             const btnAnalytics = document.getElementById('btn-nav-analytics');
+            const btnAutopublisher = document.getElementById('btn-nav-autopublisher');
             const btnAdmin = document.getElementById('btn-nav-admin');
 
             const viewDispatch = document.getElementById('view-dispatch');
             const viewCadete = document.getElementById('view-cadete');
             const viewAnalytics = document.getElementById('view-analytics');
+            const viewAutopublisher = document.getElementById('view-autopublisher');
             const viewAdmin = document.getElementById('view-admin');
 
             const baseInactive = "px-3 sm:px-4 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5";
@@ -4508,11 +5087,13 @@
             if (btnDispatch) btnDispatch.className = baseInactive;
             if (btnCadete) btnCadete.className = baseInactive;
             if (btnAnalytics) btnAnalytics.className = baseInactive;
+            if (btnAutopublisher) btnAutopublisher.className = baseInactive;
             if (btnAdmin) btnAdmin.className = baseInactive;
 
             if (viewDispatch) viewDispatch.classList.add('hidden');
             if (viewCadete) viewCadete.classList.add('hidden');
             if (viewAnalytics) viewAnalytics.classList.add('hidden');
+            if (viewAutopublisher) viewAutopublisher.classList.add('hidden');
             if (viewAdmin) viewAdmin.classList.add('hidden');
 
             if (view === 'dispatch') {
@@ -4531,6 +5112,10 @@
                 if (btnAnalytics) btnAnalytics.className = "px-3 sm:px-4 py-2 rounded-lg text-xs font-bold bg-indigo-600 text-white transition flex items-center gap-1.5 shadow";
                 if (viewAnalytics) viewAnalytics.classList.remove('hidden');
                 fetchAnalyticsData();
+            } else if (view === 'autopublisher') {
+                if (btnAutopublisher) btnAutopublisher.className = "px-3 sm:px-4 py-2 rounded-lg text-xs font-bold bg-gradient-to-r from-pink-600 to-fuchsia-600 text-white transition flex items-center gap-1.5 shadow";
+                if (viewAutopublisher) viewAutopublisher.classList.remove('hidden');
+                initAutopublisherView();
             } else if (view === 'admin') {
                 if (btnAdmin) btnAdmin.className = "px-3 sm:px-4 py-2 rounded-lg text-xs font-bold bg-amber-600 text-white transition flex items-center gap-1.5 shadow";
                 if (viewAdmin) viewAdmin.classList.remove('hidden');
@@ -7504,6 +8089,1295 @@
                 if (btn) {
                     btn.innerHTML = originalText;
                     btn.disabled = false;
+                }
+            }
+        }
+
+        /* ====================================================== */
+        /* MODULE 2.5: AUTOPUBLICADOR IA ENGINE (NNN & NACHA HOME)*/
+        /* ====================================================== */
+        const AP_STORES_META = {
+            nnn: {
+                key: 'nnn',
+                title: 'NNN / Bross London',
+                shortBadge: 'NNN',
+                igHandle: 'nnntienda.ar',
+                avatar: 'N',
+                location: 'Buenos Aires, Argentina',
+                feedFolderId: '1Tqu0lGDDETlIwtpAA5w7zsjkgLtU8SVv',
+                feedFolderName: 'NNN.Public.2026',
+                storyFolderId: '1WDQSvu9qvL7MadLJDuJwhrgf2XdRXd1T',
+                storyFolderName: 'NNN.Story.2026',
+                historySpreadsheetId: '13OZcCBHrVufQSB4HcZu1Vgnu6uYAGLFpWrwW-x347aw',
+                historyGid: '1194881315',
+                historySheetName: 'ContenidoNNN',
+                catalogUrlEdit: 'https://docs.google.com/spreadsheets/d/1dlWKIScKbKtwNcU0ETTbR06VerGG-OPpAgYQCwRzyMA/edit#gid=1859150881',
+                ruleBadge: 'Regla: DD-MM SKU.jpg',
+                nextSlotLabel: 'Hoy 18:00 hs (Feed) • 09:30 / 20:30 hs (Stories)',
+                subtitle: 'Cruza tus fotos de Drive con BrossPrecios y Catálogo Bazar NNN por código SKU. Arma Carruseles, Reels y Stories automáticas.'
+            },
+            nacha: {
+                key: 'nacha',
+                title: 'Nacha Home',
+                shortBadge: 'NachaHome',
+                igHandle: 'nachahome.ok',
+                avatar: 'NH',
+                location: 'Once, Buenos Aires',
+                feedFolderId: '171HZ5xtYv6Bh__6yQigYLjFLb9QkzksK',
+                feedFolderName: 'JulioPostNachaH',
+                storyFolderId: '1ozYfPVP_-c67WtzGXrKC8j44oCuXtgkZ',
+                storyFolderName: 'JulioStoryNachoH',
+                historySpreadsheetId: '13OZcCBHrVufQSB4HcZu1Vgnu6uYAGLFpWrwW-x347aw',
+                historyGid: '0',
+                historySheetName: 'Contenido',
+                catalogUrlEdit: 'https://docs.google.com/spreadsheets/d/1dlWKIScKbKtwNcU0ETTbR06VerGG-OPpAgYQCwRzyMA/edit#gid=1407261418',
+                ruleBadge: 'Regla: NumXXX_DD.MM.jpg',
+                nextSlotLabel: 'Todos los días 12:00 hs (Feed + Story)',
+                subtitle: 'Cruza el código NumXXX y la fecha DD.MM del archivo con tu hoja JeanCartier_stock (Medidas, Precios, Colores y Diseño).'
+            }
+        };
+
+        let currentApStore = 'nnn';
+        let currentApSubTab = 'queue';
+        let apPreviewMode = 'feed';
+        let apFilterOnlyUnposted = false;
+        let apCaptionVariantIdx = 0;
+
+        let apCatalogByStore = {
+            nnn: [],
+            nacha: []
+        };
+        let apHistoryByStore = {
+            nnn: [],
+            nacha: []
+        };
+        let apPublishedSkuSetByStore = {
+            nnn: new Set(),
+            nacha: new Set()
+        };
+
+        let apSelectedFiles = []; // [{ file, dataUrl, isVideo, name, ext }]
+        let apSelectedDriveUrls = []; // Links directos de Drive del catálogo si el usuario elige usarlos
+        let apCarouselPreviewIdx = 0;
+
+        let autopublisherQueue = JSON.parse(localStorage.getItem('croc_autopublisher_queue') || '[]');
+        let apWebhookUrl = localStorage.getItem('croc_ap_webhook_url') || 'https://n8n.nicovaz.tech/webhook/autopublicador-upload';
+
+        function mergeCloudAutopublisherQueue(cloudList) {
+            if (!Array.isArray(cloudList)) return;
+            const map = new Map((autopublisherQueue || []).map(item => [item.id, item]));
+            cloudList.forEach(item => {
+                if (item && item.id) map.set(item.id, item);
+            });
+            autopublisherQueue = Array.from(map.values()).sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+            localStorage.setItem('croc_autopublisher_queue', JSON.stringify(autopublisherQueue));
+        }
+
+        let apInitialized = false;
+        async function initAutopublisherView() {
+            const dateInput = document.getElementById('ap-input-date');
+            if (dateInput && !dateInput.value) {
+                const now = new Date();
+                const yyyy = now.getFullYear();
+                const mm = String(now.getMonth() + 1).padStart(2, '0');
+                const dd = String(now.getDate()).padStart(2, '0');
+                dateInput.value = `${yyyy}-${mm}-${dd}`;
+            }
+
+            const whInput = document.getElementById('ap-input-webhook-url');
+            if (whInput) whInput.value = apWebhookUrl;
+
+            if (currentUser && currentUser.store_key && AP_STORES_META[currentUser.store_key]) {
+                currentApStore = currentUser.store_key;
+            }
+
+            applyApStoreUI();
+
+            if (!apInitialized) {
+                apInitialized = true;
+                await refreshAutopublisherData(false);
+            } else {
+                renderAutopublisherDashboard();
+            }
+        }
+
+        function toggleApConfigPanel() {
+            const panel = document.getElementById('ap-config-panel');
+            if (panel) panel.classList.toggle('hidden');
+        }
+
+        function saveApWebhookConfig() {
+            const whInput = document.getElementById('ap-input-webhook-url');
+            if (!whInput) return;
+            const val = whInput.value.trim();
+            if (!val) {
+                alert('Ingresá una URL de Webhook válida de n8n.');
+                return;
+            }
+            apWebhookUrl = val;
+            localStorage.setItem('croc_ap_webhook_url', apWebhookUrl);
+            alert('✅ URL de Webhook guardada correctamente:\n' + apWebhookUrl);
+        }
+
+        function switchAutopublisherStore(storeKey) {
+            if (!AP_STORES_META[storeKey]) return;
+            currentApStore = storeKey;
+            apCaptionVariantIdx = 0;
+            applyApStoreUI();
+            populateApProductSelector();
+            updateApGeneratedFilename();
+            generateApSmartCaption();
+            renderAutopublisherDashboard();
+        }
+
+        function applyApStoreUI() {
+            const meta = AP_STORES_META[currentApStore];
+            if (!meta) return;
+
+            const btnNNN = document.getElementById('btn-ap-store-nnn');
+            const btnNacha = document.getElementById('btn-ap-store-nacha');
+            const activeClass = "px-3.5 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-pink-600 to-fuchsia-600 text-white transition flex items-center gap-1.5 shadow";
+            const inactiveClass = "px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5";
+
+            if (btnNNN) btnNNN.className = currentApStore === 'nnn' ? activeClass : inactiveClass;
+            if (btnNacha) btnNacha.className = currentApStore === 'nacha' ? activeClass : inactiveClass;
+
+            const elTitle = document.getElementById('ap-title-store');
+            const elSub = document.getElementById('ap-subtitle-schedule');
+            const elRule = document.getElementById('ap-badge-rule');
+            const elNextSlot = document.getElementById('ap-kpi-next-slot');
+            const elBadgeCfg = document.getElementById('ap-config-store-badge');
+
+            if (elTitle) elTitle.innerText = meta.title;
+            if (elSub) elSub.innerText = meta.subtitle;
+            if (elRule) elRule.innerText = meta.ruleBadge;
+            if (elNextSlot) elNextSlot.innerText = meta.nextSlotLabel;
+            if (elBadgeCfg) elBadgeCfg.innerText = meta.shortBadge;
+
+            // Links rápidos a Drive y Sheets
+            const linkFeed = document.getElementById('ap-link-drive-feed');
+            const linkStory = document.getElementById('ap-link-drive-story');
+            const linkHist = document.getElementById('ap-link-sheet-history');
+            const linkCat = document.getElementById('ap-link-sheet-catalog');
+
+            if (linkFeed) linkFeed.href = `https://drive.google.com/drive/folders/${meta.feedFolderId}`;
+            if (linkStory) linkStory.href = `https://drive.google.com/drive/folders/${meta.storyFolderId}`;
+            if (linkHist) linkHist.href = `https://docs.google.com/spreadsheets/d/${meta.historySpreadsheetId}/edit#gid=${meta.historyGid}`;
+            if (linkCat) linkCat.href = meta.catalogUrlEdit;
+
+            // Mockup de Instagram
+            const igAvatar = document.getElementById('ap-ig-avatar');
+            const igUser = document.getElementById('ap-ig-username');
+            const igLoc = document.getElementById('ap-ig-location');
+            const igCapUser = document.getElementById('ap-ig-caption-user');
+            const igStoryUser = document.getElementById('ap-ig-story-user');
+            const igTime = document.getElementById('ap-ig-mock-time');
+
+            if (igAvatar) igAvatar.innerText = meta.avatar;
+            if (igUser) igUser.innerText = meta.igHandle;
+            if (igLoc) igLoc.innerText = meta.location;
+            if (igCapUser) igCapUser.innerText = meta.igHandle;
+            if (igStoryUser) igStoryUser.innerText = meta.igHandle;
+            if (igTime) igTime.innerText = currentApStore === 'nnn' ? '18:00' : '12:00';
+        }
+
+        function extractSkuFromPublishedFilename(filename, storeKey) {
+            if (!filename) return '';
+            const raw = String(filename).trim();
+            if (storeKey === 'nacha') {
+                const m = raw.match(/Num0*(\d+)/i);
+                return m ? `Num${m[1]}` : '';
+            }
+            // NNN: limpiar extensión, fecha y prefijos igual que en el nodo '3. Elegir Foto Nueva2'
+            let clean = raw.replace(/\.[^/.]+$/, '');
+            clean = clean.replace(/^(?:\d{1,2}[\/._-]\d{1,2})[\s._-]*/i, '');
+            clean = clean.replace(/^(?:FEED|STORY|09HS|18HS|20HS)[\s._-]*/gi, '');
+            clean = clean.replace(/^(?:Art\.?|Articulo|Modelo|Num)[\s._-]*/i, '');
+            clean = clean.replace(/\s*(?:\(\d+\)|_\d+)$/, '');
+            return clean.trim().toUpperCase();
+        }
+
+        async function refreshAutopublisherData(showSpinner = true) {
+            const icon = document.getElementById('ap-refresh-icon');
+            if (showSpinner && icon) icon.classList.add('fa-spin');
+
+            try {
+                // 1. Construir Catálogo NNN unificado (Bazar NNN + BrossPrecios)
+                const nnnItems = [];
+                const seenNnnSkus = new Set();
+
+                (liveNNNBazarCatalog || []).forEach(b => {
+                    const skuClean = String(b.sku || '').trim();
+                    if (!skuClean) return;
+                    const priceVal = (b.precioOferta > 0 && b.precioOferta < b.precioPublico) ? b.precioOferta : b.precioPublico;
+                    seenNnnSkus.add(skuClean.toUpperCase());
+                    nnnItems.push({
+                        sku: skuClean,
+                        name: b.nombre || skuClean,
+                        category: `Bazar • ${b.categoria || 'General'}`,
+                        price: priceVal > 0 ? `$${priceVal.toLocaleString('es-AR')}` : '$31.999',
+                        variants: 'Único / Surtido',
+                        features: `Artículo de ${b.categoria || 'Bazar'} alta resistencia y calidad garantizada.`,
+                        driveUrls: []
+                    });
+                });
+
+                // Fetch BrossPrecios (gid=1258458893) para sumar Mochilas, Paraguas, Medias y Bóxers Bross
+                try {
+                    const brossSheetUrl = `https://docs.google.com/spreadsheets/d/${NNN_BAZAR_SPREADSHEET_ID}/gviz/tq?tqx=out:json&gid=1258458893`;
+                    const rBross = await fetch(brossSheetUrl);
+                    const tBross = await rBross.text();
+                    const jBross = JSON.parse(tBross.substring(tBross.indexOf('{'), tBross.lastIndexOf('}') + 1));
+                    const rowsBross = jBross.table.rows || [];
+
+                    rowsBross.forEach(r => {
+                        const c = r.c ? r.c.map(x => (x && x.v !== null && x.v !== undefined) ? String(x.v).trim() : '') : [];
+                        const col0 = c[0] || ''; // Producto o Código numérico de bóxer (ej: 139103)
+                        const col1 = c[1] || ''; // Medida o Nombre de bóxer (ej: BOXER BROSS MILITARY VINTAGE GREEN)
+                        const col2 = c[2] || ''; // Artículo (ej: Art. 403699, 320000, Estampados)
+                        const col3 = c[3] || ''; // Caracteristica
+                        const col4 = c[4] || ''; // PRECIO
+
+                        // Caso A: Fila de Bóxer individual con código numérico en col0 (ej: 139103 | BOXER BROSS MILITARY...)
+                        if (/^\d{5,6}$/.test(col0) && col1) {
+                            const skuCode = col0;
+                            if (!seenNnnSkus.has(skuCode.toUpperCase())) {
+                                seenNnnSkus.add(skuCode.toUpperCase());
+                                nnnItems.push({
+                                    sku: skuCode,
+                                    name: col1,
+                                    category: 'Bross London • Bóxers',
+                                    price: '$9.500',
+                                    variants: 'Talles S al XXL (Especiales 3XL y 4XL $11.500)',
+                                    features: 'Material: Algodón 92% - Lycra 8%. Elástico personalizado Bross London de 40mm.',
+                                    driveUrls: []
+                                });
+                            }
+                        }
+                        // Caso B: Accesorios, Medias, Paraguas, Mochilas o Categorías Bross en col2
+                        else if (col2 && col2.toLowerCase() !== 'artículo' && col2.toLowerCase() !== 'articulo') {
+                            const rawSku = col2.replace(/^Art\.?\s*/i, '').trim();
+                            if (rawSku && !seenNnnSkus.has(rawSku.toUpperCase())) {
+                                seenNnnSkus.add(rawSku.toUpperCase());
+                                const numP = parseFloat(col4.replace(/[^0-9]/g, ''));
+                                const priceFormatted = !isNaN(numP) && numP > 0 ? `$${numP.toLocaleString('es-AR')}` : '$19.000';
+                                const shortTitle = col3 ? col3.split(':')[0].split('.')[0].slice(0, 55) : col2;
+                                nnnItems.push({
+                                    sku: rawSku,
+                                    name: shortTitle && shortTitle.length > 3 ? `${col2} - ${shortTitle}` : col2,
+                                    category: 'Bross London • Indumentaria & Accesorios',
+                                    price: priceFormatted,
+                                    variants: col1 || 'Único / Surtido',
+                                    features: col3 || 'Calidad original Bross London.',
+                                    driveUrls: []
+                                });
+                            }
+                        }
+                    });
+                } catch (eBross) {
+                    console.warn('Aviso al cargar BrossPrecios para Autopublicador:', eBross);
+                }
+
+                apCatalogByStore.nnn = nnnItems;
+
+                // 2. Construir Catálogo NachaHome (JeanCartier_stock gid=1407261418 agrupado por Num de foto)
+                try {
+                    const nachaCatUrl = `https://docs.google.com/spreadsheets/d/${NNN_BAZAR_SPREADSHEET_ID}/gviz/tq?tqx=out:json&gid=1407261418`;
+                    const rNacha = await fetch(nachaCatUrl);
+                    const tNacha = await rNacha.text();
+                    const jNacha = JSON.parse(tNacha.substring(tNacha.indexOf('{'), tNacha.lastIndexOf('}') + 1));
+                    const rowsNacha = jNacha.table.rows || [];
+
+                    const groupedNacha = new Map();
+                    rowsNacha.forEach(r => {
+                        const c = r.c ? r.c.map(x => (x && x.v !== null && x.v !== undefined) ? String(x.v).trim() : '') : [];
+                        const numRaw = c[0] || '';
+                        const numInt = parseInt(numRaw, 10);
+                        if (isNaN(numInt) || numInt <= 0) return;
+
+                        const rubro = c[1] || 'Blanquería';
+                        const medida = c[2] || '';
+                        const articulo = c[3] || '';
+                        const diseno = (c[4] || '').replace(/"/g, '').trim();
+                        const color = c[5] || '';
+                        const incluye = c[6] || c[10] || '';
+                        const precioRaw = c[7] || '';
+                        const caracteristicas = c[9] || '';
+                        const urls = [c[11], c[12], c[13], c[14]].filter(u => u && u.startsWith('http'));
+
+                        // Formatear precio limpio
+                        let cleanPrice = precioRaw.split(',')[0].replace(/[^0-9]/g, '');
+                        const priceNum = parseInt(cleanPrice, 10);
+                        const formattedPrice = !isNaN(priceNum) && priceNum > 0 ? `$${priceNum.toLocaleString('es-AR')}` : precioRaw;
+
+                        const key = `Num${numInt}`;
+                        if (!groupedNacha.has(key)) {
+                            const paddedNum = `Num${String(numInt).padStart(3, '0')}`;
+                            const displayName = [rubro, diseno, color].filter(Boolean).join(' • ');
+                            groupedNacha.set(key, {
+                                numInt,
+                                sku: paddedNum,
+                                matchKey: key.toUpperCase(),
+                                name: displayName || `Producto ${paddedNum}`,
+                                category: rubro || 'Blanquería Hogar',
+                                measuresList: [],
+                                pricesList: [],
+                                features: [caracteristicas, incluye ? `Incluye: ${incluye}` : ''].filter(Boolean).join(' | '),
+                                driveUrls: []
+                            });
+                        }
+
+                        const entry = groupedNacha.get(key);
+                        if (medida && formattedPrice) {
+                            const mp = `${medida}: ${formattedPrice}`;
+                            if (!entry.measuresList.includes(mp)) entry.measuresList.push(mp);
+                        } else if (medida && !entry.measuresList.includes(medida)) {
+                            entry.measuresList.push(medida);
+                        }
+                        if (formattedPrice && !entry.pricesList.includes(formattedPrice)) {
+                            entry.pricesList.push(formattedPrice);
+                        }
+                        urls.forEach(u => {
+                            if (!entry.driveUrls.includes(u)) entry.driveUrls.push(u);
+                        });
+                    });
+
+                    apCatalogByStore.nacha = Array.from(groupedNacha.values())
+                        .sort((a, b) => a.numInt - b.numInt)
+                        .map(item => ({
+                            sku: item.sku,
+                            matchKey: item.matchKey,
+                            name: item.name,
+                            category: item.category,
+                            price: item.pricesList.join(' / ') || 'Consultar',
+                            variants: item.measuresList.join(' | ') || 'Medidas estándar',
+                            features: item.features,
+                            driveUrls: item.driveUrls
+                        }));
+                } catch (eNacha) {
+                    console.warn('Aviso al cargar JeanCartier_stock para NachaHome:', eNacha);
+                }
+
+                // 3. Leer Historial de Publicadas en Vivo (ContenidoNNN gid=1194881315 y Contenido gid=0)
+                await Promise.all([
+                    fetchApStoreHistory('nnn'),
+                    fetchApStoreHistory('nacha')
+                ]);
+
+                populateApProductSelector();
+                updateApGeneratedFilename();
+                renderAutopublisherDashboard();
+            } finally {
+                if (icon) icon.classList.remove('fa-spin');
+            }
+        }
+
+        async function fetchApStoreHistory(storeKey) {
+            const meta = AP_STORES_META[storeKey];
+            if (!meta) return;
+            try {
+                const url = `https://docs.google.com/spreadsheets/d/${meta.historySpreadsheetId}/gviz/tq?tqx=out:json&gid=${meta.historyGid}`;
+                const res = await fetch(url);
+                const txt = await res.text();
+                const json = JSON.parse(txt.substring(txt.indexOf('{'), txt.lastIndexOf('}') + 1));
+                const rows = json.table.rows || [];
+
+                const historyItems = [];
+                const skuSet = new Set();
+
+                rows.forEach((r, idx) => {
+                    const c = r.c ? r.c.map(x => (x && x.v !== null && x.v !== undefined) ? String(x.v).trim() : '') : [];
+                    if (storeKey === 'nnn') {
+                        // Columnas ContenidoNNN: ig_story_ids(0), ig_post_id(1), file_id(2), fileId(3), FileID(4), file_name(5), fileName(6), failed_stories(7), status(8), action(9), slot(10), ig_story_id(11), timestamp(12)
+                        const fileName = c[5] || c[6] || c[2] || '';
+                        const igPostId = c[1] || '';
+                        const igStoryIds = c[0] || c[11] || '';
+                        const timestamp = c[12] || '';
+                        const slot = c[10] || (igPostId ? 'FEED 18HS' : 'STORY');
+                        if (!fileName || fileName.toLowerCase() === 'file_name') return;
+
+                        const detectedSku = extractSkuFromPublishedFilename(fileName, 'nnn');
+                        if (detectedSku) {
+                            skuSet.add(detectedSku.replace(/[^A-Z0-9]/g, ''));
+                        }
+
+                        historyItems.push({
+                            idx,
+                            dateStr: timestamp ? new Date(timestamp).toLocaleString('es-AR') : (fileName.match(/^\d{1,2}[._-]\d{1,2}/)?.[0] || 'Publicado'),
+                            fileName,
+                            sku: detectedSku || 'S/D',
+                            igPostId: igPostId || '-',
+                            igStoryIds: igStoryIds.replace(/[\[\]"]/g, '') || '-',
+                            status: `Publicado (${slot})`
+                        });
+                    } else {
+                        // Columnas Contenido (Nacha): fecha(0), file_name(1), file_id(2), ig_post_id(3), ig_story_ids(4), estado(5)
+                        const fecha = c[0] || '';
+                        const fileName = c[1] || '';
+                        const igPostId = c[3] || '';
+                        const igStoryIds = c[4] || '';
+                        const estado = c[5] || 'Publicado OK';
+                        if (!fileName || fileName.toLowerCase() === 'file_name') return;
+
+                        const detectedSku = extractSkuFromPublishedFilename(fileName, 'nacha');
+                        if (detectedSku) {
+                            skuSet.add(detectedSku.toUpperCase());
+                        }
+
+                        historyItems.push({
+                            idx,
+                            dateStr: fecha || 'Publicado',
+                            fileName,
+                            sku: detectedSku || 'S/D',
+                            igPostId: igPostId || '-',
+                            igStoryIds: igStoryIds || '-',
+                            status: estado
+                        });
+                    }
+                });
+
+                apHistoryByStore[storeKey] = historyItems.reverse();
+                apPublishedSkuSetByStore[storeKey] = skuSet;
+            } catch (err) {
+                console.warn(`Error al leer historial de ${storeKey}:`, err);
+            }
+        }
+
+        function isApProductAlreadyPublished(item, storeKey) {
+            const set = apPublishedSkuSetByStore[storeKey] || new Set();
+            if (storeKey === 'nacha') {
+                const m = String(item.sku || '').match(/Num0*(\d+)/i);
+                const key = m ? `NUM${m[1]}` : String(item.sku || '').toUpperCase();
+                return set.has(key);
+            }
+            const clean = String(item.sku || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+            if (!clean) return false;
+            if (set.has(clean)) return true;
+            for (const pubSku of set) {
+                if (pubSku.length >= 4 && (pubSku.includes(clean) || clean.includes(pubSku))) return true;
+            }
+            return false;
+        }
+
+        function filterApCatalogByUnposted() {
+            apFilterOnlyUnposted = !apFilterOnlyUnposted;
+            const btn = document.getElementById('btn-ap-filter-unposted');
+            if (btn) {
+                if (apFilterOnlyUnposted) {
+                    btn.className = "text-[11px] px-2.5 py-1 rounded-lg bg-amber-500 text-slate-950 font-extrabold transition shadow";
+                    btn.innerText = "🔥 Mostrando solo NO publicados";
+                } else {
+                    btn.className = "text-[11px] px-2.5 py-1 rounded-lg bg-slate-950 hover:bg-slate-800 text-amber-300 border border-amber-500/30 font-semibold transition";
+                    btn.innerText = "⚡ Ver solo no publicados";
+                }
+            }
+            populateApProductSelector(document.getElementById('ap-product-search')?.value || '');
+        }
+
+        function onApProductSearchInput(query) {
+            populateApProductSelector(query);
+        }
+
+        function populateApProductSelector(searchQuery = '') {
+            const sel = document.getElementById('ap-product-select');
+            if (!sel) return;
+
+            const catalog = apCatalogByStore[currentApStore] || [];
+            const q = String(searchQuery || '').trim().toLowerCase();
+
+            const filtered = catalog.filter(item => {
+                if (apFilterOnlyUnposted && isApProductAlreadyPublished(item, currentApStore)) {
+                    return false;
+                }
+                if (!q) return true;
+                const hay = `${item.sku} ${item.name} ${item.category} ${item.features}`.toLowerCase();
+                return hay.includes(q);
+            });
+
+            const byCat = {};
+            filtered.forEach((item, index) => {
+                const cat = item.category || 'General';
+                if (!byCat[cat]) byCat[cat] = [];
+                byCat[cat].push(item);
+            });
+
+            let html = `<option value="">📦 Elegí un producto (${filtered.length} disponibles en catálogo)...</option>`;
+            Object.keys(byCat).forEach(cat => {
+                html += `<optgroup label="🏷️ ${escapeHTML(cat)}">`;
+                byCat[cat].forEach(item => {
+                    const isPub = isApProductAlreadyPublished(item, currentApStore);
+                    const statusIcon = isPub ? '✅' : '⏳';
+                    html += `<option value="${escapeHTML(item.sku)}">${statusIcon} ${escapeHTML(item.sku)} — ${escapeHTML(item.name)} (${escapeHTML(item.price)})</option>`;
+                });
+                html += `</optgroup>`;
+            });
+
+            sel.innerHTML = html;
+
+            // Si el usuario buscó texto y hay coincidencia exacta o única, seleccionarla automáticamente
+            if (q && filtered.length === 1) {
+                sel.value = filtered[0].sku;
+                onApProductSelectChange(filtered[0].sku);
+            }
+        }
+
+        function onApProductSelectChange(skuVal) {
+            if (!skuVal) return;
+            const catalog = apCatalogByStore[currentApStore] || [];
+            const item = catalog.find(x => x.sku === skuVal);
+            if (!item) return;
+
+            document.getElementById('ap-input-sku').value = item.sku;
+            document.getElementById('ap-input-product-name').value = item.name;
+            document.getElementById('ap-input-price').value = item.price;
+            document.getElementById('ap-input-variants').value = item.variants || '';
+            document.getElementById('ap-input-features').value = item.features || '';
+
+            // Mostrar links de Drive existentes si el catálogo los trae (ej. NachaHome)
+            const driveBox = document.getElementById('ap-catalog-drive-links-box');
+            const driveList = document.getElementById('ap-catalog-drive-links-list');
+            apSelectedDriveUrls = item.driveUrls || [];
+
+            if (driveBox && driveList) {
+                if (apSelectedDriveUrls.length > 0) {
+                    driveBox.classList.remove('hidden');
+                    driveList.innerHTML = apSelectedDriveUrls.map((u, idx) => {
+                        const isVid = u.toLowerCase().includes('video') || idx === apSelectedDriveUrls.length - 1;
+                        return `
+                            <a href="${escapeHTML(u)}" target="_blank" class="px-2.5 py-1 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 text-[10px] font-bold flex items-center gap-1">
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i> Ver Archivo Drive #${idx + 1}
+                            </a>
+                        `;
+                    }).join('');
+                } else {
+                    driveBox.classList.add('hidden');
+                    driveList.innerHTML = '';
+                }
+            }
+
+            updateApGeneratedFilename();
+            generateApSmartCaption(false);
+        }
+
+        function pickNextFreeApDate() {
+            const storeItems = (autopublisherQueue || []).filter(q => q.store === currentApStore);
+            const usedDates = new Set(storeItems.map(q => q.date));
+            const d = new Date();
+            for (let i = 0; i < 60; i++) {
+                const yyyy = d.getFullYear();
+                const mm = String(d.getMonth() + 1).padStart(2, '0');
+                const dd = String(d.getDate()).padStart(2, '0');
+                const iso = `${yyyy}-${mm}-${dd}`;
+                if (!usedDates.has(iso)) {
+                    const dateInput = document.getElementById('ap-input-date');
+                    if (dateInput) dateInput.value = iso;
+                    updateApGeneratedFilename();
+                    return;
+                }
+                d.setDate(d.getDate() + 1);
+            }
+        }
+
+        function buildApOfficialFileName(ext = 'jpg', fileIdx = 0, totalFiles = 1, forceTarget = null) {
+            const rawSku = (document.getElementById('ap-input-sku')?.value || '').trim() || (currentApStore === 'nnn' ? 'CRG-035' : 'Num001');
+            const dateVal = document.getElementById('ap-input-date')?.value || new Date().toISOString().slice(0, 10);
+            const target = forceTarget || document.getElementById('ap-input-target')?.value || 'both';
+
+            const parts = dateVal.split('-');
+            const dd = (parts[2] || '20').padStart(2, '0');
+            const mm = (parts[1] || '10').padStart(2, '0');
+            const cleanExt = String(ext || 'jpg').replace(/^\./, '').toLowerCase();
+
+            if (currentApStore === 'nacha') {
+                // Regla NachaHome en '3. Elegir Archivo Pendiente':
+                // parseFileDate busca DD.MM y extractProductNum busca NumXXX
+                const numMatch = rawSku.match(/(\d+)/);
+                const numPadded = numMatch ? `Num${String(parseInt(numMatch[1], 10)).padStart(3, '0')}` : `Num001`;
+                const suffix = totalFiles > 1 ? `_${fileIdx + 1}` : '';
+                return `${numPadded}_${dd}.${mm}${suffix}.${cleanExt}`;
+            } else {
+                // Regla NNN en '3. Elegir Foto Nueva2' y '3. Elegir Story del Slot':
+                // Fecha DD-MM adelante + Tag opcional (09HS/20HS) + SKU exacto
+                const cleanSku = rawSku.replace(/^Art\.?\s*/i, '').trim();
+                let slotPrefix = '';
+                if (target === 'story_09') slotPrefix = '09HS ';
+                else if (target === 'story_20') slotPrefix = '20HS ';
+
+                const suffix = totalFiles > 1 ? ` (${fileIdx + 1})` : '';
+                return `${dd}-${mm} ${slotPrefix}${cleanSku}${suffix}.${cleanExt}`;
+            }
+        }
+
+        function updateApGeneratedFilename() {
+            const firstExt = apSelectedFiles.length > 0 ? apSelectedFiles[0].ext : 'jpg';
+            const total = apSelectedFiles.length || 1;
+            const officialName = buildApOfficialFileName(firstExt, 0, total);
+            const previewEl = document.getElementById('ap-preview-filename');
+            if (previewEl) {
+                if (total > 1) {
+                    previewEl.innerText = `${officialName} (+${total - 1} archivos en Carrusel)`;
+                } else {
+                    previewEl.innerText = officialName;
+                }
+            }
+
+            const meta = AP_STORES_META[currentApStore];
+            const target = document.getElementById('ap-input-target')?.value || 'both';
+            const folderLabel = document.getElementById('ap-preview-folder-label');
+            if (folderLabel && meta) {
+                let destText = '';
+                if (target === 'both') destText = `${meta.feedFolderName} + ${meta.storyFolderName}`;
+                else if (target === 'feed') destText = meta.feedFolderName;
+                else destText = meta.storyFolderName;
+                folderLabel.innerHTML = `Destino Drive: <span class="text-emerald-300 font-semibold">${escapeHTML(destText)}</span>`;
+            }
+
+            const skuPlaceholder = document.getElementById('ap-ig-placeholder-sku');
+            if (skuPlaceholder) {
+                skuPlaceholder.innerText = `Archivo: ${officialName}`;
+            }
+        }
+
+        function generateApSmartCaption(nextVariant = false) {
+            if (nextVariant) apCaptionVariantIdx = (apCaptionVariantIdx + 1) % 3;
+
+            const sku = (document.getElementById('ap-input-sku')?.value || '').trim();
+            const name = (document.getElementById('ap-input-product-name')?.value || '').trim();
+            const price = (document.getElementById('ap-input-price')?.value || '').trim();
+            const variants = (document.getElementById('ap-input-variants')?.value || '').trim();
+            const features = (document.getElementById('ap-input-features')?.value || '').trim();
+            const isCarousel = apSelectedFiles.length > 1;
+
+            if (!name && !sku) return;
+
+            let caption = '';
+            if (currentApStore === 'nacha') {
+                // Estilo cálido, acogedor y hogareño de Nacha Home (fiel al nodo 'Redactar Copy con IA')
+                const intros = [
+                    `🏠✨ ¡Renová tu dormitorio y descansá como te merecés con nuestro ${name || sku}!`,
+                    `🛏️🌸 Transformá la calidez de tu hogar con la suavidad y calidad premium de ${name || sku}.`,
+                    `💤✨ ¡Llegó el confort que tu cama estaba esperando! Descubrí nuestro ${name || sku} en Nacha Home.`
+                ];
+                const intro = intros[apCaptionVariantIdx % intros.length];
+                caption = `${intro}\n\n`;
+                if (features) caption += `✅ ${features}\n`;
+                if (variants) caption += `📏 Medidas y Precios disponibles:\n• ${variants}\n`;
+                else if (price) caption += `💰 Precio Especial: ${price}\n`;
+                caption += `\n🚚 Envíos rápidos a domicilio en CABA, GBA y todo el país.\n💬 Comentá "PRECIO" o escribinos al DM / WhatsApp para reservar el tuyo antes de que se agote.\n\n#NachaHome #Blanqueria #Sabanas #Confort #DecoracionHogar #Acolchados #Edredon`;
+            } else {
+                // Estilo moderno, masculino y directo de NNN / Bross London (fiel al nodo 'Redactar Copy con IA5')
+                const intros = [
+                    `🔥 ${name || 'Nuevo Ingreso'} (${sku || 'NNN'}) — Diseño, durabilidad y estilo superior.`,
+                    `⚡ Llevá tu día a día al siguiente nivel con ${name || sku}. Calidad garantizada al mejor precio.`,
+                    `🚀 ¡Stock disponible en NNN Tienda! Conocé ${name || sku} ${isCarousel ? '(Deslizá para ver todas las fotos 👉)' : ''}`
+                ];
+                const intro = intros[apCaptionVariantIdx % intros.length];
+                caption = `${intro}\n\n`;
+                if (features) caption += `✔️ ${features}\n`;
+                if (variants) caption += `📐 Variantes / Medidas: ${variants}\n`;
+                if (price) caption += `💰 Precio: ${price}\n`;
+                caption += `\n📦 Envíos en el día en CABA y GBA • Venta por mayor y menor.\n👉 Pedí el tuyo ahora por WhatsApp desde el link en nuestra bio o escribinos por DM.\n\n#BrossLondon #NNN #ModaMasculina #BazarPremium #Tendencia #Mayorista`;
+            }
+
+            const textarea = document.getElementById('ap-input-caption');
+            if (textarea) textarea.value = caption;
+            updateApInstagramPreview();
+        }
+
+        function copyApCaptionToClipboard() {
+            const val = document.getElementById('ap-input-caption')?.value || '';
+            if (!val) return;
+            navigator.clipboard.writeText(val).then(() => {
+                alert('✅ Copy copiado al portapapeles.');
+            });
+        }
+
+        /* DRAG & DROP Y PREVIEW DE ARCHIVOS */
+        function handleApDragOver(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const dz = document.getElementById('ap-dropzone');
+            if (dz) dz.classList.add('border-pink-500', 'bg-pink-950/20');
+        }
+
+        function handleApDragLeave(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const dz = document.getElementById('ap-dropzone');
+            if (dz) dz.classList.remove('border-pink-500', 'bg-pink-950/20');
+        }
+
+        function handleApDrop(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            handleApDragLeave(e);
+            if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                processApFilesList(e.dataTransfer.files);
+            }
+        }
+
+        function handleApFileSelect(e) {
+            if (e.target && e.target.files && e.target.files.length > 0) {
+                processApFilesList(e.target.files);
+            }
+        }
+
+        function processApFilesList(fileList) {
+            const filesArr = Array.from(fileList).slice(0, 10);
+            filesArr.forEach(file => {
+                const extMatch = file.name.match(/\.([^.]+)$/);
+                const ext = extMatch ? extMatch[1].toLowerCase() : (file.type.includes('video') ? 'mp4' : 'jpg');
+                const isVideo = file.type.startsWith('video/') || ['mp4', 'mov'].includes(ext);
+
+                // Si todavía no había seleccionado un producto, intentar detectar el SKU desde el nombre del archivo subido
+                const currentSkuInput = document.getElementById('ap-input-sku');
+                if (currentSkuInput && !currentSkuInput.value.trim()) {
+                    const guessed = extractSkuFromPublishedFilename(file.name, currentApStore);
+                    if (guessed) {
+                        const catalog = apCatalogByStore[currentApStore] || [];
+                        const match = catalog.find(c => c.sku.toUpperCase() === guessed.toUpperCase() || c.sku.toUpperCase().replace(/[^A-Z0-9]/g, '') === guessed.toUpperCase().replace(/[^A-Z0-9]/g, ''));
+                        if (match) {
+                            document.getElementById('ap-product-select').value = match.sku;
+                            onApProductSelectChange(match.sku);
+                        } else {
+                            currentSkuInput.value = guessed;
+                        }
+                    }
+                }
+
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    apSelectedFiles.push({
+                        file,
+                        dataUrl: ev.target.result,
+                        isVideo,
+                        originalName: file.name,
+                        sizeKb: Math.round(file.size / 1024),
+                        ext
+                    });
+                    apCarouselPreviewIdx = 0;
+                    renderApFilesGrid();
+                    updateApGeneratedFilename();
+                    generateApSmartCaption(false);
+                    updateApInstagramPreview();
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function removeApSelectedFile(idx) {
+            apSelectedFiles.splice(idx, 1);
+            if (apCarouselPreviewIdx >= apSelectedFiles.length) {
+                apCarouselPreviewIdx = Math.max(0, apSelectedFiles.length - 1);
+            }
+            renderApFilesGrid();
+            updateApGeneratedFilename();
+            updateApInstagramPreview();
+        }
+
+        function clearApSelectedFiles() {
+            apSelectedFiles = [];
+            apCarouselPreviewIdx = 0;
+            const input = document.getElementById('ap-file-input');
+            if (input) input.value = '';
+            renderApFilesGrid();
+            updateApGeneratedFilename();
+            updateApInstagramPreview();
+        }
+
+        function renderApFilesGrid() {
+            const grid = document.getElementById('ap-files-preview-grid');
+            const btnClear = document.getElementById('btn-ap-clear-files');
+            if (!grid) return;
+
+            if (apSelectedFiles.length === 0) {
+                grid.classList.add('hidden');
+                grid.innerHTML = '';
+                if (btnClear) btnClear.classList.add('hidden');
+                return;
+            }
+
+            grid.classList.remove('hidden');
+            if (btnClear) btnClear.classList.remove('hidden');
+
+            grid.innerHTML = apSelectedFiles.map((f, idx) => {
+                const officialName = buildApOfficialFileName(f.ext, idx, apSelectedFiles.length);
+                return `
+                    <div class="relative group rounded-xl overflow-hidden border border-slate-800 bg-slate-950 p-1.5 flex flex-col justify-between">
+                        <div class="relative aspect-square rounded-lg overflow-hidden bg-slate-900">
+                            ${f.isVideo
+                                ? `<video src="${f.dataUrl}" class="w-full h-full object-cover" muted></video><span class="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-pink-600 text-white text-[9px] font-bold">REEL/VIDEO</span>`
+                                : `<img src="${f.dataUrl}" class="w-full h-full object-cover">`
+                            }
+                            <button type="button" onclick="removeApSelectedFile(${idx})" class="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-rose-600/90 hover:bg-rose-500 text-white text-xs flex items-center justify-center shadow">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                            <span class="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded bg-slate-950/80 text-white font-mono text-[9px] font-bold">
+                                #${idx + 1}
+                            </span>
+                        </div>
+                        <div class="mt-1.5 px-1">
+                            <div class="text-[10px] font-mono text-emerald-400 font-bold truncate" title="${escapeHTML(officialName)}">${escapeHTML(officialName)}</div>
+                            <div class="text-[9px] text-slate-500">${f.sizeKb} KB</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function setApPreviewMode(mode) {
+            apPreviewMode = mode;
+            const btnFeed = document.getElementById('btn-ap-prev-feed');
+            const btnStory = document.getElementById('btn-ap-prev-story');
+            const viewFeed = document.getElementById('ap-ig-mock-feed-view');
+            const viewStory = document.getElementById('ap-ig-mock-story-view');
+
+            if (mode === 'feed') {
+                if (btnFeed) btnFeed.className = "px-2.5 py-1 rounded-lg bg-pink-600 text-white transition";
+                if (btnStory) btnStory.className = "px-2.5 py-1 rounded-lg text-slate-400 hover:text-white transition";
+                if (viewFeed) viewFeed.classList.remove('hidden');
+                if (viewStory) viewStory.classList.add('hidden');
+            } else {
+                if (btnStory) btnStory.className = "px-2.5 py-1 rounded-lg bg-pink-600 text-white transition";
+                if (btnFeed) btnFeed.className = "px-2.5 py-1 rounded-lg text-slate-400 hover:text-white transition";
+                if (viewStory) viewStory.classList.remove('hidden');
+                if (viewFeed) viewFeed.classList.add('hidden');
+            }
+            updateApInstagramPreview();
+        }
+
+        function stepApPreviewCarousel(delta) {
+            if (apSelectedFiles.length <= 1) return;
+            apCarouselPreviewIdx = (apCarouselPreviewIdx + delta + apSelectedFiles.length) % apSelectedFiles.length;
+            updateApInstagramPreview();
+        }
+
+        function updateApInstagramPreview() {
+            const captionVal = document.getElementById('ap-input-caption')?.value || '';
+            const capEl = document.getElementById('ap-ig-caption-text');
+            if (capEl) {
+                capEl.innerText = captionVal || 'Elegí un producto del catálogo para ver cómo redacta la IA el pie de foto con precio y detalles reales...';
+            }
+
+            const emptyEl = document.getElementById('ap-ig-empty-placeholder');
+            const imgEl = document.getElementById('ap-ig-preview-img');
+            const vidEl = document.getElementById('ap-ig-preview-video');
+            const badgeEl = document.getElementById('ap-ig-carousel-badge');
+            const prevBtn = document.getElementById('btn-ap-prev-slide');
+            const nextBtn = document.getElementById('btn-ap-next-slide');
+
+            const storyImg = document.getElementById('ap-ig-story-img');
+            const storyPh = document.getElementById('ap-ig-story-placeholder');
+
+            if (apSelectedFiles.length === 0) {
+                if (emptyEl) emptyEl.classList.remove('hidden');
+                if (imgEl) imgEl.classList.add('hidden');
+                if (vidEl) vidEl.classList.add('hidden');
+                if (badgeEl) badgeEl.classList.add('hidden');
+                if (prevBtn) prevBtn.classList.add('hidden');
+                if (nextBtn) nextBtn.classList.add('hidden');
+                if (storyImg) storyImg.classList.add('hidden');
+                if (storyPh) storyPh.classList.remove('hidden');
+                return;
+            }
+
+            const currentFile = apSelectedFiles[apCarouselPreviewIdx] || apSelectedFiles[0];
+            if (emptyEl) emptyEl.classList.add('hidden');
+
+            if (currentFile.isVideo) {
+                if (imgEl) imgEl.classList.add('hidden');
+                if (vidEl) {
+                    vidEl.src = currentFile.dataUrl;
+                    vidEl.classList.remove('hidden');
+                }
+            } else {
+                if (vidEl) vidEl.classList.add('hidden');
+                if (imgEl) {
+                    imgEl.src = currentFile.dataUrl;
+                    imgEl.classList.remove('hidden');
+                }
+                if (storyImg) {
+                    storyImg.src = currentFile.dataUrl;
+                    storyImg.classList.remove('hidden');
+                }
+                if (storyPh) storyPh.classList.add('hidden');
+            }
+
+            if (apSelectedFiles.length > 1) {
+                if (badgeEl) {
+                    badgeEl.innerText = `${apCarouselPreviewIdx + 1} / ${apSelectedFiles.length}`;
+                    badgeEl.classList.remove('hidden');
+                }
+                if (prevBtn) prevBtn.classList.remove('hidden');
+                if (nextBtn) nextBtn.classList.remove('hidden');
+            } else {
+                if (badgeEl) badgeEl.classList.add('hidden');
+                if (prevBtn) prevBtn.classList.add('hidden');
+                if (nextBtn) nextBtn.classList.add('hidden');
+            }
+        }
+
+        function downloadApRenamedFiles() {
+            if (apSelectedFiles.length === 0) {
+                alert('Subí primero al menos una foto o video para descargarlo con el nombre oficial.');
+                return;
+            }
+            apSelectedFiles.forEach((f, idx) => {
+                const officialName = buildApOfficialFileName(f.ext, idx, apSelectedFiles.length);
+                const a = document.createElement('a');
+                a.href = f.dataUrl;
+                a.download = officialName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            });
+        }
+
+        async function submitAutopublisherJob(publishNow = false) {
+            const sku = (document.getElementById('ap-input-sku')?.value || '').trim();
+            const productName = (document.getElementById('ap-input-product-name')?.value || '').trim();
+            const price = (document.getElementById('ap-input-price')?.value || '').trim();
+            const variants = (document.getElementById('ap-input-variants')?.value || '').trim();
+            const features = (document.getElementById('ap-input-features')?.value || '').trim();
+            const dateVal = document.getElementById('ap-input-date')?.value || new Date().toISOString().slice(0, 10);
+            const target = document.getElementById('ap-input-target')?.value || 'both';
+            const caption = (document.getElementById('ap-input-caption')?.value || '').trim();
+
+            if (!sku) {
+                alert('Por favor elegí un producto del catálogo o ingresá su SKU / Número.');
+                return;
+            }
+            if (apSelectedFiles.length === 0 && apSelectedDriveUrls.length === 0) {
+                alert('Por favor arrastrá al menos una foto o video para publicar.');
+                return;
+            }
+
+            const meta = AP_STORES_META[currentApStore];
+            const banner = document.getElementById('ap-upload-status-banner');
+            const btnSched = document.getElementById('btn-ap-submit-schedule');
+            const btnNow = document.getElementById('btn-ap-submit-now');
+
+            if (btnSched) btnSched.disabled = true;
+            if (btnNow) btnNow.disabled = true;
+
+            if (banner) {
+                banner.className = "p-3.5 rounded-2xl text-xs font-bold bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 flex items-center gap-2";
+                banner.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> <span>Enviando archivos con nombre oficial (${escapeHTML(buildApOfficialFileName())}) a Google Drive vía n8n...</span>`;
+                banner.classList.remove('hidden');
+            }
+
+            // Construir lista de operaciones de subida a Drive (Feed y/o Story)
+            const uploadsPayload = [];
+            apSelectedFiles.forEach((f, idx) => {
+                const base64Clean = f.dataUrl.includes(',') ? f.dataUrl.split(',')[1] : f.dataUrl;
+                const mimeType = f.file.type || (f.isVideo ? 'video/mp4' : 'image/jpeg');
+
+                // Nota importante para Carrusel en NNN:
+                // En Google Drive varios archivos pueden tener el mismo nombre base 'DD-MM SKU.jpg' para que cleanFileName() los agrupe al 100%,
+                // o con sufijo '(1)', '(2)'. Enviamos ambos para máxima compatibilidad.
+                if (target === 'both' || target === 'feed') {
+                    const feedFileName = buildApOfficialFileName(f.ext, idx, apSelectedFiles.length, 'feed');
+                    uploadsPayload.push({
+                        role: 'feed',
+                        folderId: meta.feedFolderId,
+                        folderName: meta.feedFolderName,
+                        fileName: feedFileName,
+                        mimeType,
+                        isVideo: f.isVideo,
+                        base64Data: base64Clean
+                    });
+                }
+
+                // Si eligió Pack Completo (Feed + Story), subimos la primera imagen/video a la carpeta de Stories también
+                if ((target === 'both' && idx === 0) || target === 'story' || target === 'story_09' || target === 'story_20') {
+                    const storyTargetMode = target === 'both' ? 'story' : target;
+                    const storyFileName = buildApOfficialFileName(f.ext, idx, 1, storyTargetMode);
+                    uploadsPayload.push({
+                        role: 'story',
+                        folderId: meta.storyFolderId,
+                        folderName: meta.storyFolderName,
+                        fileName: storyFileName,
+                        mimeType,
+                        isVideo: f.isVideo,
+                        base64Data: base64Clean
+                    });
+                }
+            });
+
+            const newQueueItem = {
+                id: `AP-${Date.now()}`,
+                store: currentApStore,
+                storeTitle: meta.title,
+                sku,
+                productName: productName || sku,
+                price: price || '',
+                variants,
+                features,
+                date: dateVal,
+                target,
+                officialFileName: buildApOfficialFileName(apSelectedFiles[0]?.ext || 'jpg', 0, apSelectedFiles.length),
+                mediaCount: apSelectedFiles.length || apSelectedDriveUrls.length || 1,
+                isVideo: apSelectedFiles[0]?.isVideo || false,
+                thumbnailDataUrl: (!apSelectedFiles[0]?.isVideo && apSelectedFiles[0]?.dataUrl) ? apSelectedFiles[0].dataUrl.slice(0, 180000) : '',
+                caption,
+                status: publishNow ? 'Publicación Inmediata Solicitada' : 'Programado en Cola Drive',
+                createdAt: new Date().toISOString()
+            };
+
+            let webhookOk = false;
+            try {
+                const resp = await fetch(apWebhookUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: publishNow ? 'upload_and_publish_now' : 'upload_to_drive',
+                        publishNow,
+                        store: currentApStore,
+                        storeMeta: meta,
+                        product: {
+                            sku,
+                            name: productName,
+                            price,
+                            variants,
+                            features
+                        },
+                        schedule: {
+                            date: dateVal,
+                            target,
+                            officialFileName: newQueueItem.officialFileName
+                        },
+                        caption,
+                        uploads: uploadsPayload,
+                        catalogDriveUrls: apSelectedDriveUrls
+                    })
+                });
+                if (resp.ok) {
+                    webhookOk = true;
+                    newQueueItem.status = publishNow ? 'Publicado en Instagram OK' : 'En Google Drive (Listo para publicar)';
+                }
+            } catch (err) {
+                console.warn('Webhook n8n pendiente de activar o CORS:', err);
+            }
+
+            // Guardar siempre en la cola sincronizada en la nube (Supabase + LocalStorage)
+            autopublisherQueue.unshift(newQueueItem);
+            localStorage.setItem('croc_autopublisher_queue', JSON.stringify(autopublisherQueue));
+            pushCloudAppState();
+            renderAutopublisherDashboard();
+
+            if (banner) {
+                if (webhookOk) {
+                    banner.className = "p-3.5 rounded-2xl text-xs font-bold bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 flex items-center justify-between gap-2";
+                    banner.innerHTML = `
+                        <span>✅ ¡Subido a Google Drive (${escapeHTML(newQueueItem.officialFileName)}) y programado para el ${escapeHTML(dateVal)}!</span>
+                        <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20">Sync Nube OK</span>
+                    `;
+                } else {
+                    banner.className = "p-3.5 rounded-2xl text-xs font-bold bg-amber-500/15 border border-amber-500/30 text-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2";
+                    banner.innerHTML = `
+                        <div>
+                            <div>📌 Guardado en la Cola del Portal (${escapeHTML(newQueueItem.officialFileName)}).</div>
+                            <div class="text-[11px] font-normal text-slate-300 mt-0.5">El Webhook de n8n no respondió aún: se descargó automáticamente el archivo con el nombre exacto para arrastrar a Drive o importá <span class="font-mono text-amber-300">Autopublicador_Webhook_Portal_PROD.json</span> en n8n.</div>
+                        </div>
+                        <button type="button" onclick="downloadApRenamedFiles()" class="px-3 py-1.5 rounded-lg bg-amber-500 text-slate-950 font-extrabold text-[11px] whitespace-nowrap">
+                            Descargar ${escapeHTML(newQueueItem.officialFileName)}
+                        </button>
+                    `;
+                    downloadApRenamedFiles();
+                }
+            }
+
+            if (btnSched) btnSched.disabled = false;
+            if (btnNow) btnNow.disabled = false;
+        }
+
+        function deleteApQueueItem(id) {
+            if (!confirm('¿Quitar esta publicación programada de la cola del portal?')) return;
+            autopublisherQueue = autopublisherQueue.filter(x => x.id !== id);
+            localStorage.setItem('croc_autopublisher_queue', JSON.stringify(autopublisherQueue));
+            pushCloudAppState();
+            renderAutopublisherDashboard();
+        }
+
+        function preloadApProductFromTable(sku) {
+            const sel = document.getElementById('ap-product-select');
+            if (sel) {
+                sel.value = sku;
+                onApProductSelectChange(sku);
+            }
+            pickNextFreeApDate();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function switchApSubTab(tab) {
+            currentApSubTab = tab;
+            const tabs = ['queue', 'history', 'catalog'];
+            tabs.forEach(t => {
+                const btn = document.getElementById(`btn-aptab-${t}`);
+                const view = document.getElementById(`ap-subview-${t}`);
+                if (btn) {
+                    btn.className = t === tab
+                        ? "px-3.5 py-2 rounded-lg text-xs font-bold bg-pink-600 text-white transition flex items-center gap-1.5 shadow"
+                        : "px-3.5 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5";
+                }
+                if (view) {
+                    if (t === tab) view.classList.remove('hidden');
+                    else view.classList.add('hidden');
+                }
+            });
+            renderAutopublisherDashboard();
+        }
+
+        function renderAutopublisherDashboard() {
+            const catalog = apCatalogByStore[currentApStore] || [];
+            const history = apHistoryByStore[currentApStore] || [];
+            const queue = (autopublisherQueue || []).filter(q => q.store === currentApStore);
+
+            let unpostedCount = 0;
+            catalog.forEach(item => {
+                if (!isApProductAlreadyPublished(item, currentApStore)) unpostedCount++;
+            });
+
+            // Actualizar KPIs
+            const elCatCount = document.getElementById('ap-kpi-catalog-count');
+            const elSchedCount = document.getElementById('ap-kpi-scheduled-count');
+            const elPubCount = document.getElementById('ap-kpi-published-count');
+            const elUnpostedCount = document.getElementById('ap-kpi-unposted-count');
+
+            if (elCatCount) elCatCount.innerText = catalog.length;
+            if (elSchedCount) elSchedCount.innerText = queue.length;
+            if (elPubCount) elPubCount.innerText = history.length;
+            if (elUnpostedCount) elUnpostedCount.innerText = unpostedCount;
+
+            const tQueue = document.getElementById('ap-tab-count-queue');
+            const tHist = document.getElementById('ap-tab-count-history');
+            const tCat = document.getElementById('ap-tab-count-catalog');
+            if (tQueue) tQueue.innerText = queue.length;
+            if (tHist) tHist.innerText = history.length;
+            if (tCat) tCat.innerText = catalog.length;
+
+            // Renderizar Sub-Tab 1: Cola Programada
+            const queueContainer = document.getElementById('ap-queue-list');
+            if (queueContainer) {
+                if (queue.length === 0) {
+                    queueContainer.innerHTML = `
+                        <div class="col-span-full p-8 text-center rounded-2xl border border-dashed border-slate-800 bg-slate-950/50 space-y-2">
+                            <div class="w-12 h-12 rounded-2xl bg-pink-500/10 text-pink-400 flex items-center justify-center mx-auto text-xl">
+                                <i class="fa-regular fa-calendar-plus"></i>
+                            </div>
+                            <div class="text-sm font-bold text-white">No hay publicaciones en la cola de programación</div>
+                            <p class="text-xs text-slate-400 max-w-md mx-auto">
+                                Elegí un artículo arriba, seleccioná la fecha y subí la imagen o video para dejar armada tu grilla de contenidos en Google Drive.
+                            </p>
+                        </div>
+                    `;
+                } else {
+                    queueContainer.innerHTML = queue.map(item => {
+                        const targetLabels = {
+                            both: '🔥 Feed + Story',
+                            feed: '📸 Solo Feed',
+                            story_09: '🌅 Story 09:30 hs',
+                            story_20: '🌙 Story 20:30 hs',
+                            story: '📱 Story'
+                        };
+                        const tBadge = targetLabels[item.target] || '📸 Feed';
+                        return `
+                            <div class="p-4 rounded-2xl bg-slate-950/90 border border-slate-800 hover:border-pink-500/40 transition flex flex-col justify-between gap-3 shadow-lg">
+                                <div class="flex items-start justify-between gap-2">
+                                    <div>
+                                        <div class="flex items-center gap-1.5 flex-wrap">
+                                            <span class="px-2 py-0.5 rounded-md bg-pink-500/20 text-pink-300 border border-pink-500/30 font-mono font-bold text-[11px]">
+                                                📅 ${escapeHTML(item.date)}
+                                            </span>
+                                            <span class="px-2 py-0.5 rounded-md bg-slate-900 text-slate-300 border border-slate-800 font-bold text-[10px]">
+                                                ${tBadge}
+                                            </span>
+                                            ${item.mediaCount > 1 ? `<span class="px-2 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 text-[10px] font-bold">🎠 ${item.mediaCount} fotos</span>` : ''}
+                                        </div>
+                                        <h4 class="font-bold text-white text-sm mt-2">${escapeHTML(item.productName)}</h4>
+                                        <div class="text-xs font-mono text-emerald-400 font-semibold mt-0.5">
+                                            Archivo: ${escapeHTML(item.officialFileName)}
+                                        </div>
+                                    </div>
+                                    <button type="button" onclick="deleteApQueueItem('${escapeHTML(item.id)}')" class="text-slate-500 hover:text-rose-400 p-1 text-xs" title="Eliminar de la cola">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                </div>
+
+                                <div class="text-[11px] text-slate-400 line-clamp-3 bg-slate-900/70 p-2.5 rounded-xl border border-slate-800/80 whitespace-pre-line">
+                                    ${escapeHTML(item.caption || 'Copy generado automáticamente por IA en n8n')}
+                                </div>
+
+                                <div class="flex items-center justify-between pt-2 border-t border-slate-800/80 text-[11px]">
+                                    <span class="text-amber-300 font-bold">${escapeHTML(item.price || '')}</span>
+                                    <span class="text-emerald-400 font-semibold flex items-center gap-1">
+                                        <i class="fa-solid fa-circle-check"></i> ${escapeHTML(item.status)}
+                                    </span>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            }
+
+            // Renderizar Sub-Tab 2: Historial Publicado en Sheets
+            const histBody = document.getElementById('ap-history-table-body');
+            if (histBody) {
+                if (history.length === 0) {
+                    histBody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-slate-500">No se encontraron registros en la hoja de historial.</td></tr>`;
+                } else {
+                    histBody.innerHTML = history.slice(0, 80).map(h => `
+                        <tr class="hover:bg-slate-800/40 transition">
+                            <td class="p-3.5 font-mono text-slate-300 text-[11px]">${escapeHTML(h.dateStr)}</td>
+                            <td class="p-3.5 font-mono font-bold text-white">${escapeHTML(h.fileName)}</td>
+                            <td class="p-3.5">
+                                <span class="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-mono font-bold text-[11px]">
+                                    ${escapeHTML(h.sku)}
+                                </span>
+                            </td>
+                            <td class="p-3.5 font-mono text-slate-400 text-[11px]">${escapeHTML(h.igPostId)}</td>
+                            <td class="p-3.5 font-mono text-slate-400 text-[11px] max-w-[180px] truncate">${escapeHTML(h.igStoryIds)}</td>
+                            <td class="p-3.5 text-right">
+                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                    ✅ ${escapeHTML(h.status)}
+                                </span>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+            }
+
+            // Renderizar Sub-Tab 3: Semáforo de Catálogo
+            const catBody = document.getElementById('ap-catalog-status-table-body');
+            if (catBody) {
+                if (catalog.length === 0) {
+                    catBody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-slate-500">Cargando catálogo en vivo...</td></tr>`;
+                } else {
+                    catBody.innerHTML = catalog.map(item => {
+                        const isPub = isApProductAlreadyPublished(item, currentApStore);
+                        const inQueue = queue.some(q => q.sku.toUpperCase() === item.sku.toUpperCase());
+                        let badgeHtml = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">⏳ Pendiente de Publicar</span>`;
+                        if (isPub) {
+                            badgeHtml = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">✅ Ya Publicado en IG</span>`;
+                        } else if (inQueue) {
+                            badgeHtml = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-pink-500/20 text-pink-300 border border-pink-500/30">📅 En Cola Programada</span>`;
+                        }
+
+                        return `
+                            <tr class="hover:bg-slate-800/40 transition">
+                                <td class="p-3.5 font-mono font-bold text-emerald-400">${escapeHTML(item.sku)}</td>
+                                <td class="p-3.5 font-bold text-white">${escapeHTML(item.name)}</td>
+                                <td class="p-3.5 text-slate-400">${escapeHTML(item.category)}</td>
+                                <td class="p-3.5 font-bold text-amber-300">${escapeHTML(item.price)}</td>
+                                <td class="p-3.5 text-center">${badgeHtml}</td>
+                                <td class="p-3.5 text-right">
+                                    <button type="button" onclick="preloadApProductFromTable('${escapeHTML(item.sku)}')" class="px-3 py-1.5 rounded-xl bg-pink-600/20 hover:bg-pink-600 text-pink-300 hover:text-white border border-pink-500/30 text-[11px] font-bold transition">
+                                        ➕ Programar Post
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
                 }
             }
         }
