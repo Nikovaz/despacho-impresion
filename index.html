@@ -369,7 +369,7 @@
                                 <i class="fa-solid fa-cloud-arrow-down"></i> Precios Sheets en Vivo
                             </span>
                         </div>
-                        <div class="text-xs text-slate-400 mt-0.5">Sincronizado con tus hojas de <b>Precios Bross</b>, <b>Precios JC</b>, <b>Logística</b> y <b>Gasto en Ads</b></div>
+                        <div class="text-xs text-slate-400 mt-0.5">Sincronizado con tus hojas de <b>Precios Bross</b>, <b>Catálogo Bazar NNN</b>, <b>Precios JC</b>, <b>Logística</b> y <b>Gasto en Ads</b></div>
                     </div>
                 </div>
 
@@ -1720,8 +1720,11 @@
         /* (Precios Bross, Precios Jean Cartier, Logística & Ads) */
         /* ====================================================== */
         const MAIN_SPREADSHEET_ID = '13OZcCBHrVufQSB4HcZu1Vgnu6uYAGLFpWrwW-x347aw';
+        const NNN_BAZAR_SPREADSHEET_ID = '1dlWKIScKbKtwNcU0ETTbR06VerGG-OPpAgYQCwRzyMA';
+        const NNN_BAZAR_GID = '1859150881';
 
         let liveBrossCatalog = [];
+        let liveNNNBazarCatalog = [{"sku": "L25919", "nombre": "Set Cuchillos", "precioCosto": 12865, "precioPublico": 22000, "precioOferta": 18000, "categoria": "Cocina"}, {"sku": "L25910", "nombre": "Set Ollas Hierro", "precioCosto": 230485, "precioPublico": 299000, "precioOferta": 300000, "categoria": "Cocina"}, {"sku": "V1301", "nombre": "Abrelatas manual", "precioCosto": 6510, "precioPublico": 12000, "precioOferta": 8000, "categoria": "Cocina"}, {"sku": "MR06", "nombre": "Selladora de Bolsas", "precioCosto": 37355, "precioPublico": 57000, "precioOferta": 44000, "categoria": "Cocina"}, {"sku": "CRG-100", "nombre": "Desmenuzador Pollo", "precioCosto": 7440, "precioPublico": 12500, "precioOferta": 12000, "categoria": "Cocina"}, {"sku": "L25931", "nombre": "Vaso Vidrio Diseño x 6", "precioCosto": 12648, "precioPublico": 22500, "precioOferta": 26000, "categoria": "Cocina"}, {"sku": "L2571", "nombre": "Jarra con 4 vasos", "precioCosto": 14260, "precioPublico": 26600, "precioOferta": 30000, "categoria": "Cocina"}, {"sku": "S2577", "nombre": "Tupper Vidrio 12pcs", "precioCosto": 49600, "precioPublico": 75000, "precioOferta": 0, "categoria": "Cocina"}, {"sku": "L2610", "nombre": "Tupper Tapa Bambú", "precioCosto": 34100, "precioPublico": 49900, "precioOferta": 0, "categoria": "Cocina"}, {"sku": "CRG-3530", "nombre": "Recipientes Vidrio con tapa. 5pcs", "precioCosto": 35650, "precioPublico": 56600, "precioOferta": 56000, "categoria": "Cocina"}, {"sku": "CRG-3528", "nombre": "Recipientes Acero Inoxidable con Accesorios 3pcs", "precioCosto": 47895, "precioPublico": 72999, "precioOferta": 0, "categoria": "Cocina"}, {"sku": "V727", "nombre": "Organizadores heladera. 10pcs", "precioCosto": 33170, "precioPublico": 50000, "precioOferta": 0, "categoria": "Organización"}, {"sku": "CRG-3552", "nombre": "Huevera 15 huevos con tapa", "precioCosto": 8990, "precioPublico": 16660, "precioOferta": 0, "categoria": "Cocina"}, {"sku": "CRG-3525", "nombre": "Organizador/Escurridor Cuchillos", "precioCosto": 17050, "precioPublico": 26999, "precioOferta": 0, "categoria": "Cocina"}, {"sku": "CRG-3515", "nombre": "Organizador Blanco Largo", "precioCosto": 21700, "precioPublico": 36999, "precioOferta": 0, "categoria": "Organización"}, {"sku": "CRG-3529", "nombre": "Especiero Madera", "precioCosto": 41385, "precioPublico": 63999, "precioOferta": 0, "categoria": "Cocina"}, {"sku": "V1347", "nombre": "Set repisas baño", "precioCosto": 9145, "precioPublico": 15999, "precioOferta": 0, "categoria": "Baño"}, {"sku": "U2575", "nombre": "Toallero rebatible", "precioCosto": 11625, "precioPublico": 19999, "precioOferta": 0, "categoria": "Baño"}, {"sku": "CRG-004", "nombre": "Toallero Doble Nivel", "precioCosto": 38750, "precioPublico": 59999, "precioOferta": 0, "categoria": "Baño"}, {"sku": "CRG-037", "nombre": "Kit 3 estantes madera flotante", "precioCosto": 27280, "precioPublico": 43999, "precioOferta": 0, "categoria": "Organización"}, {"sku": "Q25720", "nombre": "Guante de trabajo x 12", "precioCosto": 13950, "precioPublico": 28999, "precioOferta": 0, "categoria": "Herramientas"}, {"sku": "A25710", "nombre": "Juego de trinquete 12pcs", "precioCosto": 12710, "precioPublico": 22999, "precioOferta": 0, "categoria": "Herramientas"}, {"sku": "CRG-2006", "nombre": "Cinta de Amarre Traka Traka 9mts x 2", "precioCosto": 21700, "precioPublico": 33999, "precioOferta": 0, "categoria": "Herramientas"}, {"sku": "RB0035", "nombre": "Pulverizador espuma 2lts", "precioCosto": 8835, "precioPublico": 18999, "precioOferta": 0, "categoria": "Herramientas"}, {"sku": "CRG-3563", "nombre": "Guante moteado x 12", "precioCosto": 6138, "precioPublico": 16999, "precioOferta": 0, "categoria": "Herramientas"}, {"sku": "V205", "nombre": "Compresor de aire portátil", "precioCosto": 44950, "precioPublico": 68999, "precioOferta": 0, "categoria": "Herramientas"}, {"sku": "CRG-035", "nombre": "Organizador ollas Vertical", "precioCosto": 20150, "precioPublico": 31999, "precioOferta": 0, "categoria": "Organización"}, {"sku": "L2613", "nombre": "Bolsa de comprensión a vacío", "precioCosto": 9145, "precioPublico": 16999, "precioOferta": 0, "categoria": "Organización"}, {"sku": "CRG-034", "nombre": "Organizador ollas Horizontal", "precioCosto": 11160, "precioPublico": 19999, "precioOferta": 0, "categoria": "Organización"}, {"sku": "L2614", "nombre": "Cesto Ropa Plegable x 2", "precioCosto": 9300, "precioPublico": 16999, "precioOferta": 0, "categoria": "Organización"}, {"sku": "CRG-103", "nombre": "Organizador Pared rebatible", "precioCosto": 68045, "precioPublico": 99000, "precioOferta": 0, "categoria": "Organización"}, {"sku": "CRG-104", "nombre": "Gabinete Organizador Cocina", "precioCosto": 55800, "precioPublico": 81999, "precioOferta": 0, "categoria": "Organización"}, {"sku": "MA095", "nombre": "Camara deportiva", "precioCosto": 46500, "precioPublico": 71999, "precioOferta": 0, "categoria": "Camping/Aire Libre"}, {"sku": "MR4458", "nombre": "Hidrolavadora con doble bateria", "precioCosto": 38905, "precioPublico": 66999, "precioOferta": 0, "categoria": "Herramientas"}, {"sku": "TSV504", "nombre": "Set Coctelería", "precioCosto": 31000, "precioPublico": 49999, "precioOferta": 0, "categoria": "Cocina"}, {"sku": "V124", "nombre": "Set Coctelería", "precioCosto": 20615, "precioPublico": 33999, "precioOferta": 0, "categoria": "Cocina"}, {"sku": "MR1759", "nombre": "Set X5 estantes ducha", "precioCosto": 20615, "precioPublico": 33999, "precioOferta": 0, "categoria": "Baño"}, {"sku": "G2336", "nombre": "Repisa colgante baño", "precioCosto": 17670, "precioPublico": 29999, "precioOferta": 0, "categoria": "Baño"}, {"sku": "CRG-007", "nombre": "Alfombra antideslizante", "precioCosto": 4650, "precioPublico": 9999, "precioOferta": 0, "categoria": "Baño"}, {"sku": "CRG-113", "nombre": "Set 4 cajones apilables", "precioCosto": 34720, "precioPublico": 53999, "precioOferta": 0, "categoria": "Organización"}, {"sku": "NVT-054", "nombre": "Box Organizador Zapatos x 12", "precioCosto": 44640, "precioPublico": 66999, "precioOferta": 0, "categoria": "Organización"}, {"sku": "Q25718", "nombre": "Pinza Crimpeadora + 1200 terminales", "precioCosto": 21390, "precioPublico": 33999, "precioOferta": 0, "categoria": "Herramientas"}, {"sku": "CRG-511", "nombre": "Selladora Inalambrica", "precioCosto": 23250, "precioPublico": 36999, "precioOferta": 0, "categoria": "Cocina"}, {"sku": "CRG-017", "nombre": "Silla doble para camping", "precioCosto": 65100, "precioPublico": 97999, "precioOferta": 0, "categoria": "Camping/Aire Libre"}, {"sku": "Linterna bici", "nombre": "Linterna bici x 2", "precioCosto": 10230, "precioPublico": 19999, "precioOferta": 0, "categoria": "Camping/Aire Libre"}, {"sku": "Tender invisible", "nombre": "Tender invisible", "precioCosto": 32550, "precioPublico": 52999, "precioOferta": 0, "categoria": "Organización"}, {"sku": "CRG-510", "nombre": "Masajeador", "precioCosto": 48050, "precioPublico": 69999, "precioOferta": 0, "categoria": "Cuidado Personal"}, {"sku": "L25924", "nombre": "Termo infusor doble vidrio", "precioCosto": 27900, "precioPublico": 44999, "precioOferta": 0, "categoria": "Cocina"}, {"sku": "1194", "nombre": "Carro plegable", "precioCosto": 46190, "precioPublico": 69999, "precioOferta": 0, "categoria": "Herramientas"}];
         let liveJeanCartierCatalog = [];
         let liveLogisticsCatalog = [];
         let liveAdsExpenses = [];
@@ -1784,6 +1787,35 @@
                     console.log('✅ Loaded Live Logistica from Sheets:', liveLogisticsCatalog.length, 'zones');
                     if (dispatchOrders.length > 0) renderDispatchDashboard();
                 }).catch(e => console.warn('Logistica offline fallback:', e));
+
+                // 2.5 Fetch Catálogo Bazar NNN Live from Google Sheets
+                const nnnBazarUrl = `https://docs.google.com/spreadsheets/d/${NNN_BAZAR_SPREADSHEET_ID}/gviz/tq?tqx=out:json&gid=${NNN_BAZAR_GID}`;
+                fetch(nnnBazarUrl).then(r => r.text()).then(txt => {
+                    const data = JSON.parse(txt.substring(txt.indexOf('{'), txt.lastIndexOf('}') + 1));
+                    const rows = data.table.rows || [];
+                    const parsedBazar = [];
+                    for (let i = 2; i < rows.length; i++) {
+                        const r = rows[i];
+                        if (!r || !r.c || !r.c[0] || !r.c[0].v) continue;
+                        const sku = String(r.c[0].v || '').trim();
+                        const nombre = String((r.c[1] && r.c[1].v) || '').trim();
+                        if (!sku || !nombre) continue;
+                        const precioCosto = Math.round(parseFloat((r.c[6] && r.c[6].v) || 0));
+                        const precioPublico = Math.round(parseFloat((r.c[7] && r.c[7].v) || 0));
+                        const precioOferta = Math.round(parseFloat((r.c[9] && r.c[9].v) || 0));
+                        const categoria = String((r.c[12] && r.c[12].v) || '').trim();
+                        if (precioCosto > 0) {
+                            parsedBazar.push({ sku, nombre, precioCosto, precioPublico, precioOferta, categoria });
+                            KNOWN_CATALOG_SKUS[sku.toUpperCase()] = nombre;
+                        }
+                    }
+                    if (parsedBazar.length > 0) {
+                        liveNNNBazarCatalog = parsedBazar;
+                        console.log('✅ Loaded Live Catálogo Bazar NNN from Sheets:', liveNNNBazarCatalog.length, 'items');
+                        populateQuickCatalogSelectors();
+                        if (dispatchOrders.length > 0) renderDispatchDashboard();
+                    }
+                }).catch(e => console.warn('Catálogo Bazar NNN offline fallback:', e));
 
                 // 3. Fetch Gastos Ads Live from Google Sheets
                 const adsUrl = `https://docs.google.com/spreadsheets/d/${MAIN_SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=Gastos%20Ads`;
@@ -1955,6 +1987,82 @@
             return res;
         }
 
+        function normalizeBazarStr(s) {
+            return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\s-]/g, ' ');
+        }
+
+        function matchNNNBazarItem(itemStr) {
+            if (!itemStr || !liveNNNBazarCatalog || liveNNNBazarCatalog.length === 0) return null;
+            const itNorm = normalizeBazarStr(itemStr);
+            if (/\b(boxer|bross|media|medias|pijama|remera|chomba)\b/.test(itNorm)) {
+                return null;
+            }
+            // 1. Exact SKU match
+            for (const b of liveNNNBazarCatalog) {
+                const skuNorm = normalizeBazarStr(b.sku).trim();
+                if (!skuNorm) continue;
+                const escapedSku = skuNorm.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+                if (new RegExp('\\b' + escapedSku + '\\b', 'i').test(itNorm)) {
+                    return b;
+                }
+            }
+            // 2. Best Name Token match
+            let bestItem = null;
+            let bestScore = 0;
+            const stopWords = new Set(['de', 'con', 'para', 'por', 'en', 'el', 'la', 'los', 'las', 'x', 'set', 'kit', 'pcs', 'x2', 'x6', 'x12', '2', '3', '4', '5', '6', '10', '12', '15', '2lts', '9mts']);
+            for (const b of liveNNNBazarCatalog) {
+                const nameTokens = normalizeBazarStr(b.nombre).split(/\s+/).filter(t => t.length >= 3 && !stopWords.has(t));
+                if (nameTokens.length === 0) continue;
+                let matched = 0;
+                for (const t of nameTokens) {
+                    if (itNorm.includes(t)) matched++;
+                }
+                if (matched === nameTokens.length && matched >= 1) {
+                    const score = matched * 10 + b.nombre.length;
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestItem = b;
+                    }
+                } else if (matched >= 2 && (matched / nameTokens.length) >= 0.66) {
+                    const score = matched * 5;
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestItem = b;
+                    }
+                }
+            }
+            return bestItem;
+        }
+
+        function extractBazarOrderMultiplier(it, bazarItem) {
+            let s = String(it || '');
+            // Remove the product's built-in pack size if present in its name (e.g. "x 6", "x 12", "x 2") so only the order multiplier remains
+            if (bazarItem && bazarItem.nombre) {
+                const packMatch = bazarItem.nombre.match(/\bx\s*(\d+)\b/i);
+                if (packMatch) {
+                    const packNum = packMatch[1];
+                    s = s.replace(new RegExp('\\bx\\s*' + packNum + '\\b', 'i'), '');
+                }
+            }
+            // Check trailing x N
+            const allX = [...s.matchAll(/\bx\s*(\d+)\b/gi)];
+            if (allX.length > 0) {
+                const lastQ = parseInt(allX[allX.length - 1][1], 10);
+                if (lastQ > 0 && lastQ < 100) return lastQ;
+            }
+            const leadX = s.match(/^\s*(\d+)\s*x\b/i);
+            if (leadX) {
+                const q = parseInt(leadX[1], 10);
+                if (q > 0 && q < 100) return q;
+            }
+            const mUnits = s.match(/\b(\d+)\s*(?:unidades?|unidad|u)\b/i);
+            if (mUnits) {
+                const q = parseInt(mUnits[1], 10);
+                if (q > 0 && q < 100) return q;
+            }
+            return 1;
+        }
+
         function calculateBrossCostWithTable(text, subtotal, costs) {
             if (!text) {
                 const numItems = Math.max(1, Math.round(subtotal / 9500));
@@ -1965,6 +2073,13 @@
             let totalCost = 0;
 
             for (const it of items) {
+                const bazarMatch = matchNNNBazarItem(it);
+                if (bazarMatch) {
+                    const bQty = extractBazarOrderMultiplier(it, bazarMatch);
+                    totalCost += (bQty * bazarMatch.precioCosto);
+                    continue;
+                }
+
                 if (/entregar|horario|antes de|nota|hs\b/i.test(it) && !/b[oó]xer|boxer|media|remera|pijama|pack/i.test(it)) {
                     continue;
                 }
@@ -3649,6 +3764,7 @@
         let editedOrders = JSON.parse(localStorage.getItem('croc_edited_orders') || '{}');
 
         function openEditOrderModal(orderId) {
+            populateQuickCatalogSelectors();
             const order = dispatchOrders.find(o => o.id === orderId);
             if (!order) {
                 alert('Pedido no encontrado.');
@@ -3916,7 +4032,66 @@
         let deletedOrderIds = JSON.parse(localStorage.getItem('croc_deleted_orders') || '[]');
         let showDeletedOrders = false;
 
+                function populateQuickCatalogSelectors() {
+            const selects = [document.getElementById('mo-quick-bazar-select'), document.getElementById('eo-quick-bazar-select')];
+            selects.forEach(sel => {
+                if (!sel) return;
+                const currentVal = sel.value;
+                let html = '<option value="">⚡ + Agregar producto del Catálogo NNN Bazar (49 artículos en vivo)...</option>';
+                const byCat = {};
+                (liveNNNBazarCatalog || []).forEach((item, idx) => {
+                    const cat = item.categoria || 'General';
+                    if (!byCat[cat]) byCat[cat] = [];
+                    byCat[cat].push({ ...item, idx });
+                });
+                Object.keys(byCat).forEach(cat => {
+                    html += `<optgroup label="📦 ${cat}">`;
+                    byCat[cat].forEach(item => {
+                        const effectivePrice = (item.precioOferta > 0 && item.precioOferta < item.precioPublico) ? item.precioOferta : item.precioPublico;
+                        const ofertaTag = (item.precioOferta > 0 && item.precioOferta < item.precioPublico) ? ` [OFERTA $${item.precioOferta.toLocaleString('es-AR')}]` : '';
+                        html += `<option value="${item.idx}">${item.sku} - ${item.nombre} — Venta: $${effectivePrice.toLocaleString('es-AR')}${ofertaTag} (Costo: $${item.precioCosto.toLocaleString('es-AR')})</option>`;
+                    });
+                    html += `</optgroup>`;
+                });
+                sel.innerHTML = html;
+                sel.value = currentVal || '';
+            });
+        }
+
+        function insertQuickCatalogProduct(prefix) {
+            const sel = document.getElementById(`${prefix}-quick-bazar-select`);
+            const qtyInput = document.getElementById(`${prefix}-quick-bazar-qty`);
+            const textarea = document.getElementById(`${prefix}-products`);
+            const subInput = document.getElementById(`${prefix}-subtotal`);
+            const totInput = document.getElementById(`${prefix}-total`);
+            const shipInput = document.getElementById(`${prefix}-shipping`);
+
+            if (!sel || sel.value === '') return;
+            const item = liveNNNBazarCatalog[parseInt(sel.value, 10)];
+            if (!item) return;
+
+            const qty = Math.max(1, parseInt(qtyInput ? qtyInput.value : '1', 10) || 1);
+            const unitPrice = (item.precioOferta > 0 && item.precioOferta < item.precioPublico) ? item.precioOferta : item.precioPublico;
+            const lineTotal = unitPrice * qty;
+
+            const lineStr = `${item.nombre} (${item.sku}) x ${qty}`;
+            const currentText = textarea.value.trim();
+            textarea.value = currentText ? `${currentText}\n${lineStr}` : lineStr;
+
+            // Update subtotal & total automatically
+            const currentSub = parseMonto(subInput ? subInput.value : '0');
+            const newSub = currentSub + lineTotal;
+            if (subInput) subInput.value = `$${newSub.toLocaleString('es-AR')}`;
+
+            const shipCost = parseMonto(shipInput ? shipInput.value : '0');
+            if (totInput) totInput.value = `$${(newSub + shipCost).toLocaleString('es-AR')}`;
+
+            sel.value = '';
+            if (qtyInput) qtyInput.value = '1';
+        }
+
         function openManualOrderModal() {
+            populateQuickCatalogSelectors();
             document.getElementById('form-manual-order').reset();
             document.getElementById('mo-store').value = currentDispatchStore || 'nnn';
             document.getElementById('modal-manual-order').classList.remove('hidden');
@@ -4069,6 +4244,55 @@
         /* ROBUST PRODUCT CANONICAL NORMALIZATION & QUANTITY      */
         /* ====================================================== */
         const KNOWN_CATALOG_SKUS = {
+            "L25919": "Set Cuchillos",
+            "L25910": "Set Ollas Hierro",
+            "V1301": "Abrelatas manual",
+            "MR06": "Selladora de Bolsas",
+            "CRG-100": "Desmenuzador Pollo",
+            "L25931": "Vaso Vidrio Diseño x 6",
+            "L2571": "Jarra con 4 vasos",
+            "S2577": "Tupper Vidrio 12pcs",
+            "L2610": "Tupper Tapa Bambú",
+            "CRG-3530": "Recipientes Vidrio con tapa. 5pcs",
+            "CRG-3528": "Recipientes Acero Inoxidable con Accesorios 3pcs",
+            "V727": "Organizadores heladera. 10pcs",
+            "CRG-3552": "Huevera 15 huevos con tapa",
+            "CRG-3525": "Organizador/Escurridor Cuchillos",
+            "CRG-3515": "Organizador Blanco Largo",
+            "CRG-3529": "Especiero Madera",
+            "V1347": "Set repisas baño",
+            "U2575": "Toallero rebatible",
+            "CRG-004": "Toallero Doble Nivel",
+            "CRG-037": "Kit 3 estantes madera flotante",
+            "Q25720": "Guante de trabajo x 12",
+            "A25710": "Juego de trinquete 12pcs",
+            "CRG-2006": "Cinta de Amarre Traka Traka 9mts x 2",
+            "RB0035": "Pulverizador espuma 2lts",
+            "CRG-3563": "Guante moteado x 12",
+            "V205": "Compresor de aire portátil",
+            "CRG-035": "Organizador ollas Vertical",
+            "L2613": "Bolsa de comprensión a vacío",
+            "CRG-034": "Organizador ollas Horizontal",
+            "L2614": "Cesto Ropa Plegable x 2",
+            "CRG-103": "Organizador Pared rebatible",
+            "CRG-104": "Gabinete Organizador Cocina",
+            "MA095": "Camara deportiva",
+            "MR4458": "Hidrolavadora con doble bateria",
+            "TSV504": "Set Coctelería",
+            "V124": "Set Coctelería",
+            "MR1759": "Set X5 estantes ducha",
+            "G2336": "Repisa colgante baño",
+            "CRG-007": "Alfombra antideslizante",
+            "CRG-113": "Set 4 cajones apilables",
+            "NVT-054": "Box Organizador Zapatos x 12",
+            "Q25718": "Pinza Crimpeadora + 1200 terminales",
+            "CRG-511": "Selladora Inalambrica",
+            "CRG-017": "Silla doble para camping",
+            "LINTERNA BICI": "Linterna bici x 2",
+            "TENDER INVISIBLE": "Tender invisible",
+            "CRG-510": "Masajeador",
+            "L25924": "Termo infusor doble vidrio",
+            "1194": "Carro plegable",
             'TX-V226': 'Termo 1L Media Manija c/Bombilla',
             'DH-B36': 'Termo 1L Media Manija',
             'GL199-3': 'Marcadores Touch x 168',
@@ -7384,7 +7608,15 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-300 mb-1.5">Detalle de Productos *</label>
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-1.5">
+                        <label class="block text-xs font-semibold text-slate-300">Detalle de Productos *</label>
+                        <div class="flex items-center gap-1.5">
+                            <select id="mo-quick-bazar-select" onchange="insertQuickCatalogProduct('mo')" class="bg-slate-900 text-emerald-300 text-[11px] font-medium rounded-lg px-2.5 py-1.5 border border-emerald-500/40 focus:outline-none focus:border-emerald-400 max-w-[260px] sm:max-w-[320px] truncate cursor-pointer">
+                                <option value="">⚡ + Catálogo NNN Bazar...</option>
+                            </select>
+                            <input type="number" id="mo-quick-bazar-qty" value="1" min="1" max="50" title="Cantidad a agregar" class="w-12 bg-slate-900 text-white text-center text-xs font-bold rounded-lg py-1.5 border border-slate-700 focus:outline-none focus:border-emerald-400">
+                        </div>
+                    </div>
                     <textarea id="mo-products" rows="3" placeholder="Ej: Set de cubiertos 26 piezas en pote (GL81130-1) - Azul x 1&#10;Termo 1L media manija (DH-B36) - Negro x 1" class="w-full bg-slate-950 text-white text-xs rounded-xl p-3 border border-slate-800 focus:outline-none focus:border-indigo-500 font-mono" required></textarea>
                 </div>
 
@@ -7501,7 +7733,15 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-300 mb-1.5">Detalle de Productos * <span class="text-slate-500 font-normal">(un producto por renglón)</span></label>
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-1.5">
+                        <label class="block text-xs font-semibold text-slate-300">Detalle de Productos * <span class="text-slate-500 font-normal">(un producto por renglón)</span></label>
+                        <div class="flex items-center gap-1.5">
+                            <select id="eo-quick-bazar-select" onchange="insertQuickCatalogProduct('eo')" class="bg-slate-900 text-amber-300 text-[11px] font-medium rounded-lg px-2.5 py-1.5 border border-amber-500/40 focus:outline-none focus:border-amber-400 max-w-[260px] sm:max-w-[320px] truncate cursor-pointer">
+                                <option value="">⚡ + Catálogo NNN Bazar...</option>
+                            </select>
+                            <input type="number" id="eo-quick-bazar-qty" value="1" min="1" max="50" title="Cantidad a agregar" class="w-12 bg-slate-900 text-white text-center text-xs font-bold rounded-lg py-1.5 border border-slate-700 focus:outline-none focus:border-amber-400">
+                        </div>
+                    </div>
                     <textarea id="eo-products" rows="4" class="w-full bg-slate-950 text-white text-xs rounded-xl p-3 border border-slate-800 focus:outline-none focus:border-amber-500 font-mono" required></textarea>
                 </div>
 
