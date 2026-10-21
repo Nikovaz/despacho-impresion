@@ -2709,15 +2709,15 @@
                 <i data-lucide="plus" class="w-3.5 h-3.5"></i> Agregar Artículo con Foto
               </button>
             </div>
-            <div class="overflow-x-auto">
-              <table class="w-full border-collapse select-none" style="font-family: Arial, 'Inter', sans-serif;">
+            <div class="w-full overflow-hidden">
+              <table class="w-full table-fixed border-collapse select-none text-xs" style="font-family: Arial, 'Inter', sans-serif;">
                 <thead>
-                  <tr class="bg-[#222b35] text-white text-xs sm:text-sm font-black uppercase tracking-wider">
-                    <th class="py-2.5 px-3 border border-black text-center w-36">ART / CÓDIGO</th>
-                    <th class="py-2.5 px-4 border border-black text-left">ARTÍCULO / DESCRIPCIÓN</th>
-                    <th class="py-2.5 px-3 border border-black text-center w-40">CATEGORÍA</th>
-                    <th class="py-2.5 px-3 border border-black text-center w-44 bg-white text-[#ff0000]">STOCK (UNIDADES)</th>
-                    <th class="py-2.5 px-2 border border-black text-center w-24">ACCIONES</th>
+                  <tr class="bg-[#222b35] text-white text-xs font-black uppercase tracking-wider h-9">
+                    <th style="width: 15%;" class="py-1 px-2 border border-black text-center">ART</th>
+                    <th style="width: 50%;" class="py-1 px-3 border border-black text-left">ARTÍCULO / DESCRIPCIÓN</th>
+                    <th style="width: 15%;" class="py-1 px-2 border border-black text-center">CATEGORÍA</th>
+                    <th style="width: 12%;" class="py-1 px-2 border border-black text-center bg-white text-[#ff0000]">STOCK</th>
+                    <th style="width: 8%;" class="py-1 px-1 border border-black text-center">ACCIONES</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -2816,42 +2816,42 @@
             </div>
           </div>
 
-          <div class="overflow-x-auto w-full">
-            <table class="w-full border-collapse select-none text-xs" style="font-family: Arial, 'Inter', sans-serif;">
+          <div class="w-full overflow-hidden">
+            <table class="w-full table-fixed border-collapse select-none text-xs" style="font-family: Arial, 'Inter', sans-serif;">
               <thead>
                 <tr class="bg-[#222b35] text-white text-xs font-black uppercase tracking-wider h-9">
-                  <th class="py-1.5 px-1.5 border border-black text-center w-[76px] sm:w-[86px]">ART</th>
-                  <th class="py-1.5 px-2.5 border border-black text-left">DESCRIPCIÓN / MODELO</th>
-                  <th class="py-1.5 px-0.5 border border-black text-center w-[54px] sm:w-[68px]">S</th>
-                  <th class="py-1.5 px-0.5 border border-black text-center w-[54px] sm:w-[68px]">M</th>
-                  <th class="py-1.5 px-0.5 border border-black text-center w-[54px] sm:w-[68px]">L</th>
-                  <th class="py-1.5 px-0.5 border border-black text-center w-[54px] sm:w-[68px]">XL</th>
-                  <th class="py-1.5 px-0.5 border border-black text-center w-[54px] sm:w-[68px]">XXL</th>
-                  <th class="py-1.5 px-0.5 border border-black text-center w-[54px] sm:w-[68px] bg-[#1b2432] text-amber-300">3XL</th>
-                  <th class="py-1.5 px-0.5 border border-black text-center w-[54px] sm:w-[68px] bg-[#1b2432] text-amber-300">4XL</th>
-                  <th class="py-1.5 px-1 border border-black text-center w-[50px] sm:w-[64px] bg-white text-[#ff0000]">TOTAL</th>
-                  <th class="py-1.5 px-1 border border-black text-center w-[100px] sm:w-[115px]">ACCIÓN</th>
+                  <th style="width: 7.5%;" class="py-1 px-1 border border-black text-center truncate">ART</th>
+                  <th style="width: 33.5%;" class="py-1 px-2 border border-black text-left truncate">DESCRIPCIÓN / MODELO</th>
+                  <th style="width: 7%;" class="py-1 px-0.5 border border-black text-center">S</th>
+                  <th style="width: 7%;" class="py-1 px-0.5 border border-black text-center">M</th>
+                  <th style="width: 7%;" class="py-1 px-0.5 border border-black text-center">L</th>
+                  <th style="width: 7%;" class="py-1 px-0.5 border border-black text-center">XL</th>
+                  <th style="width: 7%;" class="py-1 px-0.5 border border-black text-center">XXL</th>
+                  <th style="width: 7%;" class="py-1 px-0.5 border border-black text-center bg-[#1b2432] text-amber-300">3XL</th>
+                  <th style="width: 7%;" class="py-1 px-0.5 border border-black text-center bg-[#1b2432] text-amber-300">4XL</th>
+                  <th style="width: 5%;" class="py-1 px-0.5 border border-black text-center bg-white text-[#ff0000]">TOT</th>
+                  <th style="width: 8%;" class="py-1 px-0.5 border border-black text-center">ACCIÓN</th>
                 </tr>
               </thead>
               <tbody>
                 <!-- Fila rápida para agregar nuevo artículo directo en la planilla Excel -->
                 <tr class="bg-slate-900 border-b-2 border-emerald-500/60 text-xs h-9">
                   <td class="p-0.5 border border-black">
-                    <input id="newRowBoxer_art" type="text" placeholder="+ ART" class="w-full bg-slate-950 text-white px-1 py-1 rounded border border-slate-700 font-mono text-xs text-center h-7" />
+                    <input id="newRowBoxer_art" type="text" placeholder="+ ART" class="w-full bg-slate-950 text-white px-1 py-0.5 rounded border border-slate-700 font-mono text-[11px] text-center h-7" />
                   </td>
                   <td class="p-0.5 border border-black">
-                    <input id="newRowBoxer_desc" type="text" placeholder="Nuevo modelo / color y Enter..." class="w-full bg-slate-950 text-white px-2 py-1 rounded border border-slate-700 text-xs font-bold uppercase h-7"
+                    <input id="newRowBoxer_desc" type="text" placeholder="Nuevo modelo / color y Enter..." class="w-full bg-slate-950 text-white px-2 py-0.5 rounded border border-slate-700 text-xs font-bold uppercase h-7 truncate"
                       onkeydown="if(event.key==='Enter') quickAddBoxerRow()" />
                   </td>
                   ${ALL_TALLES.map((t) => `
                     <td class="p-0.5 border border-black">
-                      <input id="newRowBoxer_${t}" type="number" min="0" placeholder="0" class="w-full bg-slate-950 text-emerald-400 font-bold text-center py-1 rounded border border-slate-700 text-xs h-7"
+                      <input id="newRowBoxer_${t}" type="number" min="0" placeholder="0" class="w-full bg-slate-950 text-emerald-400 font-bold text-center py-0.5 rounded border border-slate-700 text-xs h-7"
                         onkeydown="if(event.key==='Enter') quickAddBoxerRow()" />
                     </td>
                   `).join('')}
-                  <td class="p-0.5 border border-black text-center text-[10px] text-emerald-400 font-bold">NUEVA</td>
+                  <td class="p-0.5 border border-black text-center text-[9px] text-emerald-400 font-bold">NUEVA</td>
                   <td class="p-0.5 border border-black text-center">
-                    <button onclick="quickAddBoxerRow()" class="w-full py-1 rounded bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs h-7" title="Agregar esta fila">
+                    <button onclick="quickAddBoxerRow()" class="w-full py-0.5 rounded bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-[11px] h-7" title="Agregar esta fila">
                       + Crear
                     </button>
                   </td>
@@ -2863,12 +2863,12 @@
                   const fullName = p.descripcion || `${p.modelo} ${p.color}`;
 
                   return `
-                    <tr class="h-9 sm:h-10 leading-none">
-                      <td class="${rowBgClass} border border-black px-1 text-center font-mono font-bold text-xs whitespace-nowrap overflow-hidden cursor-pointer hover:brightness-95"
+                    <tr class="h-9 leading-none">
+                      <td class="${rowBgClass} border border-black px-1 text-center font-mono font-bold text-[11px] sm:text-xs whitespace-nowrap overflow-hidden cursor-pointer hover:brightness-95"
                           onclick="openEditBrossModal('${p.id}')" title="ART ${p.codigo_base || p.art} - Clic para ver ficha">
                         ${p.codigo_base || p.art}
                       </td>
-                      <td class="${rowBgClass} border border-black px-2.5 text-left font-bold uppercase text-xs sm:text-sm whitespace-nowrap truncate cursor-pointer hover:brightness-95"
+                      <td class="${rowBgClass} border border-black px-2 text-left font-bold uppercase text-[11px] sm:text-xs whitespace-nowrap truncate cursor-pointer hover:brightness-95"
                           onclick="openEditBrossModal('${p.id}')" title="${fullName}">
                         ${fullName}
                       </td>
@@ -2876,12 +2876,12 @@
                         const qty = Number(p[`stock_${t}`] || 0);
                         const st = getExcelCellStyles(qty);
                         return `
-                          <td class="${st.td} p-0 text-center align-middle h-9">
-                            <div class="h-full flex items-center justify-between px-0.5 sm:px-1">
+                          <td class="${st.td} p-0 text-center align-middle h-9 overflow-hidden">
+                            <div class="h-full w-full flex items-center justify-between px-0.5">
                               <button type="button" tabindex="-1"
                                 onclick="adjustBrossStock('${p.id}', '${t}', -1)"
                                 title="Descontar 1 (-1)"
-                                class="w-3.5 sm:w-4.5 h-6 rounded text-[11px] sm:text-xs font-black flex items-center justify-center transition-colors ${st.btn}">
+                                class="w-3.5 h-6 rounded text-[10px] font-black flex items-center justify-center transition-colors shrink-0 ${st.btn}">
                                 -
                               </button>
                               <input
@@ -2892,26 +2892,25 @@
                                 onfocus="this.select()"
                                 onchange="handleExcelCellChange('${p.id}', '${t}', this.value)"
                                 onkeydown="handleExcelKeyNav(event, ${rIdx}, ${cIdx})"
-                                class="w-6 sm:w-8 text-center text-xs sm:text-sm font-black focus:outline-none focus:ring-1 focus:ring-cyan-400 rounded ${st.input} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none h-7"
+                                class="w-full text-center text-xs font-black focus:outline-none focus:ring-1 focus:ring-cyan-400 rounded ${st.input} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none h-7 p-0"
                               />
                               <button type="button" tabindex="-1"
                                 onclick="adjustBrossStock('${p.id}', '${t}', 1)"
                                 title="Sumar 1 (+1)"
-                                class="w-3.5 sm:w-4.5 h-6 rounded text-[11px] sm:text-xs font-black flex items-center justify-center transition-colors ${st.btn}">
+                                class="w-3.5 h-6 rounded text-[10px] font-black flex items-center justify-center transition-colors shrink-0 ${st.btn}">
                                 +
                               </button>
                             </div>
                           </td>
                         `;
                       }).join('')}
-                      <td class="bg-white border border-black px-0.5 text-center font-black text-[#ff0000] text-xs sm:text-sm">
+                      <td class="bg-white border border-black px-0.5 text-center font-black text-[#ff0000] text-xs">
                         ${total}
                       </td>
                       <td class="bg-[#18202c] border border-black p-0.5 text-center">
-                        <div class="inline-flex items-center gap-1 justify-center">
-                          <button onclick="openCurvaModal('${p.id}')" class="px-1 py-1 rounded bg-emerald-600/30 hover:bg-emerald-500/50 text-emerald-300 border border-emerald-500/40 text-[10px] font-black flex items-center gap-0.5" title="Ingreso rápido de lote (+12 u. o docena)">
+                        <div class="inline-flex items-center gap-0.5 justify-center">
+                          <button onclick="openCurvaModal('${p.id}')" class="p-1 rounded bg-emerald-600/30 hover:bg-emerald-500/50 text-emerald-300 border border-emerald-500/40 text-[10px] font-black flex items-center justify-center" title="Ingreso rápido de lote (+12 u. o docena)">
                             <i data-lucide="package-plus" class="w-3 h-3"></i>
-                            <span class="hidden sm:inline">+Curva</span>
                           </button>
                           <button onclick="openEditBrossModal('${p.id}')" class="p-1 rounded bg-slate-800 hover:bg-slate-700 text-cyan-300" title="Editar ficha / foto">
                             <i data-lucide="edit-3" class="w-3 h-3"></i>
