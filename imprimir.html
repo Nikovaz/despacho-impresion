@@ -4324,10 +4324,11 @@
             const order = dispatchOrders.find(o => o.id === orderId);
             if (!order) return;
             const curDate = order.fecha_programada || '';
-            const newDate = prompt(`Programar fecha de entrega para ${order.cliente_nombre}:\n(Formato: YYYY-MM-DD, ej: 2026-09-24)`, curDate);
+            const newDate = prompt(`Programar fecha de entrega para ${order.cliente_nombre}:\n(Formato: YYYY-MM-DD o DD/MM, ej: 2026-10-29 o 29/10)`, curDate);
             if (newDate !== null) {
-                order.fecha_programada = newDate.trim();
-                editedOrders[orderId] = { ...(editedOrders[orderId] || {}), fecha_programada: newDate.trim() };
+                const parsed = parseScheduledDateValue(newDate) || newDate.trim();
+                order.fecha_programada = parsed;
+                editedOrders[orderId] = { ...(editedOrders[orderId] || {}), fecha_programada: parsed };
                 localStorage.setItem('croc_edited_orders', JSON.stringify(editedOrders));
                 renderDispatchDashboard();
                 pushCloudAppState();
@@ -4417,7 +4418,8 @@
             const deliveryType = document.getElementById('eo-delivery-type')?.value || 'cadete';
             const attempts = parseInt(document.getElementById('eo-delivery-attempts')?.value || '1', 10);
 
-            const scheduledDate = document.getElementById('eo-scheduled-date')?.value || '';
+            const rawScheduledDate = (document.getElementById('eo-scheduled-date')?.value || '').trim();
+            const scheduledDate = parseScheduledDateValue(rawScheduledDate) || rawScheduledDate;
 
             const changes = {
                 cliente_nombre: name,
@@ -4800,9 +4802,67 @@
         /* ====================================================== */
         /* PARSERS, TICKET GENERATION & DISPATCH LOGIC            */
         /* ====================================================== */
+        function parseScheduledDateValue(raw) {
+            if (!raw) return null;
+            const str = String(raw).trim();
+            if (!str || str.toLowerCase() === 'null' || str.toLowerCase() === 'undefined' || str === '-' || str.toLowerCase() === 's/f') return null;
+
+            const currentYear = new Date().getFullYear();
+
+            // 1. GViz Date format: Date(yyyy, mm, dd)
+            if (str.includes('Date(')) {
+                const nums = str.replace(/[^0-9,]/g, '').split(',').map(n => parseInt(n, 10));
+                if (nums.length >= 3) {
+                    let y = nums[0];
+                    let m = nums[1] + 1; // 0-based month in Date() constructor
+                    let d = nums[2];
+                    if (y < currentYear) y = currentYear;
+                    return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                }
+            }
+
+            // 2. ISO format YYYY-MM-DD
+            const isoMatch = str.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
+            if (isoMatch) {
+                let y = parseInt(isoMatch[1], 10);
+                let m = parseInt(isoMatch[2], 10);
+                let d = parseInt(isoMatch[3], 10);
+                if (y < currentYear) y = currentYear;
+                return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+            }
+
+            // 3. DD/MM/YYYY or DD-MM-YYYY or DD/MM
+            const dmyMatch = str.match(/^(\d{1,2})[-\/](\d{1,2})(?:[-\/](\d{2,4}))?/);
+            if (dmyMatch) {
+                let d = parseInt(dmyMatch[1], 10);
+                let m = parseInt(dmyMatch[2], 10);
+                let y = dmyMatch[3] ? parseInt(dmyMatch[3], 10) : currentYear;
+                if (y < 100) y += 2000;
+                if (y < currentYear) y = currentYear;
+                return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+            }
+
+            return null;
+        }
+
+        function formatScheduledDateHuman(dateStr) {
+            if (!dateStr) return '';
+            try {
+                const parts = String(dateStr).split('-');
+                if (parts.length === 3) {
+                    const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10), 12, 0, 0);
+                    const weekday = d.toLocaleDateString('es-AR', { weekday: 'long' });
+                    const dayNum = d.getDate();
+                    const capitalizedWeekday = weekday.charAt(0).toUpperCase() + weekday.slice(1);
+                    return `${capitalizedWeekday} ${dayNum}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+                }
+            } catch (e) {}
+            return dateStr;
+        }
+
         function parseGoogleDate(raw) {
             if (!raw) return new Date();
-            const str = String(raw);
+            const str = String(raw).trim();
             if (str.includes('Date(')) {
                 const nums = str.replace(/[^0-9,]/g, '').split(',').map(n => parseInt(n, 10));
                 if (nums.length >= 3) {
@@ -4813,6 +4873,13 @@
                 const dateParts = parts[0].split('-');
                 const timeParts = (parts[1] || '12:00').split(':');
                 return new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]), parseInt(timeParts[0] || 12), parseInt(timeParts[1] || 0));
+            } else if (str.includes('/')) {
+                const parts = str.split(' ');
+                const dateParts = parts[0].split('/');
+                const timeParts = (parts[1] || '12:00').split(':');
+                if (dateParts.length >= 3) {
+                    return new Date(parseInt(dateParts[2]), parseInt(dateParts[1]) - 1, parseInt(dateParts[0]), parseInt(timeParts[0] || 12), parseInt(timeParts[1] || 0));
+                }
             }
             return new Date();
         }
@@ -5252,6 +5319,8 @@
                     const subtotal = getVal(r, ['subtotal', 'sub'], 7);
                     const total = getVal(r, ['total', 'totalfinal', 'monto'], 8);
                     const metodoPagoCol = getVal(r, ['metododepago', 'metodopago', 'pago', 'metodo'], 9);
+                    const rawFechaDespacho = getVal(r, ['fechadespacho', 'fechaprogramada', 'fechadeentrega', 'fechapactada', 'fechadespachoestimada', 'despacho', 'programada', 'programado', 'fechaentrega'], 10);
+                    const fechaProgramada = parseScheduledDateValue(rawFechaDespacho);
 
                     let direccion = direccionRaw.trim();
                     if (!direccion || direccion.toLowerCase() === 'true' || direccion.toLowerCase() === 'false') {
@@ -5289,6 +5358,7 @@
                         subtotal: subtotal,
                         total: total,
                         fecha_hora: fechaParsed.toISOString(),
+                        fecha_programada: fechaProgramada || undefined,
                         estado: printedOrderIds.includes(ticketId) ? 'impreso' : 'pendiente'
                     });
                 }
@@ -5307,6 +5377,11 @@
                 dispatchOrders = dispatchOrders.map(o => {
                     if (editedOrders[o.id]) {
                         const ed = { ...editedOrders[o.id] };
+                        if (!ed.fecha_programada && o.fecha_programada) {
+                            delete ed.fecha_programada;
+                        } else if (ed.fecha_programada) {
+                            ed.fecha_programada = parseScheduledDateValue(ed.fecha_programada) || ed.fecha_programada;
+                        }
                         if (ed.tipoEntrega === 'cadete' && ed.envio === false && !/\bno\b|\bretira|\bretiro/i.test(ed.costo_envio || '')) {
                             ed.envio = true;
                             editedOrders[o.id].envio = true;
@@ -5551,13 +5626,19 @@
             const historyBatch = filterOrdersByDispatchCycle(orders);
 
             const nowDate = new Date();
-            const todayStr = nowDate.toISOString().slice(0, 10);
+            const pad = n => String(n).padStart(2, '0');
+            const todayStr = `${nowDate.getFullYear()}-${pad(nowDate.getMonth() + 1)}-${pad(nowDate.getDate())}`;
 
             orders.forEach(order => {
-                // 1. Si tiene fecha programada futura (ej. 24 o 25)
-                if (order.fecha_programada && order.fecha_programada > todayStr) {
-                    scheduledBatch.push(order);
-                    return; // No mezclar con el lote de hoy ni de mañana
+                // 1. Si tiene fecha programada explícita
+                if (order.fecha_programada) {
+                    if (order.fecha_programada > todayStr) {
+                        scheduledBatch.push(order);
+                        return; // Programado futuro (ej. Jueves 29): va directo a Programados
+                    } else if (order.fecha_programada === todayStr) {
+                        todayBatch.push(order);
+                        return; // Programado para hoy: va al lote de hoy
+                    }
                 }
 
                 // 2. Lógica normal por horario de corte 12:00 hs
@@ -5573,7 +5654,8 @@
             orders.forEach(order => {
                 if (order.fecha_programada && order.fecha_programada > todayStr) return;
                 const oDate = new Date(order.fecha_hora);
-                if (oDate.toISOString().slice(0, 10) === todayStr) {
+                const orderDayStr = `${oDate.getFullYear()}-${pad(oDate.getMonth() + 1)}-${pad(oDate.getDate())}`;
+                if (orderDayStr === todayStr) {
                     if (!todayBatch.some(o => o.id === order.id) && !tomorrowBatch.some(o => o.id === order.id)) {
                         todayBatch.unshift(order);
                     }
@@ -5740,7 +5822,13 @@
             const { todayBatch, tomorrowBatch, scheduledBatch, historyBatch } = categorizeDispatchOrders(dispatchOrders);
             if (currentDispatchTab === 'today') return todayBatch;
             if (currentDispatchTab === 'tomorrow') return tomorrowBatch;
-            if (currentDispatchTab === 'scheduled') return scheduledBatch || [];
+            if (currentDispatchTab === 'scheduled') {
+                return (scheduledBatch || []).sort((a, b) => {
+                    const da = a.fecha_programada || a.fecha_hora || '';
+                    const db = b.fecha_programada || b.fecha_hora || '';
+                    return da.localeCompare(db);
+                });
+            }
             return historyBatch;
         }
 
@@ -5779,7 +5867,7 @@
                             <span class="text-xs px-2 py-0.5 rounded font-bold ${isTransfer ? 'bg-sky-500/20 text-sky-300 border border-sky-500/30' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'}">
                                 ${isTransfer ? '💳 Transferencia' : '💵 Efectivo'}
                             </span>
-                            ${order.fecha_programada ? `<span class="text-xs px-2 py-0.5 rounded-full font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30 flex items-center gap-1"><i class="fa-solid fa-calendar-day"></i> Programado: ${order.fecha_programada}</span>` : ''}
+                            ${order.fecha_programada ? `<span class="text-xs px-2.5 py-0.5 rounded-full font-bold bg-purple-500/25 text-purple-200 border border-purple-500/40 flex items-center gap-1.5 shadow-sm" title="Entrega coordinada para esta fecha"><i class="fa-solid fa-calendar-day text-purple-400"></i> ${formatScheduledDateHuman(order.fecha_programada)} (${order.fecha_programada})</span>` : ''}
                             ${prof.isLoss ? `<span class="text-xs px-2 py-0.5 rounded-full font-black bg-rose-500/20 text-rose-300 border border-rose-500/40">🔴 PÉRDIDA CADETE</span>` : ''}
                             ${(prof.isCancelled && !prof.isLoss) ? `<span class="text-xs px-2 py-0.5 rounded-full font-bold bg-slate-800 text-slate-400 border border-slate-700">⚪ CANCELADO</span>` : ''}
                             ${(order.isEdited || editedOrders[order.id]) ? '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">✏️ Editado</span>' : ''}
@@ -5992,6 +6080,7 @@
                             <div style="font-size:11px; text-transform:uppercase; color:#666; font-weight:bold;">Destino / Entrega</div>
                             <div style="font-size:16px; font-weight:900; color:#000;">📍 ${escapeHTML(order.direccion)}</div>
                             <div style="font-size:13px; color:#444; margin-top:2px;">🚚 ${escapeHTML(order.costo_envio)}</div>
+                            ${order.fecha_programada ? `<div style="margin-top:5px; font-size:13px; font-weight:bold; color:#581c87; background:#f3e8ff; border:1.5px solid #a855f7; padding:3px 8px; border-radius:4px; display:inline-block;">📅 ENTREGAR: ${formatScheduledDateHuman(order.fecha_programada).toUpperCase()} (${order.fecha_programada})</div>` : ''}
                         </div>
                     </div>
 
@@ -6086,6 +6175,7 @@
                     <div style="font-size:13px; color:#333; margin-top:3px;">
                         🚚 ${escapeHTML(order.costo_envio)}
                     </div>
+                    ${order.fecha_programada ? `<div style="font-size:13px; font-weight:900; margin-top:6px; background:#000; color:#fff; padding:4px 6px; border-radius:3px; text-align:center;">📅 ENTREGAR: ${formatScheduledDateHuman(order.fecha_programada).toUpperCase()} (${order.fecha_programada})</div>` : ''}
                 </div>
 
                 <div style="margin-bottom:10px; border-bottom:2px solid #000; padding-bottom:8px;">
