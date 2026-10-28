@@ -8358,6 +8358,10 @@
             nnn: new Set(),
             nacha: new Set()
         };
+        let apDriveFilesByStore = {
+            nnn: { feed: [{"id":"12P_mXdMkB_raPihwIYLURRdyniHBzclX","name":"01.11CRG-004.jpg"},{"id":"11uXI6EyB8kmINEKXHvp_RJQ-uH-Hyfni","name":"01.11CRG-004.jpg"},{"id":"1NjW4cmtzs4TohBH4twNI0xwX-QdJVW5W","name":"02.10_L2610_bambu.jpg"},{"id":"1FwbPDU6WNFu8TSfLJa1e6taHH_sbTEp9","name":"02.10_L2610_bambu.jpg"},{"id":"1Bk8Qv593HIDdFO9OAl6kcaD8TRq7dTe1","name":"02.11_CRG-037.jpg"},{"id":"1r5noN5MfZ_M3Y30aW82fJZBAPvDZp4TV","name":"02.11_CRG-037.jpg"},{"id":"1-THPdXgmU3FKL-8eFg54n3cUY6pxzAgM","name":"03.10_CRG-3530.jpg"},{"id":"1Ije5PhKQszOIEv4v6AJmZ1vNEv5YaXGH","name":"03.10_CRG-3530.jpg"},{"id":"18D_-JIiAMCUVkkD_wlkQGUCMYhuZwtCq","name":"03.11_CRG-508.jpg"},{"id":"1mylhRk1UCOKnQRAFDMRZcEPKCM0NNKD5","name":"03.11_CRG-508.jpg"},{"id":"1mW5K2J15wCc27NDQrGMheeo_Wr9w45-r","name":"04.10_L2610_TupperAcero.jpg"},{"id":"12I0t-XNW8pMgYWu6fFA2IBV3Y8cmn1F6","name":"04.10_L2610_TupperAcero.jpg"},{"id":"1LX4HaRlMpU7xmIVqWEFME_EuKpfikvWg","name":"04.11_CRG-2006.jpg"},{"id":"1HQkWR-ub-y5QfdStq3NYJuTozTh0G02C","name":"04.11_CRG-2006.jpg"},{"id":"11bKOLe898DD_kgKx2zgwPvnfwbhlNi93","name":"05.10_V727.jpg"},{"id":"1pT17jZC1qzP9F6NeEG9WpKZSUduA6KCi","name":"05.11_CRG-2011.jpg"},{"id":"1utmr0BrXRo77a6BCZgo5IobD6tkALtnJ","name":"05.11_CRG-2011.jpg"},{"id":"1fMHztoY4FssDtw0fADzc_Ee06yfLJmlq","name":"06.10_CRG-3552.jpg"},{"id":"1fOnDCWFBSrpEN6qhXi-TOWIHf7Zz9sOi","name":"06.11_CRG-3528.jpg"},{"id":"1oOejYU_Z_MJZKpCDVRqdlFgRkJpR_0Hs","name":"06.11_CRG-3528.jpg"},{"id":"1WkvfXUkMKRMG7gHvgXfN1XKnyNkcjrvC","name":"07.10_CRG-3525.jpg"},{"id":"1TfVZ3OjhMaCN2cFjBSgLZxcDhv6QJuzL","name":"07.10_CRG-3525.jpg"},{"id":"1oEf1WbiHUF5E3MXoiav3qXx0FkajH6bX","name":"07.11_CRG-3563.jpg"},{"id":"1Mje5xJqXfYkaWYyAhITH0SOmT6tebgvU","name":"07.11_CRG-3563.jpg"},{"id":"1v9EW2tvbTySRempa15sewFPdvsfXCWPY","name":"07.11_Q25720.jpg"},{"id":"1OjGpx4aRzCQ2OAq5FAmvU1UfHgq9ius6","name":"07.11_Q25720.jpg"},{"id":"1hROu2f70YSHpZDNjy9gKaD1MagYSqu5T","name":"08.10_CRG-035.jpg"},{"id":"1D2W2hp8j5TKnOr85Qg_zXGpXlpA4pedU","name":"08.10_CRG-035.jpg"},{"id":"1xwz8l3knnPU24lTSVhzXlXciit91fRWg","name":"08.11_L2613.jpg"},{"id":"1mZ9KZSxubjGUS9jgyUUXSC7WZY3gpCJB","name":"08.11_L2613.jpg"},{"id":"1o4oRizgC8Qu_tgWoXW1wjnv3-DS9rJp9","name":"09.10_CRG-034.jpg"},{"id":"1FNuCPfxt3QQsYxhA6u0XN-t9QfKxW8H6","name":"09.10_CRG-034.jpg"},{"id":"1II9F0VtvpprIlSxiDXmbunERNXamXz5O","name":"09.11_L2614.jpg"},{"id":"1GwwyIFkCl5SH7xU8PgJg2UnofQfzcGQz","name":"09.11_L2614.jpg"},{"id":"1ZaRRwJ75mPeIZDypgWrEtQo86epof_Gr","name":"10.10_CRG-103.jpg"},{"id":"1BuBiP3-VSTz8QK6cBm2eh0sm0J2fYKO8","name":"10.10_CRG-103.jpg"},{"id":"196WjJ7oAsYaAYKKjBVmuKdKcLhirapGX","name":"10.11_L25910.jpg"},{"id":"14fwlLO8LJR4c_Zkt0j1m1aLYaOv6K-NE","name":"10.11_L25910.jpg"},{"id":"11mIJ6To0C8uMrQLadgIpSRxDEzdLkl50","name":"11.10_CRG-104.jpg"},{"id":"139Jwz5JKA_itHSOfnYDmWMe7V2ZU2Ktk","name":"11.10_CRG-104.jpg"},{"id":"1F-M9WhcJI7ajpJ9I3enV8Gu6oMUQJobn","name":"11.11_MA095.jpg"},{"id":"1VK1Ne-uq9j1OKw2IdAG_WCTJR1QbIJNJ","name":"11.11_MA095.jpg"},{"id":"1G9GEzavta5OIkySShtGmf9q3OEbHble7","name":"12.10_CRG-3515.jpg"},{"id":"1Si7gGH_TX_FJ9WDb6uz8dFfznr4Gogl7","name":"12.10_CRG-3515.jpg"},{"id":"1gmfyBiF5qT43THo01NAlJ7_unFY-1Wx8","name":"12.11_MR4458.jpg"},{"id":"1waX2trrALqSYYebylFjWs7o5A_mc-ZM0","name":"12.11_MR4458.jpg"},{"id":"1EKNI0chjSJQqXiUZ2wxFdEABjC83Ki6p","name":"13.10_CRG-3529.jpg"},{"id":"1OpquWp_zfHLnN66Rzy4HLS5dLgMOJSIP","name":"13.10_CRG-3529.jpg"},{"id":"1uML3OibdDcm-vtUI1ShTA2XZZVgR9xtg","name":"13.11_TSV504.jpg"},{"id":"1NLtp9xjpoIXpUO41CasG4Gm_4_Mty5ji","name":"13.11_TSV504.jpg"},{"id":"1nNMJZIHYKlrGokW87PSVV8rQyeNml40D","name":"14.10_MR1759.jpg"},{"id":"139V-hlvvnB5OMgRkl0ANmuIVMJIzOBfZ","name":"14.10_MR1759.jpg"},{"id":"1u-5FG2RO6HikWYQAZ-D56m76qfPP9GMT","name":"14.11_V1347.jpg"},{"id":"1iT7pBMPUykOtsxaBEFc8zUZ4WXbxsl75","name":"14.11_V1347.jpg"},{"id":"1WWjFJJUo4g4mdxmZ1-kgFAJlMMAWg1UK","name":"15.10_G2336.jpg"},{"id":"14D9pBiqfQYHSQ6lJsloh0PeU_5jKq0fv","name":"15.10_G2336.jpg"},{"id":"1-BvylTLtgPgtDz6IMA7s3kea-hMOrmfo","name":"16.10_CRG-007.jpg"},{"id":"1ZCbFCoITPqvOhKoOCCnRCzIKVxuHLV1V","name":"17.10_U2575.jpg"},{"id":"1jg_l6kdw47I58jlAnyhmcLnn8Rpjzlkm","name":"17.10_U2575.jpg"},{"id":"1emeQK6Iu8Y1YgWgTS7WeYrXZLdsldAHG","name":"18.10_CRG-113.jpg"},{"id":"1Oj8F7ZstOzvvTjUfHIPLAP3miOGKzUSD","name":"18.10_CRG-113.jpg"},{"id":"1Q3W08cBfv0BOzvSZuTmIekjf3e_xYegB","name":"19.10_CRG-012.jpg"},{"id":"1dujh-sAYqacUnXx6cRZmPvOdF8JPEu4W","name":"19.10_CRG-012.jpg"},{"id":"11qdNdxaQVgxF7tGmx_e4LDp-tDHuF3PP","name":"20.10_NVT-054.jpg"},{"id":"1cTRNw2kx6JXjVxfu8bxvbA-SEM3hme0_","name":"20.10_NVT-054.jpg"},{"id":"1048s1qtotVlW76QPU6Isav0PeLsaKyq9","name":"21.10_A25710.jpg"},{"id":"1H_jiabw48UsZaD97dQFCU60d_8QdKuW9","name":"21.10_A25710.jpg"},{"id":"1n5fT0CZoK81LTxwoIHNYVecy-tATxdw9","name":"22.10_Q25718.jpg"},{"id":"1d3otCV0u8bpT2kkSY4qpXYb0Lf9-iBN3","name":"22.10_Q25718.jpg"},{"id":"1aUY0ENekBrvydNpBrPh5m-sOd3aSX6-3","name":"22_09.art.25320000.jpg"},{"id":"10sjaIDodACf1jYcITV4UTZbfWmhzRBbd","name":"22_09.art.25320001.jpg"},{"id":"1ePDSxsQqz-_xKG295SYSWnRuvor0jgGF","name":"22_09.art.25320002.jpg"},{"id":"1Bc9JaWpx_U6Gt3DY2FArCTJtEokrxNYp","name":"23.09_V1301.jpg"},{"id":"15uoO_uEHNCcRp-nLpXELAuE8afYb18S3","name":"23.09_V1301.jpg"},{"id":"15OhhwABRFNKmVPLwegndZw8XjTfse1VB","name":"23.10_RB0035.jpg"},{"id":"1GfphX8-6psybwOK00huDhrQ1FsGwz-7_","name":"23.10_RB0035.jpg"},{"id":"1KUM4z7AC3EiRDdxwrARREMZUhJwxVUV3","name":"24.09_CRG-511.jpg"},{"id":"1rfMbGg6wvrcmJFnBBX94rSknNgsiz5N7","name":"24.09_CRG-511.jpg"},{"id":"1V8_8f5LWrWIphMPOvgDDLvsUpTEep1Ww","name":"24.10_CRG-017.jpg"},{"id":"1y2IeEuEGgkK4myupOmMxtZZGaMUxMXps","name":"24.10_CRG-017.jpg"},{"id":"14sSm5pvwiKzlFk1ggBTtjSe6imOyDn1q","name":"25.09_MR06.jpg"},{"id":"12jugDVJ9qvP678se4sf9jMcsJwgjvzlz","name":"25.09_MR06.jpg"},{"id":"1kgskyPo-k1WlM3a7xaIeKX46OxJ5NTrk","name":"25.10_V205.jpg"},{"id":"1d4X768EL68gDgWELMMq4bhP8kZ13a4Ay","name":"25.10_V205.jpg"},{"id":"1GYWnrXoTXYDDtxllIVlLnyoESyfCVEDy","name":"26.09_CRG-100.jpg"},{"id":"1RLSXHLN6f7zB4nDEynaWO70h0JiA0vLE","name":"26.09_CRG-100.jpg"},{"id":"10d3BvZkwrrnF5t_BCFtZEKh2XzzN0HJO","name":"26.09_LINTERNABICI.jpg"},{"id":"187DFI2ThmSmLgX2VBTAagvKIPrvXSxiF","name":"26.09_LINTERNABICI.jpg"},{"id":"1qJ4XobOHtli4eRB85zEnTnoEXqalptXr","name":"27.10_V13829.jpg"},{"id":"1QXO5o4HkGCDmtjGKtLtixPhBjyJyIZl7","name":"27.10_V13829.jpg"},{"id":"151uqYTfO4o4JEkYsNoa3Qjewngk2osPf","name":"28.09_L2571.jpg"},{"id":"1fhKcqxgDNL2QZIBIAgLa1UV9Jp5iNymf","name":"28.09_L2571.jpg"},{"id":"1vwgRmT2g13FiJWdd66q4VIg4ixudBlZz","name":"28.10_CRG-510.jpg"},{"id":"1Wgmc8z6GGn7t-1BdqShpGWTSvQliITbY","name":"28.10_CRG-510.jpg"},{"id":"1WBevPjWtheJ3WEkAPe3Kc_mEaMZkraey","name":"29.09_L25924.jpg"},{"id":"1oBlm4pzftDFiAcXSei7Y2JIZlcKyTavV","name":"29.09_L25924.jpg"},{"id":"1MJeQ04i9sI6GHPHw6xRO4r3R8hi3JhVM","name":"30.10_L25931.jpg"},{"id":"1GPdSKMva1BsLd5hAddPm-hrtmsbP1f-c","name":"30.10_L25931.jpg"},{"id":"1NUuSMIQ2CNI30CeCQsRFpwlZjbRlhB7s","name":"31.10_1194.jpg"},{"id":"19j8UlbIrFSxTHHxZadqTsrN8d3BvYh4C","name":"31.10_1194.jpg"}], story: [{"id":"1Y4Phu6D1UvUuXmBvlCs8obSZuqt7OQtz","name":"01.11_CRG-004_09hs.jpg"},{"id":"18dA3-n4qovKmIjriuL9A2O4d6a3hzXtz","name":"01.11_CRG-004_20hs.jpg"},{"id":"1FGaitmsbxBZC-_YV4DUUZYLP_8axMHD0","name":"02.10_L2610_09hs.jpg"},{"id":"19F-yusCKfQf6QPWQdFa4qfOREAp9ElkY","name":"02.10_L2610_20hs.jpg"},{"id":"1leqJ3Zrn6yy2_nhYJjk-tVwDN06MO25y","name":"02.11_CRG-037_09hs.jpg"},{"id":"1jCEpQkqQTfplkus0ldvJn06QTwxTwRkh","name":"02.11_CRG-037_20hs.jpg"},{"id":"13JHAJX6BAweX2Bg7lXEkMkd-31XJ8FMk","name":"03.10_CRG-3530_09hs.jpg"},{"id":"1ZMWSTR4PRTucDSWDocfrLTVgyr_Fr9Gu","name":"03.10_CRG-3530_20hs.jpg"},{"id":"1fcjzQ9kQD_edIu4yg2kp2B-isv6Jhi-A","name":"03.11_CRG-508_09hs.jpg"},{"id":"1jtj17_0yvnG0xbxRVNILoU_z9vmXTDNG","name":"03.11_CRG-508_20hs.jpg"},{"id":"179hy6FSv9DlOPSSO8782DmFr1Oo6GCaS","name":"04.10_L2610AC_09hs"},{"id":"1tFRC4KhqABQyNME0xCQyc46fricN-_DL","name":"04.10_L2610AC_20hs"},{"id":"17uw3X7UJPUHNGoMoL8bGDPi2vOTWMr69","name":"04.11_CRG-2006_09hs.jpg"},{"id":"1ldpyqQY76wkgLMMTsUoOvvHgXxlRwWBy","name":"04.11_CRG-2006_20hs.jpg"},{"id":"1hz8ug8ngAUNWt3EpKiaz35Pz1GS6Vwa8","name":"05.10_V727_09hs.jpg"},{"id":"1TyYuY8GMad5CnDzNs9ywTnkK2Rlm-JSV","name":"05.11_CRG-2011_09hs.jpg"},{"id":"1P64JJSHwP53e1nrFe4UlK4ExnEJ15Bs3","name":"05.11_CRG-2011_20hs.jpg"},{"id":"1mly83UHYCR6NUbhkBm7NNs8ycYl7IJgz","name":"06.10_CRG-3552_09hs.jpg"},{"id":"1FsMueahik2QjOpdSFTc6DsKaL0_TQOoL","name":"06.11_CRG-3528_09hs.jpg"},{"id":"1U_bQHZ6R5903ZE9Aj7SgfwVt8oOctWln","name":"06.11_CRG-3528_20hs.jpg"},{"id":"1PXv8GQh9bOyBgFa8gGf-Mue7SGwWNy7B","name":"07.10_CRG-3525_09hs.jpg"},{"id":"1qf0HYsZJPWWoRbaSRU_qLbxjlcJZeQgU","name":"07.10_CRG-3525_20hs.jpg"},{"id":"1D5eyKQkD7fyU9lUX-x7oWf5rM6eTCEzi","name":"07.11_CRG-3563_09hs.jpg"},{"id":"1h5-BmNZqGWR0ZG15CSr8PHM8LlUtMEq6","name":"07.11_CRG-3563_20hs.jpg"},{"id":"1-o8BwVmMJUSy1G_nyFOWa1KYLrqT6AMK","name":"07.11_Q25720_09hs.jpg"},{"id":"12NJfo_cCO9udTlNdvTorHElY2S4pshfc","name":"07.11_Q25720_20hs.jpg"},{"id":"15I51C0ynqF4jg1Ykn_5a2-MdL9M3ejxG","name":"08.10_CRG-035_09hs.jpg"},{"id":"1EFejMdrAGOGrKbGYZ6KFC5IKsAQY05xA","name":"08.10_CRG-035_20hs.jpg"},{"id":"1P_J8-Do0Nym-46G2tSuh1RjeE_yG-0xo","name":"08.11_L2613_09hs.jpg"},{"id":"1jrsnJleXg6486AQeq_hN13LYp7YURbV6","name":"08.11_L2613_20hs.jpg"},{"id":"1f7RbcRvUxrVxZGLn7poWp43hnSB4zC6M","name":"09.10_CRG-034_09hs.jpg"},{"id":"1ZbC7_WlczavStLqFri576SfDZIA_MZCk","name":"09.10_CRG-034_20hs.jpg"},{"id":"1_qO4vfLjrWRM7u12qckub53MATpR3qgu","name":"09.11_L2614_09hs.jpg"},{"id":"1GAksHiHTO8DK18pQDOxCtmTvNnSddOQV","name":"09.11_L2614_20hs.jpg"},{"id":"1th3Pnt-QHSmp0hMPib0ivmt-c58ygRlb","name":"10.10_CRG-103_09hs.jpg"},{"id":"1rEFnlK12s5On77INQQsiaseuhZmSbGlR","name":"10.10_CRG-103_20hs.jpg"},{"id":"1IJqSxaSJPII5o074v-NKmUFOTYkUEkXa","name":"10.11_L25910_09hs.jpg"},{"id":"12XniDkX-T72XN_rBujTlKmFTN_AuSFZz","name":"10.11_L25910_20hs.jpg"},{"id":"1Emu9LzlaJeYf1uiwEyY9MA6X2vOWm12_","name":"11.10CRG-104_09hs.jpg"},{"id":"1aGkQh4vwIHuwACMb4vFo-0jle1SysW5E","name":"11.10CRG-104_20hs"},{"id":"1_untg83HNTWgewMsGE5TX94XHCUnNWcV","name":"11.11_MA095_09hs.jpg"},{"id":"184oCTgabAUYrYYEnHD2sTDaMLojF2JUG","name":"11.11_MA095_20hs.jpg"},{"id":"13aGnRNOMR3WGdO0FTXlsMj-P028mcPth","name":"12.10_CRG-3515_09hs.jpg"},{"id":"1bcgHVORdGWPO61Zrn0D8buxzJvLXph9r","name":"12.10_CRG-3515_20hs.jpg"},{"id":"1_f5jHGvNoqLSuvPPPG4LZfMJyddiw9jp","name":"12.11_MR4458_09hs.jpg"},{"id":"1taL5ReSzsls3rgUXSJNYklnEXmlZgM6F","name":"12.11_MR4458_20hs.jpg"},{"id":"1Esa16Xc1K3lUURvIpiQsHkGgASmzLPsU","name":"13.10_CRG-3529_09hs.jpg"},{"id":"1Le4MpKvN3avHsH1p6x0bVKaGzFfv6aoB","name":"13.10_CRG-3529_20hs.jpg"},{"id":"1aDrbS0_CAU5JrbwhELBQBUcw2cGnr9BH","name":"13.11_TSV504_09hs.jpg"},{"id":"139HBG8mlNOmxRimy3ku08PgXOWg5HWg6","name":"13.11_TSV504_20hs.jpg"},{"id":"1E9X0uqDdhVYCDCRQC5KiLOaQwodvPr4H","name":"14.10_MR1759_09hs.jpg"},{"id":"1nCqkZ8Oq2lJE0r7kwVp_iZr7wDjy9OS8","name":"14.10_MR1759_20hs.jpg"},{"id":"1SwCOlGDbpoX8pwXnwUYBDOpRyg_HZ5Xr","name":"14.11_V1347_09hs.jpg"},{"id":"1THfPlmfikIU3NRHya9OvVkas1wFtR4Tx","name":"14.11_V1347_20hs.jpg"},{"id":"1FmDQTmvfAUoxsjOZ2Q5Q8Yq4CUSxYz4W","name":"15.10_G2336_09hs.jpg"},{"id":"1F-sFVc18xUXzlQMgcYvczLLGz0ZPHfEv","name":"15.10_G2336_20hs.jpg"},{"id":"1cZwanOasW16eP0FPQ9fFoXW8sIqo6szx","name":"16.10_CRG-007_09hs.jpg"},{"id":"1JpVa-dAWO-WA3r16Ev6rXLL2Jy1TIE3E","name":"17.10_U2575_09hs.jpg"},{"id":"1K37lC12gH6TpMT4q6NyNKvgP7MhcCp5W","name":"17.10_U2575_20hs.jpg"},{"id":"1O4Uu1sq4eF0RppOCr-4wQYjFbDnWh-Xd","name":"18.10_CRG-113_09hs.jpg"},{"id":"1xIoOf13nrpZv_sWm5-pHGnapujXMYJNg","name":"18.10_CRG-113_20hs.jpg"},{"id":"1NidxqOzt-01qxBlfqZ56pw1qQDZ3mgJ8","name":"19.10_CRG-012_09hs.jpg"},{"id":"14Djr0dzi0xPzhxdZVSHP7OV31__Hutlb","name":"19.10_CRG-012_20hs.jpg"},{"id":"1D6RX5WbHg1mT1MZdPMz158_-awPN5PBw","name":"20.10_NVT-054_09hs.jpg"},{"id":"1gO22cnohThSa1EToyU-MbUcydiBz7U0d","name":"20.10_NVT-054_20hs.jpg"},{"id":"1V7s6r5jFUt9VerGI9B1VWBQhFnveF154","name":"21.10_A25710_09hs.jpg"},{"id":"17NV8wyf31Kw-km64zdxelCGh2d_RHv5a","name":"21.10_A25710_20hs.jpg"},{"id":"1edt6CaWAaI4y9WC2C78eE3hsXrcB61zb","name":"22.10_Q25718_09hs.jpg"},{"id":"1ucV2WYz3JHE4881TZz3D6vU5tDoj7AY3","name":"22.10_Q25718_20hs.jpg"},{"id":"1SS7nnfOkMYI6AtZULtmv-a6ThK6pPwVX","name":"22_09.art.25320000.09hs.jpg"},{"id":"1LAVNvfh29oqA_xLSwZ5Ewd2F4SjBiWrh","name":"22_09.art.25320001.20hs.jpg"},{"id":"1JgbTvT79Y98Gw_I9HTBPMrJnd5-AdDk8","name":"23.09_V1301_09hs.jpg"},{"id":"1NGw_6QbKk_fWQ5QpO3PQJZa0kM8xk8LG","name":"23.09_V1301_20hs.jpg"},{"id":"1lVh4VALiac6SCT92vMBtBhm7waY5vvfW","name":"23.10_RB0035_09hs.jpg"},{"id":"1Lha9ePrv5wM_ywvEYPju6c55tf7dHClo","name":"23.10_RB0035_20hs.jpg"},{"id":"1FTM4Krxr4fsyEkmuxkd9uQWPo5bv8-iS","name":"24.09_CRG-511_09hs.jpg"},{"id":"10RstekX8ZYL0IbqRkC4AawirOc2jFBKA","name":"24.09_CRG-511_20hs.jpg"},{"id":"1N176Wsm38VDCF-kE5Ntf80NaE7Hn4ymN","name":"24.10_CRG-017_09hs.jpg"},{"id":"1Mv_I2-O8P09t0jKIzS-Uj-4IKJWKKVpb","name":"24.10_CRG-017_20hs.jpg"},{"id":"1W1LyEtf45DR2Bnh3cdBcgbGw7SwKeSjh","name":"25.09_MR06_09hs.jpg"},{"id":"1IUJcSEhINDonri4Vin45ypqGWgxznd8S","name":"25.09_MR06_20hs.jpg"},{"id":"1tIqRHUHBpaGZkce1Q_p7iaBuG0OfSzli","name":"25.10_V205_09hs.jpg"},{"id":"1LJdLef6dSPW_7pW2jiZmHwtPHcnPQakm","name":"25.10_V205_20hs.jpg"},{"id":"1KvtI4OZJl7dGXB_kqI51phnay6iMOe5E","name":"26.09_CRG-100_09hs.jpg"},{"id":"1hz05wS9h_Eahm0GahJir3y-M6NTJDnfz","name":"26.09_CRG-100_20hs.jpg"},{"id":"1n9nBEKPyvyjbHDZVoRqinUEanmKl7cJW","name":"26.10_LinternaBici_09hs.jpg"},{"id":"1jCqZgAFIpoYHof7HuLNy_15TXlUcLAYa","name":"26.10_LinternaBici_20hs.jpg"},{"id":"1RU64RNvDBt1NCTXySDaLZm-gUqMNMDBZ","name":"27.10_Tender invisible_09hs.jpg"},{"id":"1P8pM0cXk4QpUW7uf_yZriaEr1YJ5c7b9","name":"27.10_Tender invisible_20hs.jpg"},{"id":"1r0KGVSSu_jn34s2iCKlavBl9sMe1mPWl","name":"28.09_L2571_09hs.jpg"},{"id":"1vsIXV73SXAQPGbL4s0Y_zZc0kwXmHdUE","name":"28.09_L2571_20hs.jpg"},{"id":"1R6-2EIDYs8bK-0u-XaTSWMwegciL6rm-","name":"28.10_CRG-510_09hs.jpg"},{"id":"1MMeE28Pdbus7w91RqRN88s895ln0Skja","name":"28.10_CRG-510_20hs.jpg"},{"id":"1NCoB1z10OcH7GgsPxYlcam84RIU0rY7a","name":"29.09_L25924_09hs.jpg"},{"id":"1dtdePz7H6JdROkIm-oWo727EmbnITjyU","name":"29.09_L25924_20hs.jpg"},{"id":"11WIddYTELF1MTpALCEVBYwpbfnFtZnVJ","name":"30.09_CRG-102_09hs.jpg"},{"id":"1PvbKwZAhAUHFYIH3JdRIeyRqvs5Q1xWY","name":"30.10_L25931_09hs.jpg"},{"id":"14YNE64GoQs_8cfAnqDIZuIUEVFLVUoS8","name":"30.10_L25931_20hs.jpg"},{"id":"1GFSH6sRbuhDVPZS1PmgROEKDgp-5ozBG","name":"31.10_1194_09hs.jpg"},{"id":"1MQKtFWx6Gzq0dr-ijhcL6B1u1lNeqpia","name":"31.10_1194_20hs.jpg"}] },
+            nacha: { feed: [{"id":"1L0f7Mw82Y98Qx0TDHfFPj74rwoXZVBnc","name":"29.08"},{"id":"1BbqZFvY8y6TDLNS9qJYhsPaQV6v7bFNh","name":"Acolchado_Kioto_14.08.mp4"},{"id":"1ThKlMpJlD0gR1I43Q7JCL9f0vR-2Gfsh","name":"Acolchado_Seul_23.08.mp4"},{"id":"1GH4Fq6FWpCo0BtX2v0nZMxKOOOMKhucJ","name":"Num046_22.08.jpg"},{"id":"1ReZtgqXWKP6te956D8rE6Pt6lKR8C49i","name":"Num047_22.08.jpg"},{"id":"1mZpsUWeSvdRjJGfgffWddsg4xVG7DC0X","name":"Num048_22.08.jpg"},{"id":"1rAALJv8rLi6xqPWI-LO_rmVRoJRqb2wj","name":"Num052_17.08.jpg"},{"id":"18EavXeBGdsfVc7e5IJkjFQt2iXg5xAnc","name":"Num053_17.08.jpg"},{"id":"1PDA-uBGwBc0wqKxUnEhx_KdK8_8PkVpT","name":"Num054_17.08.jpg"},{"id":"1IEWoc4pYRq4brFYgMPAyI7SmwFjeCebr","name":"Num055_17.08.jpg"},{"id":"1LELKzIX6MHU_2IItHSkl4xoFOlOSA5a7","name":"Num061_30.07.jpg"},{"id":"1JhtAofd-lmtpdfSRbkCvzNsg0mXK6NRD","name":"Num062_31.07.jpg"},{"id":"1BYZY9-8-k75iC6m0ukruPQBrLbP7xSgQ","name":"Num063_01/08.jpg"},{"id":"18IF05Svx7h06Vloy5z7JKH-46oxc_tM_","name":"Num064_02.08.jpg"},{"id":"1jKYFr-W06Josb-vsA-Bxhj05wWinXFY3","name":"Num065_14.08.jpg"},{"id":"1_KbhKdmh-aTuZbr4iLsAdv0a0NCzxxRj","name":"Num066_14.08.jpg"},{"id":"1S7aSjK4v_k5pUBf5S1B71ebkLdm7_NKp","name":"Num067_14.08.jpg"},{"id":"1sCl-kT1aqX1g-yoKm7CkdStq0hQNIMiQ","name":"Num084.Manta_Premium_29.07.mp4"},{"id":"1gjlVzavz5ACzRTESpPVAXYm45ysD4Xs6","name":"Num084_28.07.png"},{"id":"1oglv9IS4t6YW5h1EsPgKcoYaHHWro0Ty","name":"Num085.Manta_Basic_28.07.mp4"},{"id":"1Ddmbss59YJj01my8DKdNrNcTMRWssLiq","name":"Num085_27.07.png"},{"id":"1UhmTTfE6kCfZUVEdU3tisv07aE7oysJk","name":"Num086_25.07.png"},{"id":"1LU7mf--fLxp6fuq0WDpQoJ4Xu7o2pEw_","name":"Num086Manta_Everest_26.07.mp4"},{"id":"1XGlfUKy-cHUXTvaE4cFftu6IcbMVt40H","name":"Num087_25.07.png"},{"id":"1p8Y_XFWwDP5Wl8aU_jSv5THMHfw-kCRv","name":"Num141_18.08.jpg"},{"id":"1iVhqVbcy24csXKXz-D5OAVGcuN88a3zQ","name":"Num142_18.08.jpg"},{"id":"1gKW3GIIKW0MdXffHKv46OSFDH0bU7-8p","name":"Num143_18.08.jpg"},{"id":"1GT8A8wKus4G6IZ-fKjypYmLsziQYeHMe","name":"Num144_18.08.jpg"},{"id":"1kJ296umM7n9TJdMqPscUBpW1P4VhcF2p","name":"Num146_19.08.jpg"},{"id":"1RQ-vLo6J_LUD_gt3uSN-9Cc71Awm1xCJ","name":"Num147_19.08.jpg"},{"id":"14ZEKa6CT9gvsfyzWnqXCuvuMbzHNRT9e","name":"Num149_19.08.jpg"},{"id":"1Cynarp4fFTf2HH7T4AXQ93aYRbDytL-q","name":"Num150_19.08.jpg"},{"id":"1a4800W-dN-b6zAM2SUeLkjd0V76q8lUF","name":"Num151_19.08.jpg"},{"id":"1IRXIQWu_ezB9p_mf3sGNI9_6B-zDwhUv","name":"Num153_19.08.jpg"},{"id":"1azLDtrcvBy-5mRNIGNK34Ccnnb7vJTUy","name":"Num156_16.08.jpg"},{"id":"1HKeQQnp8HeI0eysufr25FS-OPCOf58dz","name":"Num157_16.08.jpg"},{"id":"1mxPFZna0dYR7afIwR6VyVLCXPWUeVTXz","name":"Num159_16.08.jpg"},{"id":"1dBPbieYxAVysoat8Tq866QGFSFMi7sSj","name":"Num160_16.08.jpg"},{"id":"1PZeGsZ4hzG8gxvIL3wQTOJRlzpOVDuTY","name":"Num161_16.08.jpg"},{"id":"1-Aj4V4wGDg5ivx5as54OtreTWlAKulsp","name":"Num162_16.08.jpg"},{"id":"1oMOlTpASAtZEaleXMERx3SPZmvXFARFi","name":"Num163_16.08.jpg"},{"id":"1OVjbp8pFYOwz5XIq-qniHf7rIeP4JUKv","name":"Num164_16.08.jpg"},{"id":"1Y0lx-uCubaMrljSzUGmjxhVixEmnt2_A","name":"Num165_16.08.jpg"},{"id":"1jNRfAxI4d8AAt_3tB4M9dvSuDQl5OCoS","name":"Num166_16.08.jpg"},{"id":"1fHRm7vrhIwal7Xt-3Q2_WoKOVfALgi6H","name":"Num167_20.08.jpg"},{"id":"1mugSEkdfD1qtonnIryjuX4Hh1q69tUjG","name":"Num168_20.08.jpg"},{"id":"1RP3OOx2BczahU81sN-qFC6VuYawZd5rm","name":"Num169_22.08.jpg"},{"id":"1cJ7h4bODI0kRJtz8xMIMe2uTQk7Z4uZj","name":"Num170_20.08.jpg"},{"id":"153HI0InYxfttvQFUa5O8mQEXIf71YjjX","name":"Num171_20.08.jpg"},{"id":"1S22bQhhTlS9Hb5NZoUPjFlcxu3TJxBb4","name":"Num172_20.08.jpg"},{"id":"1nSnCw-wgA1ermtwesVUX5y9k_iqRJ7qs","name":"Num173_03.08.jpg"},{"id":"12SqcIkCipFDlMJ4gJxSbwG_Chb3uustW","name":"Num174_03.08.png"},{"id":"1dRaw4R5uQtfTB7V_epuC55aJGLQ6LRJc","name":"Num175_03.08.jpg"},{"id":"1rXZ4VRi51tD9oswDKTfptwc0cmTjBQ-T","name":"Num176_03.08.png"},{"id":"1THVVVnuywRN33hkNmhePbuw3L6u1PTHO","name":"Num177_03.08.jpg"},{"id":"1rkbluQeWPYANnsHzfpjClRSABegxg7Fa","name":"Num178_03.08.jpg"},{"id":"1SfOAM0ZMDQ5m8g4x97v90j8xsciYmSGL","name":"Num179_03.08.jpg"},{"id":"19MyqQlUBui-lQbssIvZPKi0-QZ1ibxgB","name":"Num180_03.08.jpg"},{"id":"1ra2ntn0eVkNCYCCrfeoK1YLB6efmPnXq","name":"Num181_03.08.jpg"},{"id":"1-c_rxYpfjnNZq2HF0H0gVn7rpLccV_2s","name":"Num182_03.08.jpg"},{"id":"1BRGlc0187xUntjArpqJIqD_LsvAawlhJ","name":"Num185_10.08.jpg"},{"id":"1wIj2E2D0ArkQzvYAra0Ldnc0b5onhqj9","name":"Num186_10.08.jpg"},{"id":"17lCC93onHC45N8WBTIKfa-tVHLaSSL8E","name":"Num187_10.08.jpg"},{"id":"1Ra7R6P1HdTs8EmV0VyYpweWGz5trp7Py","name":"Num188_10.08.jpg"},{"id":"1XzJodQA7TeAPJCOCmLlBEuQWGLT_gBiv","name":"Num189_10.08.jpg"},{"id":"1UKM5OTaHTD-vMymcwXvrW2lATZnqx1uA","name":"Num190_10.08.jpg"},{"id":"15xvU9pK6FSlXeK9EHfVyAKtKbGvfWMXv","name":"Num191_23.08.jpg"},{"id":"1-tTOmrya_GfCpciJyacCWZTtjh8Rtaha","name":"Num192_24.08.jpg"},{"id":"1C7b4DugcztNrQAYxLB0NxlnYIAK8vI5q","name":"Num193_25.08.jpg"},{"id":"1ULBjmhzeoLsCiHP2VRMg_PxWnHjbmrpA","name":"Num196_17.07.jpg"},{"id":"187oW-ebxLWvTSnptBhKZ32Lx6w8bQ24B","name":"Num197_18.07.jpg"},{"id":"1I-PkTkEC27NQcH_qf47saqPLa7m9DFSy","name":"Num198_19.07.jpg"},{"id":"1JcVl2GbdDBUWc0rIkS3K0cG8CMtvn3Lb","name":"Num199_20.07.jpg"},{"id":"1FjtoGCkL7yVisXzNySe9x-4OPt0o4Rn6","name":"Num200_21.07.jpg"},{"id":"1jL6uI4rD5r2l_GRJWKf0oitX-TnCFCB2","name":"Num201_22.07.jpg"},{"id":"14kTkwLyvjpcSV5aUIYaO4zwUC-o9J-Gp","name":"Num202_23.07.jpg"},{"id":"1dde9sIW2aSBsoNocCIqICICIPsnyTASe","name":"Num203_24.07.jpg"},{"id":"1eYj2v7-njRCc2_yQRXEDqmiK4SiNHwDI","name":"Num212_13.08.jpg"},{"id":"1lzCZh6s1G2WWeSN2MgKEn0E8P1lf-Nfs","name":"Num213_13.08.jpg"},{"id":"1sRK5iYEtQfPl_vS6myeyfcoEixpr49s0","name":"Num214_13.08.jpg"},{"id":"1StCeAPKy7txqhGMMzQepsmr_mwK6VFXm","name":"Num215_13.08.jpg"},{"id":"11GM8ecxb4nI0TYigGeIdFYuapjdLf92l","name":"Num216_13.08.jpg"},{"id":"14jiay-2rhE9v1po5wylwmG5kLBCUfPvP","name":"Num217_13.08.jpg"},{"id":"1lPgXFAswvqSjTA2TeWoz0x074vSDCR_m","name":"Num218_13.08.jpg"},{"id":"13XKnkURkDXCuZkbr_VyuReDHpsNbQG9b","name":"Num219_13.08.jpg"},{"id":"1ZFgjtrsfHmlW0x3zfTaECZoKPgWkRWqx","name":"Num234_21.08.jpg"},{"id":"1qT4OIrhTdmsgg_gIVZx1B5EcVAgRE0vP","name":"Num236_12.08.jpg"},{"id":"1kXsgisvRNFtJe161sORf3RrmsEtJJbJL","name":"Num237_12.08.jpg"},{"id":"1tOqzFAED3GeHOqCi14JS5xz97HKMCMVQ","name":"Num238_12.08.jpg"},{"id":"1uzOqOjFSyjb3zcQ1WUs9qZwT2_7uyNSH","name":"Num239_12.08.jpg"},{"id":"1z5MP7FEDBCW2qOIjRCQSnOHgjJbCFBVz","name":"Num240_12.08.jpg"},{"id":"1p2qmXJq1C7kqRfYp6HHrWy0hgesTHBCm","name":"Num241_12.08.jpg"},{"id":"1QFU-XiEpWdKYCWyQaBs1QHVmlit50BtR","name":"Num242_12.08.jpg"},{"id":"1vAhGsehJGmOSpD3YaH2-MRgoPq6peHw1","name":"Num243_12.08.jpg"},{"id":"18YXjVF_LX0bOj9iAFShHfsdhz6Hd4-fB","name":"Num244_12.08.jpg"},{"id":"12ywJaJ0nIahre1JId68t93om6e2_InAt","name":"Num245_12.08.jpg"},{"id":"127EfPeB4ANDq0WkVBUPIHeqqnBS22j8B","name":"Num246_11.08.jpg"},{"id":"1tf1rlxxn4p_1tcqflPYCfhlWa4USG1y6","name":"Num265_03.09.jpg"},{"id":"1n17uAB0QitQzBB_jGelUM2KGvvyum8W3","name":"Num266_04.09.jpg"},{"id":"1PaS2Du25XGLtDRUFmOz_rsi5GgnEZ1vx","name":"Num268_26.08.jpg"},{"id":"1nkkcV9jg2y7U8wJ71bPJ33fB288aBDQ4","name":"Num269_27.08.jpg"},{"id":"14T6ZN8X2w9V_oK2_vwkqfHU5wGqwDAjb","name":"Num270_28.08.jpg"},{"id":"1nxZWtwnwmg0Xatw-Zq0h8DvsRkmoCJpL","name":"Num272_30.08.jpg"},{"id":"1loKPdmRtnh0aP7RR7FPCW0CX-Ld3w_Xm","name":"Num273_31.08.jpg"},{"id":"1WuvP3ogx48Xq1c-i7bNJEX42DfAg92XN","name":"Num274_01.09.jpg"},{"id":"1bpUWnklqildHxvIfqYkramhYdSwbgEcS","name":"Num393_06.09.jpg"},{"id":"17IHi5TUcijop0Tqd8TaeBNpZkHBQszlb","name":"Num394_07.09.jpg"},{"id":"1B2X3muxMga19wNqKKoWmM0lTwuh2iuAF","name":"Num395_08.09.jpg"},{"id":"15FZd2DozE72rI6qKAH8gg46hCsNOOfdQ","name":"Num396_09.09.jpg"},{"id":"11dAJ6lmkEAKlDmeQjJJgwazl22FnpnfO","name":"Num397_10.09.jpg"},{"id":"1lGg_hB8Q7pkbUsp3o1JyheY6re6EEFbC","name":"Num398_11.09.jpg"},{"id":"1HQmCpfZXLaU_56zFcGXB1ut0rs--Ffty","name":"Num399_12.09.jpg"},{"id":"1G1mHgvDyOrlCplSxhxI3lcJWs4frmeb5","name":"Num400_13.09.jpg"},{"id":"1E0DUkPKenGqPQKR_lSWIvNE7hIHgBiAI","name":"Num401_14.09.jpg"},{"id":"1t8ndor4s9Hdi4o2iV_SAFFT6JngIVizA","name":"Num402_15.09.jpg"},{"id":"1juvs61ueFQU-PdFemWFoQmDn6BgWdv-C","name":"Num403_16.09.jpg"},{"id":"1PsenpWOa4lhG5Oz7bj9ogfNiYwjXzobs","name":"Num404_17.09.jpg"},{"id":"1bDDrou2PuTycZLOH0lg7uq_MgNGHcllk","name":"Num405_18.09.jpg"},{"id":"1Q8MSbIHi-X_17xS6QTw__QyTSEX5_WYB","name":"Num406_18.09.jpg"},{"id":"155Zo5ldbBDOrvIfZ7N_wHnv6Fqzaelho","name":"Num407_18.09.jpg"},{"id":"1rmzTSkkq-sVLReJNY5WUeGrdzERde23M","name":"Num408_19.09.jpg"},{"id":"1P9PGMvXX2plu2AtYUZSW6v7ZorPsWo9G","name":"Num409_20.09.jpg"},{"id":"1-RhRa24x30JL2TdfhIGU_ox0xvQEzKpH","name":"Num410_21.09.jpg"},{"id":"1cB9rCWXlSGGxt5Bmpfa7xxR9cGweHV8G","name":"Num411_22.09.jpg"},{"id":"11FaEOFtqdf_-Oo7uxbO1mzPdi0edYfQZ","name":"Num412_23.09.jpg"},{"id":"1hJpfdz9UYol65jL5QVTAHNvWnuaytkSg","name":"Num413_23.09.jpg"},{"id":"18HeY2u2kJKAB4lwSVNzxynRFiqbm1SDz","name":"Num414_24.09.jpg"},{"id":"16B2WrqgZNL7f0ocoj1tnxnWYQ3oMGWUt","name":"Num415_25.09.jpg"},{"id":"1sql97xlQA7giORiRB7RsvUDktibgejB9","name":"Num416_25.09.jpg"},{"id":"1f5_rXk4IYrJ_b7XMksVhD4BvupA8eY2o","name":"Num417_26.09.jpg"},{"id":"1x-JCyWOrC-PpjtufjRBDfemkI_qHAak7","name":"Num418_27.09.jpg"},{"id":"1UOEvaolp3-FeI1jCh4E0a0h2sHT1IcZu","name":"Num419_28.09.jpg"},{"id":"1ImE05sAzbsg0S9LRHSh1DPiGhrq3fyyD","name":"Num420_29.09.jpg"},{"id":"1AxOhpDxAkFMrOYtiSfaeyxCYmOsTNJYU","name":"Num421_30.09.jpg"},{"id":"1ZoX5r-evTu-ArpWbcWPfpDlF4oPA5sHQ","name":"Num422_01.10.jpg"},{"id":"1Uj8UOuao8lcMIHwfHI5xMVMzXa7RAKxp","name":"Num423_02.10.jpg"},{"id":"1IJgL8rRSAfsIO7xEKj1S0Fw6khh0O5A8","name":"Num424_03.10.jpg"},{"id":"1rzpmIL8w8RPEq1fclZp7m3w1OjIE40fY","name":"Num425_04.10.jpg"},{"id":"1nWRxtPdaLy6mPlBgTo2hGDx-tSvXo-iy","name":"Num426_05.10.jpg"},{"id":"16yKYfD1cickpYHtk-W7DEE3rHsfq1S5k","name":"Num427_06.10.jpg"},{"id":"1D4E_YZd30AKr1Os687puRb85JxLv_JkY","name":"Num428_07.10.jpg"},{"id":"1Jlu4uqeP5GjECswNdayeSCd71d_d5fpO","name":"Num429_08.10.jpg"},{"id":"1n06Q3Jrt_p4T5d_EAVT9CRGYpTjf1Ky8","name":"Num430_09.10.jpg"}], story: [{"id":"1EcZ2YZZL5x03AIyM_GXD9F6qWK5FotQO","name":"Acolchado_Kioto_14.08.mp4"},{"id":"1dIbMmOHDnl7SQ1wHiYSFUAjay5K666a9","name":"Acolchado_Seul_23.08.mp4"},{"id":"14UWeGT6r1LaXJJphQc1YolPPWenV1F4C","name":"Num046_22.08.jpg"},{"id":"1qMPf6ynQDpm4kBlS6ohxYz_G0mObnFCw","name":"Num047_22.08.jpg"},{"id":"1HoIjHbX4QBcMVi3Flik4Cg8u-10N5tks","name":"Num048_22.08.jpg"},{"id":"178pwTBRW8WJ6yPcZ_QzhZBiJQxnwVgPk","name":"Num052_17.08.jpg"},{"id":"1iTKTz7gQIsKqOLJLYvASWuII56wQIrfu","name":"Num053_17.08.jpg"},{"id":"1lyUsdnivPidDVDeBayRlR_qhm4Sl_eNZ","name":"Num054_17.08.jpg"},{"id":"1TZHxXWXFQRKQaHGVJA1y2fhzhn5-ml83","name":"Num055_17.08.jpg"},{"id":"1-rqd2k0cuE99LP8K8oaanWWNXjyc5zN0","name":"Num061_30.07.jpg"},{"id":"1xjstFndwEgRtcK3ctgyBwkExi3aX8wGG","name":"Num062_31.07.jpg"},{"id":"1V0KPf5Xuqxk1J2CE8FOn5G09QDDUnXDE","name":"Num063_01.08.jpg"},{"id":"1Qy3ymatbKT1DdubD0ijJcH0I8kiV1k31","name":"Num064_02.08.jpg"},{"id":"15TKzdbSnkQx9f8jh340NzCbLvnl6tWCN","name":"Num065_14.08.jpg"},{"id":"1EkR1FSAZq6vjOjQdj2e4XA4Vc7Z24SM0","name":"Num066_14.08.jpg"},{"id":"1WxIRx3qH3g_GWzxkF9FimjoOnZvR8J4m","name":"Num067_14.08.jpg"},{"id":"1Ol0CmUqzBow8FIlE7RAknNYr4HrzMFb6","name":"Num084.Manta_Premium_29.07.mp4"},{"id":"1G8IWlsmlIrnuaYO1475qzCtvcrUsOwXq","name":"Num084_28.07.png"},{"id":"1wppl8VDSpP1CB6CwQwAZy7s0n468HXWZ","name":"Num085.Manta_Basic_28.07.mp4"},{"id":"1COjKqFGViKnidxWcCaEFn6SDUCQ_kVyj","name":"Num085_27.07.png"},{"id":"1xcEay63HpfkLDUfh-mfock-ZJJBFg0WX","name":"Num086_25.07.png"},{"id":"1LsWkE5cOv_PmrdghFQtmishcGeuBjroW","name":"Num086Manta_Everest_26.07.mp4"},{"id":"1QjcXwga9_6ikdUhEjtTJcI4my-G_Epr8","name":"Num087_25.07.png"},{"id":"1b5eDoDsea4LdFNVGoyeuE1_E-w81kAOF","name":"Num141_18.08.jpg"},{"id":"1CEypDeE4ZftGO--G6wftcfC5V0glKkwM","name":"Num142_18.08.jpg"},{"id":"17GqQTS7A9j85Efi9haYRPOoxukkYKFUC","name":"Num143_18.08.jpg"},{"id":"1UfzXvouKretn7r--G-kbBM9BSVBOh8W0","name":"Num144_18.08.jpg"},{"id":"1x2GpBqvNdOINAV-b2bWrgIgyHSR-pfWc","name":"Num145_18.08.jpg"},{"id":"12-f6E-9hNwJREleffHm8PMbLWJyf_MI4","name":"Num146_19.08.jpg"},{"id":"1ESYO_ir7hFUR66zWlQNNuYwruI8hqOGF","name":"Num147_19.08.jpg"},{"id":"1al3zo6CgcnKuQtA31srIDhrzFtU6sepe","name":"Num148_19.08.jpg"},{"id":"1Wn3iaNwYNZoLRhZGugLJexGJDe3MHILc","name":"Num149_19.08.jpg"},{"id":"1ZfywZTnBXmNqFNniVY7_yRmTcwEU2n1K","name":"Num150_19.08.jpg"},{"id":"1JW5eHJBWZoyqvw9r7eipzkROUVRid3iN","name":"Num151_19.08.jpg"},{"id":"1rKNqz2zXqvdYNkWDKP4Is-EpEc3l64NJ","name":"Num153_19.08.jpg"},{"id":"16TJ63d70sRa82Zjkmhg1PPR10d2QENt7","name":"Num156_16.08.jpg"},{"id":"1fFhljfsaga4bSlSCqC_dn9dR1f6RyTpl","name":"Num157_16.08.jpg"},{"id":"1F3t7QoLf7wc2fqSVzKZQWriyAk02V9lr","name":"Num158_16.08.jpg"},{"id":"1boJa0PACnl6q_g84iGCaCrSULiv3Deqx","name":"Num159_16.08.jpg"},{"id":"1qZx8ZP-zJlNwsAho5MMclgQggQHDOtKa","name":"Num160_16.08.jpg"},{"id":"1PEhLjCweMlFpNCGtV2mzeAW_hEh7sdFR","name":"Num161_16.08.jpg"},{"id":"1O-vIAVEGlVltcNA0HJRbxZLlWqpV_F5z","name":"Num162_16.08.jpg"},{"id":"1rKCqq9uMDqscOZi99IuvKvAdPJUWpDJg","name":"Num163_16.08.jpg"},{"id":"1WDoYsV0R0QzsDnHVAgDvT-oiIwdKg-Vn","name":"Num164_16.08.jpg"},{"id":"1TiuCSThqM4-FfWYCqbAAnkHWZhvO2INT","name":"Num165_16.08.jpg"},{"id":"1fx-tKKv1vk0diaVyG1nhYjBp1JrmgLo4","name":"Num166_16.08.jpg"},{"id":"17lqN_WZ_nU0mf-KWVpMLKQ3DVskiBdsl","name":"Num167_20.08.jpg"},{"id":"1bb0Fb-dXy2z20efv8f3b7l88BiEH8zbI","name":"Num168_20.08.jpg"},{"id":"1x5k02A5VGrFd2UO2E8SoTli0mGu-rroS","name":"Num169_20.08.jpg"},{"id":"1EYmsdgh68WEdeVaP07MVy_NGpffsGd7W","name":"Num170_20.08.jpg"},{"id":"1IeNN-PhCGygof2y6W3NDMSAR_57KUvu8","name":"Num171_20.08.jpg"},{"id":"1wf6NJVUVHMnmdY6x5hzTsP5xDDou9iVx","name":"Num172_20.08.jpg"},{"id":"1LZYWWaPW_MBmbOhh53_l8AWh9q9aA1hV","name":"Num173_03.08.jpg"},{"id":"1c7ubmVGvZRBUyoYOr1GYH5hHZVJU4nCc","name":"Num174_03.08.jpg"},{"id":"1uPHeVj1AM_mq-rxdUOh_F4PcBeyM8_8U","name":"Num175_03.08.jpg"},{"id":"1lP6yE7DBRqZoTv2-TWm2TIG7Dwap8q8t","name":"Num176_03.08.jpg"},{"id":"1R2uPPvtDMZWCBPZmfyjkKO-JfHFvLDFo","name":"Num177_03.08.jpg"},{"id":"1aR6s8Ql56DXh7Jjjex5C8eZsNoF5FaKx","name":"Num178_03.08.jpg"},{"id":"1MNNZB1LbV31lX7MY6zss138NfyglWZcU","name":"Num179_03.08.jpg"},{"id":"1Jr5QH4C_rNHUsuntlxIOCX8Ivq46wPdW","name":"Num180_03.08.jpg"},{"id":"1oPEjqYNaDlHtD44LPieFkj--snlLPSej","name":"Num181_03.08.jpg"},{"id":"1w87L24AfSX0KX4IJ3x2VEhmaVRTDP2yw","name":"Num182_03.08.jpg"},{"id":"1W9QlU6VQijbFw9ipooST-baGjqBfA1zR","name":"Num185_04.08.jpg"},{"id":"1JzSrqNVe1XdwUTuMCZmIV3gBeTq4xQdA","name":"Num185_10.08.jpg"},{"id":"1XH9rwJ9P1VGFdDg-DDYD5seBHrBu-2JW","name":"Num186_05.08.jpg"},{"id":"1RJEn58e4EtK4viwZPmB6Pbi5pCGVGkrH","name":"Num186_10.08.jpg"},{"id":"1Nf1_bW8rO5c2gzeMNTlWcJ5llg_ogcIk","name":"Num187_06.08.jpg"},{"id":"1608Tcx75eF_J4G_3g-6i8t8N36GYVBvU","name":"Num187_10.08.jpg"},{"id":"1Fhqns2b-2-KwXUn0HUMZ_tVx0rL5bVO3","name":"Num188_07.08.jpg"},{"id":"1sdi-LiR4dnIRBFP0hX3Gx7LHC-ZTSokK","name":"Num188_10.08.jpg"},{"id":"1WljAftjzjSTC_-YL231fqnIEWMui6je0","name":"Num189_08.08.jpg"},{"id":"16vexEe-zgZYBDQve9oxm6xpQSAahkAmp","name":"Num189_10.08.jpg"},{"id":"1gqetsajvK8BFwuKFFkBu6oatej-wal3y","name":"Num190_09.08.jpg"},{"id":"1DOGGQIU7O3td9QUBNOWP6Xhy2NkOC7Bs","name":"Num190_10.08.jpg"},{"id":"1t7UlK8GwXeiuBUnjZfc3v49fgzFJk2sH","name":"Num191_23.08.jpg"},{"id":"1XEHVvng2_eDBdNXKFri3SUgs1kM8XzH0","name":"Num192_24.08.jpg"},{"id":"1jE7-X9NbV_zCpSNsAhRvRqKYvYuBqZ0b","name":"Num193_25.08.jpg"},{"id":"1SoyrS1Vkwb_0XvFVqAKBoUNcECz4eONa","name":"Num196_17.07.jpg"},{"id":"17FQiNdMpfIwK594LJekXGjiDxt1bUxYN","name":"Num197_18.07.jpg"},{"id":"1tXjL02Qh-LQnAWbNfqrJdTNFqaMO_lRF","name":"Num198_19.07.jpg"},{"id":"1iyYNLxKAaDg5d1CUFAxMvET2yrVChD9K","name":"Num199_20.07.jpg"},{"id":"1kjr2V6_UWbTs3NyUF72S6qZvLIoaPGcG","name":"Num200_21.07.jpg"},{"id":"1uVsdtWT2BKHsjYFBlPkxpARedh6WxJgg","name":"Num201_22.07.jpg"},{"id":"1dyCNM3vzDCxviMh57d26JvKPkpLi_XCS","name":"Num202_23.07.jpg"},{"id":"16waS51hemBtW29Ht-xy5vGBsnSJCjOa9","name":"Num203_24.07.jpg"},{"id":"1S64eaL6-nZ05_OgoPrtzSPNQu2bW_hEw","name":"Num212_13.08.jpg"},{"id":"1n2rPlJOtOJnAt-5KzXUOuiZazn5KTZQj","name":"Num213_13.08.jpg"},{"id":"1GfgeZdAVBS865vTM6aHs2TQTzHfAGK1a","name":"Num214_13.08.jpg"},{"id":"13rW8GmHw1RwY8cX8XHFibGM9vFdkw83_","name":"Num215_13.08.jpg"},{"id":"1CIfYZKi24bOwRRFRhXdxlBsohQ8cT_RC","name":"Num216_13.08.jpg"},{"id":"1_YcLXPXLeG-1cP5AAQ6MolAbWSrxs9pt","name":"Num217_13.08.jpg"},{"id":"17jRO249ozOt_rxkvfduAqxnGOXTYX_ZP","name":"Num218_13.08.jpg"},{"id":"1tCx6jasDAFsjLtSufCtC5Tj8OkVNNIqO","name":"Num219_13.08.jpg"},{"id":"1s8DJmqRGcHD_gCkqdOde9L5BMT1K_Fuv","name":"Num234_21.08.jpg"},{"id":"1O87ecRjoVucXT6_fp49A3sToLJDh0wjh","name":"Num236_12.08.jpg"},{"id":"1A4ZDVeyJqF8bHWqbMe0Agz8aHySYcK2S","name":"Num237_12.08.jpg"},{"id":"1RK9PWViEdnsfvVKyUvlfRWzZVl36zPXH","name":"Num238_12.08.jpg"},{"id":"1pV5KTXnEDi2rw8_XS4XE9EpyCwux8ZJO","name":"Num239_12.08.jpg"},{"id":"1iB7y6Zsk3rdjypXMQ5WGkeQPMFKNPAIc","name":"Num240_12.08.jpg"},{"id":"1RgHPDJrYv8yEn6ERV-z5Q5JE-FMST1Mq","name":"Num241_12.08.jpg"},{"id":"1vfhCrPUDdPsbpGiBklOeVo7f9F4g5lEA","name":"Num242_12.08.jpg"},{"id":"1EaaRX3dowGZc6X23eu-EKtmTJDsLF8Hg","name":"Num243_12.08.jpg"},{"id":"1fpXwVtuPTgzZP3P7zbbPgJSdvgst-RgX","name":"Num244_12.08.jpg"},{"id":"1-P4CpI83jWlFbf2_Ea-M6jXkTTfxGH62","name":"Num245_12.08.jpg"},{"id":"1cKvGWizGouP79PUK14K-kjP4xzJXk1gS","name":"Num246_11.08.jpg"},{"id":"1_WfbUxO8363LYJaiQFiaPxB_azCGJYvp","name":"Num265_03.09.jpg"},{"id":"1PtrkCOgVgm4S7J4rqLiwcAcEYN4fBsXH","name":"Num266_04.09.jpg"},{"id":"10Gx55zzyk-sH912fIafDW5mTbwhtMHrj","name":"Num267_05.09.jpg"},{"id":"1lTPIB2JdGIKWoLWPn9pF-PS2WVUiwVgY","name":"Num268_26.08.jpg"},{"id":"1vuPW16cTBn9EZnFWDhn6v52d7Fk6sQR7","name":"Num269_27.08.jpg"},{"id":"1XIMc5CRSzt4ARF5u1S1vRoeENcg7uk33","name":"Num270_28.08.jpg"},{"id":"1Q5n3AX_9Bn1GEl0wHwZnOTNFgxp8ZQVV","name":"Num271_29.08.jpg"},{"id":"1azP047krNS1tby_y6bXPrVf23_d1xbO6","name":"Num272_30.08.jpg"},{"id":"1U7nBxsw_sELVzG8oAkltizKhMzOE8Du3","name":"Num273_31.08.jpg"},{"id":"1wLCFD8ZllsQuQ6J46zAPFzNadqTWHkLg","name":"Num274_01.09.jpg"},{"id":"1N7cyeUOoKwReTSKS6tHssUZftmy1nr8p","name":"Num275_02.09.jpg"},{"id":"1DD7d0lhlDPIk-EblL5dmqUTdh5_xJZhq","name":"Num393_06.09.jpg"},{"id":"18AiDKa1ac_0PDOvg4mH9EjpDVnr5GYyB","name":"Num394_07.09.jpg"},{"id":"1Jsrx6KEqXkbb9L1ivN4cX_BrrKsQH0H6","name":"Num395_08.09.jpg"},{"id":"16swZR5q0RN9mu0dSaib_R-yC3uwrRNco","name":"Num396_09.09.jpg"},{"id":"1BgVr1CnCvlOjWbhlQEvYNvHSfinYaXjX","name":"Num397_10.09.jpg"},{"id":"1Q-JBaBd8ndihAquF2JMTXkYVVTES7JVb","name":"Num398_11.09.jpg"},{"id":"1hVyZ1SIrDj-wIBxtjZuSHSSLR4v9DkGd","name":"Num399_12.09.jpg"},{"id":"1ox_8dZYPWQW6fPJ4pWSmrPN41WNVpuns","name":"Num400_13.09.jpg"},{"id":"1rkpAaytaZcbQIZ5-47po9exg50uhHSoi","name":"Num401_14.09.jpg"},{"id":"1cixngYp6MYg-kAifXXDG1rcDOFozytB_","name":"Num402_15.09.jpg"},{"id":"1pLoM_tpAg6qUTSg7bPagrFzQo0PHIxmg","name":"Num403_16.09.jpg"},{"id":"1C8l73omJmU6PK0CK4gldFMNl0vfdgJqN","name":"Num404_17.09.jpg"},{"id":"1lda23QuOX7aehdA9jhhrfp6MioP5IGGw","name":"Num405_18.09.jpg"},{"id":"16CYWUzEwG-FJ9pDBNmYDGfgNH6G1Vtqd","name":"Num406_18.09.jpg"},{"id":"1svvq5lM5qUtqwiofTrBOWrzkzE9PRZ5w","name":"Num406_18.09.jpg"},{"id":"1HK6-ARzBH_lPpn-UvkvyDGB5ncF14ngF","name":"Num407_18.09.jpg"},{"id":"1Tnl7bHTPcBEGZhPGPsOIpBq9tWDNcPXz","name":"Num408_19.09.jpg"},{"id":"1pekG55OlGh7rAVTQ6UeoRLoPSgOQiMGH","name":"Num409_20.09.jpg"},{"id":"1FLKgKnp_2UBSWeI08xEQ5m5BxuIl9brE","name":"Num410__21.09.jpg"},{"id":"11lufgmVx4gPTI5h_MDC1CwezyP2KTkmU","name":"Num411_22.09.jpg"},{"id":"1iLS1PiuxY-pLf2LBuKhm4xAtlvJ74mTB","name":"Num412_23.09.jpg"},{"id":"1azM5pobXZOHtzqMLFkga7LGiy5ai57cY","name":"Num413_23.09.jpg"},{"id":"1ytMv1QfkxZR3aC7B5v6pKTasImPrHOrj","name":"Num414_24.09.jpg"},{"id":"1_WpeAoNun9twZgkWL_qbkKc1WvcVaqKZ","name":"Num415_25.09.jpg"},{"id":"1sr4DRrSxB7FTM1nNaq08MAPS9W90UgLa","name":"Num416_25.09.jpg"},{"id":"1b_MVmR2QpHEHohtOA5SdBE_spXurNvdV","name":"Num417_26.09.jpg"},{"id":"1jRXgqxpXjIgrmHKgWFcwH1NDNB3PoLr7","name":"Num418_27.09.jpg"},{"id":"1RdG6UooyAhgAiHV_1IR_jwiS8rtwOort","name":"Num419_28.09.jpg"},{"id":"1tM9_6rQf20ZG4-KTIDtaBnj0c9Q2I96Z","name":"Num420_29.09.jpg"},{"id":"184OcX_cJ2PS7yaToY9Z4TsCXuApfIM1G","name":"Num421_30.09.jpg"},{"id":"1HlAZ8deUADpGr-vQsODMxT06533nOWyx","name":"Num422_01.10.jpg"},{"id":"1mb6__fmPSbob2tBH65h2ernejL5HHs3n","name":"Num423_02.10.jpg"},{"id":"1sCkI5MoJnud2jMJPGUFCkfogzL88PPFo","name":"Num424_03.10.jpg"},{"id":"1Z3D9wzsIRfiMcA7ezClfa_SoRc3teCV4","name":"Num425_04.10.jpg"},{"id":"1wJxolKmZ_CHoeM2gdPX6gRTsdxkqcfia","name":"Num426_05.10.jpg"},{"id":"1CIDNI9t1PbfmDtCOe_An9QC1_Vnl5gjc","name":"Num427_06.10.jpg"},{"id":"1JFr871K8NB6ov1ASEuW3SLNVaGRGWgN3","name":"Num428_07.10.jpg"},{"id":"1JPklnGkA6-v_rqupKVunv3VqXKsAFkcu","name":"Num429_08.10.jpg"},{"id":"1WoG2MeGmm7Mjn17Memo7BLAt5TrK4hL5","name":"Num430_09.10.jpg"}] }
+        };
 
         let apSelectedFiles = []; // [{ file, dataUrl, isVideo, name, ext }]
         let apSelectedDriveUrls = []; // Links directos de Drive del catálogo si el usuario elige usarlos
@@ -8491,11 +8495,12 @@
                 const m = raw.match(/Num0*(\d+)/i);
                 return m ? `Num${m[1]}` : '';
             }
-            // NNN: limpiar extensión, fecha y prefijos igual que en el nodo '3. Elegir Foto Nueva2'
+            // NNN: limpiar extensión, fecha, prefijos y sufijos (_09hs, _20hs, (1), etc.)
             let clean = raw.replace(/\.[^/.]+$/, '');
             clean = clean.replace(/^(?:\d{1,2}[\/._-]\d{1,2})[\s._-]*/i, '');
             clean = clean.replace(/^(?:FEED|STORY|09HS|18HS|20HS)[\s._-]*/gi, '');
             clean = clean.replace(/^(?:Art\.?|Articulo|Modelo|Num)[\s._-]*/i, '');
+            clean = clean.replace(/[\s._-]*(?:FEED|STORY|09HS|18HS|20HS)+$/gi, '');
             clean = clean.replace(/\s*(?:\(\d+\)|_\d+)$/, '');
             return clean.trim().toUpperCase();
         }
@@ -8661,10 +8666,12 @@
                     console.warn('Aviso al cargar JeanCartier_stock para NachaHome:', eNacha);
                 }
 
-                // 3. Leer Historial de Publicadas en Vivo (ContenidoNNN gid=1194881315 y Contenido gid=0)
+                // 3. Leer Historial de Publicadas en Vivo (Sheets) + Archivos Programados en Carpetas de Google Drive
                 await Promise.all([
                     fetchApStoreHistory('nnn'),
-                    fetchApStoreHistory('nacha')
+                    fetchApStoreHistory('nacha'),
+                    fetchApStoreDriveFolders('nnn'),
+                    fetchApStoreDriveFolders('nacha')
                 ]);
 
                 populateApProductSelector();
@@ -8672,6 +8679,64 @@
                 renderAutopublisherDashboard();
             } finally {
                 if (icon) icon.classList.remove('fa-spin');
+            }
+        }
+
+        async function fetchApDriveFolderList(folderId) {
+            if (!folderId) return null;
+            // Intento 1: Backend Node local / propio (/api/drive-folder/:folderId)
+            try {
+                const rLocal = await fetch(`/api/drive-folder/${encodeURIComponent(folderId)}`);
+                if (rLocal.ok) {
+                    const data = await rLocal.json();
+                    if (data && Array.isArray(data.files) && data.files.length > 0) {
+                        return data.files;
+                    }
+                }
+            } catch (_) {}
+
+            // Intento 2: Lector directo de embeddedfolderview vía r.jina.ai (compatible con GitHub Pages / CORS)
+            try {
+                const jinaUrl = `https://r.jina.ai/https://drive.google.com/embeddedfolderview?id=${encodeURIComponent(folderId)}`;
+                const rJina = await fetch(jinaUrl);
+                if (rJina.ok) {
+                    const txt = await rJina.text();
+                    const files = [];
+                    const seen = new Set();
+                    // Formato Markdown de r.jina.ai: ... nombre_archivo.ext](https://drive.google.com/file/d/FILE_ID/view
+                    const rx = /\s([^\n\[\]]+?\.(?:jpg|jpeg|png|webp|mp4|mov))\]\(https:\/\/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)\/view/gi;
+                    let m;
+                    while ((m = rx.exec(txt)) !== null) {
+                        const name = m[1].trim();
+                        const id = m[2].trim();
+                        if (id && !seen.has(id)) {
+                            seen.add(id);
+                            files.push({ id, name });
+                        }
+                    }
+                    if (files.length > 0) return files;
+                }
+            } catch (_) {}
+
+            return null;
+        }
+
+        async function fetchApStoreDriveFolders(storeKey) {
+            const meta = AP_STORES_META[storeKey];
+            if (!meta) return;
+            try {
+                const [feedLive, storyLive] = await Promise.all([
+                    fetchApDriveFolderList(meta.feedFolderId),
+                    fetchApDriveFolderList(meta.storyFolderId)
+                ]);
+                if (Array.isArray(feedLive) && feedLive.length > 0) {
+                    apDriveFilesByStore[storeKey].feed = feedLive;
+                }
+                if (Array.isArray(storyLive) && storyLive.length > 0) {
+                    apDriveFilesByStore[storeKey].story = storyLive;
+                }
+            } catch (e) {
+                console.warn(`Aviso al sincronizar carpetas Drive de ${storeKey}:`, e);
             }
         }
 
@@ -8687,13 +8752,24 @@
                     return xm && parseInt(xm[1], 10) === targetNum;
                 }) || null;
             }
-            const cleanTarget = String(sku).toUpperCase().replace(/[^A-Z0-9]/g, '');
+            const rawStr = String(sku).toUpperCase().trim();
+            const cleanTarget = rawStr.replace(/[^A-Z0-9]/g, '');
+            const baseToken = rawStr.split(/[_\s]/)[0].replace(/[^A-Z0-9]/g, '');
             if (!cleanTarget) return null;
+
+            // 1. Coincidencia exacta
+            let exact = catalog.find(x => {
+                const cleanCat = String(x.sku || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+                return cleanCat && (cleanCat === cleanTarget || (baseToken.length >= 4 && cleanCat === baseToken));
+            });
+            if (exact) return exact;
+
+            // 2. Coincidencia parcial (ej: 1194 -> V1194 / L2610_BAMBU -> L2610)
             return catalog.find(x => {
                 const cleanCat = String(x.sku || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
                 if (!cleanCat) return false;
-                if (cleanCat === cleanTarget) return true;
                 if (cleanCat.length >= 4 && cleanTarget.length >= 4 && (cleanCat.includes(cleanTarget) || cleanTarget.includes(cleanCat))) return true;
+                if (baseToken.length >= 4 && cleanCat.length >= 4 && (cleanCat.includes(baseToken) || baseToken.includes(cleanCat))) return true;
                 return false;
             }) || null;
         }
@@ -8727,7 +8803,7 @@
                 timeStr = `${hh}:${min}`;
             }
 
-            // 3. Fecha en el nombre del archivo (ej: "24_07.art.266500-99.jpg", "Num087_25.07.png", "20-10 CRG-035.jpg")
+            // 3. Fecha en el nombre del archivo (ej: "24_07.art.266500-99.jpg", "01.11CRG-004.jpg", "Num087_25.07.png", "30.10_L25931.jpg")
             if (storeKey === 'nacha') {
                 const fnMatch = fn.match(/(?:_|^)(\d{1,2})\.(\d{1,2})(?=_|\.|$)/);
                 if (fnMatch) {
@@ -8736,7 +8812,7 @@
                     isoDate = `2026-${mm}-${dd}`;
                 }
             } else {
-                const fnMatch = fn.match(/^(\d{1,2})[._-](\d{1,2})(?=[.\s_-])/);
+                const fnMatch = fn.match(/^(\d{1,2})[._-](\d{1,2})(?:[.\s_-]+|(?=[A-Za-z0-9]))/);
                 if (fnMatch) {
                     const dd = fnMatch[1].padStart(2, '0');
                     const mm = fnMatch[2].padStart(2, '0');
@@ -8990,10 +9066,10 @@
         }
 
         function pickNextFreeApDate() {
-            const storeItems = (autopublisherQueue || []).filter(q => q.store === currentApStore);
-            const usedDates = new Set(storeItems.map(q => q.date));
+            const allEvents = getApPlannerEvents(currentApStore);
+            const usedDates = new Set(allEvents.map(ev => ev.isoDate));
             const d = new Date();
-            for (let i = 0; i < 60; i++) {
+            for (let i = 0; i < 90; i++) {
                 const yyyy = d.getFullYear();
                 const mm = String(d.getMonth() + 1).padStart(2, '0');
                 const dd = String(d.getDate()).padStart(2, '0');
@@ -9571,54 +9647,151 @@
 
         function getApPlannerEvents(storeKey) {
             const history = apHistoryByStore[storeKey] || [];
+            const driveStore = apDriveFilesByStore[storeKey] || { feed: [], story: [] };
             const queue = (autopublisherQueue || []).filter(q => q.store === storeKey);
             const eventsMap = new Map();
 
-            // 1. Consolidar publicaciones YA SUBIDAS desde Google Sheets (agrupando Carruseles por igPostId o fecha+SKU)
-            history.forEach((h, i) => {
-                const hasPostId = h.igPostId && h.igPostId !== '-';
-                const groupKey = hasPostId
-                    ? `PUB_POST_${h.igPostId}`
-                    : `PUB_${h.isoDate || 'NODATE'}_${h.sku}_${h.timeStr}_${h.fileId || i}`;
+            const now = new Date();
+            const todayIso = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
-                if (!eventsMap.has(groupKey)) {
-                    const matchedCat = findApCatalogItemBySku(h.sku, storeKey);
-                    const catDriveId = (matchedCat && matchedCat.driveUrls && matchedCat.driveUrls[0]) ? matchedCat.driveUrls[0] : '';
-                    const firstFileId = h.fileId || catDriveId;
-                    eventsMap.set(groupKey, {
-                        id: groupKey,
-                        store: storeKey,
-                        statusType: 'published', // 'published' | 'scheduled'
-                        statusLabel: h.status || 'Publicado en IG',
-                        isoDate: h.isoDate || '2026-07-24',
-                        timeStr: h.timeStr || (storeKey === 'nnn' ? '18:00' : '12:00'),
-                        sku: h.sku || 'S/D',
-                        productName: h.productName || (matchedCat ? matchedCat.name : h.fileName),
-                        price: h.price || (matchedCat ? matchedCat.price : ''),
-                        features: h.features || (matchedCat ? matchedCat.features : ''),
-                        slotType: h.slotType || 'feed',
-                        isVideo: Boolean(h.isVideo),
-                        igPostId: h.igPostId || '-',
-                        igStoryIds: h.igStoryIds || '-',
-                        fileIds: firstFileId ? [firstFileId] : [],
-                        fileNames: [h.fileName],
-                        thumbnailUrl: firstFileId ? buildApDriveThumbnailUrl(firstFileId, 400) : '',
-                        caption: matchedCat
-                            ? `${matchedCat.name} (${matchedCat.sku})\n💰 Precio: ${matchedCat.price}\n${matchedCat.features || ''}`
-                            : `Archivo publicado desde Google Drive: ${h.fileName}`
-                    });
-                } else {
-                    const existing = eventsMap.get(groupKey);
-                    if (h.fileId && !existing.fileIds.includes(h.fileId)) {
-                        existing.fileIds.push(h.fileId);
-                    }
-                    if (h.fileName && !existing.fileNames.includes(h.fileName)) {
-                        existing.fileNames.push(h.fileName);
-                    }
+            // Set de fileIds e isoDate+SKU que ya figuran como publicados en Google Sheets
+            const publishedFileIdSet = new Set();
+            const publishedDateSkuSet = new Set();
+            history.forEach(h => {
+                if (h.fileId) publishedFileIdSet.add(h.fileId);
+                if (h.isoDate && h.sku && h.isoDate <= todayIso) {
+                    publishedDateSkuSet.add(`${h.isoDate}_${h.sku}`);
                 }
             });
 
-            // 2. Sumar publicaciones PROGRAMADAS en la cola del portal
+            // Helper para insertar o fusionar archivos por Fecha + SKU
+            const upsertDaySkuEvent = (item) => {
+                const groupKey = `EVT_${storeKey}_${item.isoDate}_${item.sku}`;
+                const matchedCat = findApCatalogItemBySku(item.sku, storeKey);
+                const catDriveId = (matchedCat && matchedCat.driveUrls && matchedCat.driveUrls[0]) ? matchedCat.driveUrls[0] : '';
+
+                if (!eventsMap.has(groupKey)) {
+                    const firstFileId = item.fileId || catDriveId;
+                    eventsMap.set(groupKey, {
+                        id: groupKey,
+                        store: storeKey,
+                        statusType: item.isPublished ? 'published' : 'scheduled',
+                        statusLabel: item.isPublished ? (item.statusLabel || 'Publicado en IG') : 'Programado en Google Drive',
+                        isoDate: item.isoDate,
+                        timeStr: item.role === 'feed'
+                            ? (storeKey === 'nnn' ? '18:00' : '12:00')
+                            : (item.timeStr || (storeKey === 'nnn' ? '18:00' : '12:00')),
+                        sku: item.sku || 'S/D',
+                        productName: matchedCat ? matchedCat.name : (item.productName || `Art. ${item.sku}`),
+                        price: matchedCat ? matchedCat.price : (item.price || ''),
+                        features: matchedCat ? matchedCat.features : (item.features || ''),
+                        slotType: item.role === 'feed' ? 'feed' : 'story',
+                        hasFeed: item.role === 'feed',
+                        hasStory: item.role === 'story',
+                        isVideo: Boolean(item.isVideo),
+                        igPostId: item.igPostId || (item.isPublished ? '-' : 'En carpeta Drive (Pendiente)'),
+                        igStoryIds: item.igStoryIds || (item.role === 'story' ? 'En carpeta Drive' : '-'),
+                        fileIds: firstFileId ? [firstFileId] : [],
+                        fileNames: item.fileName ? [item.fileName] : [],
+                        thumbnailUrl: firstFileId ? buildApDriveThumbnailUrl(firstFileId, 400) : '',
+                        caption: matchedCat
+                            ? `${matchedCat.name} (${matchedCat.sku})\n💰 Precio: ${matchedCat.price}\n${matchedCat.features || ''}`
+                            : `Archivo en Google Drive: ${item.fileName}`
+                    });
+                } else {
+                    const existing = eventsMap.get(groupKey);
+                    if (item.isPublished && existing.isoDate <= todayIso) {
+                        existing.statusType = 'published';
+                        existing.statusLabel = item.statusLabel || 'Publicado en IG';
+                    }
+                    if (item.role === 'feed') {
+                        existing.hasFeed = true;
+                        existing.timeStr = storeKey === 'nnn' ? '18:00' : '12:00';
+                        // Priorizar siempre la foto de Feed como portada de la tarjeta
+                        if (item.fileId) {
+                            existing.fileIds = [item.fileId, ...existing.fileIds.filter(id => id !== item.fileId)];
+                            existing.thumbnailUrl = buildApDriveThumbnailUrl(item.fileId, 400);
+                        }
+                    } else {
+                        existing.hasStory = true;
+                        if (item.fileId && !existing.fileIds.includes(item.fileId)) {
+                            existing.fileIds.push(item.fileId);
+                        }
+                    }
+                    if (existing.hasFeed && existing.hasStory) {
+                        existing.slotType = 'both';
+                    }
+                    if (item.fileName && !existing.fileNames.includes(item.fileName)) {
+                        existing.fileNames.push(item.fileName);
+                    }
+                    if (item.igPostId && item.igPostId !== '-') existing.igPostId = item.igPostId;
+                    if (item.igStoryIds && item.igStoryIds !== '-') existing.igStoryIds = item.igStoryIds;
+                }
+            };
+
+            // 1. Procesar archivos de las carpetas de Google Drive (Feed primero, luego Story)
+            // Esto permite ver TODOS los posteos futuros programados en Drive (30/10, 31/10, Noviembre, etc.)
+            (driveStore.feed || []).forEach(f => {
+                const parsedDT = parseApPublishedDateAndTime('', f.name, storeKey);
+                if (!parsedDT.isoDate) return;
+                const sku = extractSkuFromPublishedFilename(f.name, storeKey) || 'S/D';
+                const isPub = (parsedDT.isoDate <= todayIso) && (publishedFileIdSet.has(f.id) || publishedDateSkuSet.has(`${parsedDT.isoDate}_${sku}`));
+                upsertDaySkuEvent({
+                    isoDate: parsedDT.isoDate,
+                    timeStr: storeKey === 'nnn' ? '18:00' : '12:00',
+                    sku,
+                    fileId: f.id,
+                    fileName: f.name,
+                    role: 'feed',
+                    isVideo: /\.(mp4|mov)$/i.test(f.name),
+                    isPublished: isPub,
+                    statusLabel: isPub ? 'Publicado (FEED 18HS)' : 'En Drive (Programado)'
+                });
+            });
+
+            (driveStore.story || []).forEach(f => {
+                const parsedDT = parseApPublishedDateAndTime('', f.name, storeKey);
+                if (!parsedDT.isoDate) return;
+                const sku = extractSkuFromPublishedFilename(f.name, storeKey) || 'S/D';
+                const isPub = (parsedDT.isoDate <= todayIso) && (publishedFileIdSet.has(f.id) || publishedDateSkuSet.has(`${parsedDT.isoDate}_${sku}`));
+                upsertDaySkuEvent({
+                    isoDate: parsedDT.isoDate,
+                    timeStr: parsedDT.timeStr || '09:30',
+                    sku,
+                    fileId: f.id,
+                    fileName: f.name,
+                    role: 'story',
+                    isVideo: /\.(mp4|mov)$/i.test(f.name),
+                    isPublished: isPub,
+                    statusLabel: isPub ? `Publicado (STORY ${parsedDT.timeStr})` : `En Drive (Story ${parsedDT.timeStr})`
+                });
+            });
+
+            // 2. Consolidar publicaciones históricas desde Google Sheets (en orden cronológico original)
+            const chronologicalHistory = [...history].reverse();
+            chronologicalHistory.forEach(h => {
+                const iso = h.isoDate || '2026-07-24';
+                const isFutureInSheet = iso > todayIso;
+                const isStoryFile = /09HS|20HS|STORY/i.test(h.fileName) || h.slotType === 'story';
+                upsertDaySkuEvent({
+                    isoDate: iso,
+                    timeStr: h.timeStr || (storeKey === 'nnn' ? '18:00' : '12:00'),
+                    sku: h.sku || 'S/D',
+                    productName: h.productName,
+                    price: h.price,
+                    features: h.features,
+                    fileId: h.fileId,
+                    fileName: h.fileName,
+                    role: isStoryFile ? 'story' : 'feed',
+                    isVideo: h.isVideo,
+                    igPostId: h.igPostId,
+                    igStoryIds: h.igStoryIds,
+                    isPublished: !isFutureInSheet,
+                    statusLabel: isFutureInSheet ? 'En Drive (Programado a Futuro)' : (h.status || 'Publicado en IG')
+                });
+            });
+
+            // 3. Sumar publicaciones PROGRAMADAS desde el creador del portal (autopublisherQueue)
             queue.forEach(q => {
                 const matchedCat = findApCatalogItemBySku(q.sku, storeKey);
                 const catDriveUrl = (q.catalogDriveUrls && q.catalogDriveUrls[0]) || (matchedCat && matchedCat.driveUrls && matchedCat.driveUrls[0]) || '';
@@ -9636,7 +9809,7 @@
                     store: storeKey,
                     statusType: 'scheduled',
                     statusLabel: q.status || 'Programado en Cola',
-                    isoDate: q.date || new Date().toISOString().slice(0, 10),
+                    isoDate: q.date || todayIso,
                     timeStr: timeMap[q.target] || (storeKey === 'nnn' ? '18:00' : '12:00'),
                     sku: q.sku || 'S/D',
                     productName: q.productName || q.sku,
@@ -9772,7 +9945,7 @@
                         </div>
                         <div class="flex items-center gap-1">
                             <span class="text-[9px] font-extrabold px-1.5 py-0.2 rounded ${isPub ? 'text-emerald-300 bg-emerald-500/15' : 'text-pink-300 bg-pink-500/20'}">
-                                ${isPub ? 'Subido' : 'En Cola'}
+                                ${isPub ? 'Subido' : 'Programado'}
                             </span>
                             ${statusDot}
                         </div>
@@ -10211,7 +10384,14 @@
         function renderAutopublisherDashboard() {
             const catalog = apCatalogByStore[currentApStore] || [];
             const history = apHistoryByStore[currentApStore] || [];
-            const queue = (autopublisherQueue || []).filter(q => q.store === currentApStore);
+
+            // Renderizar el Planificador Estilo Meta Business Suite (Mes / Semana / Grilla IG)
+            // Esto también actualiza apPlannerEventsCache con los eventos de Sheets + Google Drive + Cola
+            renderApMetaPlanner();
+
+            const allPlannerEvents = apPlannerEventsCache || [];
+            const scheduledEvents = allPlannerEvents.filter(e => e.statusType === 'scheduled');
+            const publishedEvents = allPlannerEvents.filter(e => e.statusType === 'published');
 
             let unpostedCount = 0;
             catalog.forEach(item => {
@@ -10225,37 +10405,34 @@
             const elUnpostedCount = document.getElementById('ap-kpi-unposted-count');
 
             if (elCatCount) elCatCount.innerText = catalog.length;
-            if (elSchedCount) elSchedCount.innerText = queue.length;
-            if (elPubCount) elPubCount.innerText = history.length;
+            if (elSchedCount) elSchedCount.innerText = scheduledEvents.length;
+            if (elPubCount) elPubCount.innerText = publishedEvents.length || history.length;
             if (elUnpostedCount) elUnpostedCount.innerText = unpostedCount;
 
             const tQueue = document.getElementById('ap-tab-count-queue');
             const tHist = document.getElementById('ap-tab-count-history');
             const tCat = document.getElementById('ap-tab-count-catalog');
-            if (tQueue) tQueue.innerText = queue.length;
+            if (tQueue) tQueue.innerText = scheduledEvents.length;
             if (tHist) tHist.innerText = history.length;
             if (tCat) tCat.innerText = catalog.length;
 
-            // Renderizar el Planificador Estilo Meta Business Suite (Mes / Semana / Grilla IG)
-            renderApMetaPlanner();
-
-            // Renderizar Sub-Tab 1: Cola Programada
+            // Renderizar Sub-Tab 1: Cola Programada (incluye los programados en Google Drive a futuro + los del portal)
             const queueContainer = document.getElementById('ap-queue-list');
             if (queueContainer) {
-                if (queue.length === 0) {
+                if (scheduledEvents.length === 0) {
                     queueContainer.innerHTML = `
                         <div class="col-span-full p-8 text-center rounded-2xl border border-dashed border-slate-800 bg-slate-950/50 space-y-2">
                             <div class="w-12 h-12 rounded-2xl bg-pink-500/10 text-pink-400 flex items-center justify-center mx-auto text-xl">
                                 <i class="fa-regular fa-calendar-plus"></i>
                             </div>
-                            <div class="text-sm font-bold text-white">No hay publicaciones en la cola de programación</div>
+                            <div class="text-sm font-bold text-white">No hay publicaciones futuras en la cola de programación</div>
                             <p class="text-xs text-slate-400 max-w-md mx-auto">
                                 Elegí un artículo arriba, seleccioná la fecha y subí la imagen o video para dejar armada tu grilla de contenidos en Google Drive.
                             </p>
                         </div>
                     `;
                 } else {
-                    queueContainer.innerHTML = queue.map(item => {
+                    queueContainer.innerHTML = scheduledEvents.map(item => {
                         const targetLabels = {
                             both: '🔥 Feed + Story',
                             feed: '📸 Solo Feed',
@@ -10263,38 +10440,43 @@
                             story_20: '🌙 Story 20:30 hs',
                             story: '📱 Story'
                         };
-                        const tBadge = targetLabels[item.target] || '📸 Feed';
+                        const tBadge = targetLabels[item.slotType] || '📸 Feed';
+                        const fileLabel = (item.fileNames || []).join(', ');
                         return `
-                            <div class="p-4 rounded-2xl bg-slate-950/90 border border-slate-800 hover:border-pink-500/40 transition flex flex-col justify-between gap-3 shadow-lg">
+                            <div onclick="openApPostDetailModal('${escapeHTML(item.id)}')" class="cursor-pointer p-4 rounded-2xl bg-slate-950/90 border border-slate-800 hover:border-pink-500/50 transition flex flex-col justify-between gap-3 shadow-lg">
                                 <div class="flex items-start justify-between gap-2">
-                                    <div>
-                                        <div class="flex items-center gap-1.5 flex-wrap">
-                                            <span class="px-2 py-0.5 rounded-md bg-pink-500/20 text-pink-300 border border-pink-500/30 font-mono font-bold text-[11px]">
-                                                📅 ${escapeHTML(item.date)}
-                                            </span>
-                                            <span class="px-2 py-0.5 rounded-md bg-slate-900 text-slate-300 border border-slate-800 font-bold text-[10px]">
-                                                ${tBadge}
-                                            </span>
-                                            ${item.mediaCount > 1 ? `<span class="px-2 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 text-[10px] font-bold">🎠 ${item.mediaCount} fotos</span>` : ''}
-                                        </div>
-                                        <h4 class="font-bold text-white text-sm mt-2">${escapeHTML(item.productName)}</h4>
-                                        <div class="text-xs font-mono text-emerald-400 font-semibold mt-0.5">
-                                            Archivo: ${escapeHTML(item.officialFileName)}
+                                    <div class="flex items-start gap-3">
+                                        ${item.thumbnailUrl
+                                            ? `<img src="${escapeHTML(item.thumbnailUrl)}" alt="${escapeHTML(item.sku)}" loading="lazy" referrerpolicy="no-referrer" class="w-16 h-16 rounded-xl object-cover border border-slate-800 bg-slate-900 shrink-0">`
+                                            : `<div class="w-16 h-16 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-pink-400 shrink-0"><i class="fa-brands fa-instagram text-xl"></i></div>`
+                                        }
+                                        <div>
+                                            <div class="flex items-center gap-1.5 flex-wrap">
+                                                <span class="px-2 py-0.5 rounded-md bg-pink-500/20 text-pink-300 border border-pink-500/30 font-mono font-bold text-[11px]">
+                                                    📅 ${escapeHTML(item.isoDate.split('-').reverse().join('/'))} • ${escapeHTML(item.timeStr)}
+                                                </span>
+                                                <span class="px-2 py-0.5 rounded-md bg-slate-900 text-slate-300 border border-slate-800 font-bold text-[10px]">
+                                                    ${tBadge}
+                                                </span>
+                                                ${item.mediaCount > 1 ? `<span class="px-2 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 text-[10px] font-bold">🎠 ${item.mediaCount} archivos</span>` : ''}
+                                            </div>
+                                            <h4 class="font-bold text-white text-sm mt-1.5">${escapeHTML(item.productName)}</h4>
+                                            <div class="text-[11px] font-mono text-emerald-400 font-semibold mt-0.5 truncate max-w-[230px]" title="${escapeHTML(fileLabel)}">
+                                                ${escapeHTML(fileLabel)}
+                                            </div>
                                         </div>
                                     </div>
-                                    <button type="button" onclick="deleteApQueueItem('${escapeHTML(item.id)}')" class="text-slate-500 hover:text-rose-400 p-1 text-xs" title="Eliminar de la cola">
-                                        <i class="fa-solid fa-trash-can"></i>
-                                    </button>
-                                </div>
-
-                                <div class="text-[11px] text-slate-400 line-clamp-3 bg-slate-900/70 p-2.5 rounded-xl border border-slate-800/80 whitespace-pre-line">
-                                    ${escapeHTML(item.caption || 'Copy generado automáticamente por IA en n8n')}
+                                    ${item.queueId ? `
+                                        <button type="button" onclick="event.stopPropagation(); deleteApQueueItem('${escapeHTML(item.queueId)}')" class="text-slate-500 hover:text-rose-400 p-1 text-xs" title="Eliminar de la cola">
+                                            <i class="fa-solid fa-trash-can"></i>
+                                        </button>
+                                    ` : ''}
                                 </div>
 
                                 <div class="flex items-center justify-between pt-2 border-t border-slate-800/80 text-[11px]">
                                     <span class="text-amber-300 font-bold">${escapeHTML(item.price || '')}</span>
-                                    <span class="text-emerald-400 font-semibold flex items-center gap-1">
-                                        <i class="fa-solid fa-circle-check"></i> ${escapeHTML(item.status)}
+                                    <span class="text-pink-400 font-semibold flex items-center gap-1">
+                                        <i class="fa-brands fa-google-drive"></i> ${escapeHTML(item.statusLabel)}
                                     </span>
                                 </div>
                             </div>
@@ -10352,7 +10534,7 @@
                 } else {
                     catBody.innerHTML = catalog.map(item => {
                         const isPub = isApProductAlreadyPublished(item, currentApStore);
-                        const inQueue = queue.some(q => q.sku.toUpperCase() === item.sku.toUpperCase());
+                        const inQueue = scheduledEvents.some(q => String(q.sku || '').toUpperCase() === String(item.sku || '').toUpperCase());
                         let badgeHtml = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">⏳ Pendiente de Publicar</span>`;
                         if (isPub) {
                             badgeHtml = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">✅ Ya Publicado en IG</span>`;
