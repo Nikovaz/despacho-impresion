@@ -1,5 +1,5 @@
-// Service Worker para CrocScale App
-const CACHE_NAME = 'crocscale-v1';
+﻿// Service Worker para CrocScale App
+const CACHE_NAME = 'crocscale-v3-planner';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -31,7 +31,7 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
-  // Estrategia Network First para datos dinámicos
+  // Estrategia Network First para datos dinÃ¡micos
   if (event.request.url.includes('google') || event.request.url.includes('supabase.co')) {
     event.respondWith(fetch(event.request));
     return;
@@ -40,3 +40,4 @@ self.addEventListener('fetch', event => {
     fetch(event.request).catch(() => caches.match(event.request))
   );
 });
+
