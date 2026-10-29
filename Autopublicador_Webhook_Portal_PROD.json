@@ -7,7 +7,373 @@
           "interval": [
             {
               "field": "cronExpression",
-              "expression": "0 18 * * *"
+              "expression": "0 12 * * *"
+            }
+          ]
+        }
+      },
+      "id": "72cb348b-164a-4b68-994d-53590816a5ef",
+      "name": "Cron todos los días 12hs",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -880,
+        1056
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "returnAll": true,
+        "filter": {
+          "folderId": {
+            "__rl": true,
+            "value": "171HZ5xtYv6Bh__6yQigYLjFLb9QkzksK",
+            "mode": "list",
+            "cachedResultName": "JulioPostNachaH",
+            "cachedResultUrl": "https://drive.google.com/drive/folders/171HZ5xtYv6Bh__6yQigYLjFLb9QkzksK"
+          }
+        },
+        "options": {}
+      },
+      "id": "3fb9d224-35a2-4861-98f9-33889431d670",
+      "name": "1a. Listar Feed (Drive)",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -656,
+        1264
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "3HuY6vo5wwgyvfmD",
+          "name": "Google Drive NNN"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "returnAll": true,
+        "filter": {
+          "folderId": {
+            "__rl": true,
+            "value": "1ozYfPVP_-c67WtzGXrKC8j44oCuXtgkZ",
+            "mode": "list",
+            "cachedResultName": "JulioStoryNachoH",
+            "cachedResultUrl": "https://drive.google.com/drive/folders/1ozYfPVP_-c67WtzGXrKC8j44oCuXtgkZ"
+          }
+        },
+        "options": {}
+      },
+      "id": "35294222-1882-4d83-ba4e-aae6bbf2ba3a",
+      "name": "1b. Listar Stories (Drive)",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -464,
+        1264
+      ],
+      "executeOnce": true,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "3HuY6vo5wwgyvfmD",
+          "name": "Google Drive NNN"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "13OZcCBHrVufQSB4HcZu1Vgnu6uYAGLFpWrwW-x347aw",
+          "mode": "list",
+          "cachedResultName": "NachaHome",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/13OZcCBHrVufQSB4HcZu1Vgnu6uYAGLFpWrwW-x347aw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Contenido",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/13OZcCBHrVufQSB4HcZu1Vgnu6uYAGLFpWrwW-x347aw/edit#gid=0"
+        },
+        "options": {}
+      },
+      "id": "0e937614-77ec-4ee8-b025-919ec099477f",
+      "name": "2a. Leer Historial (Sheets)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        -256,
+        1264
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "hMRjCOIdJsrsXsOU",
+          "name": "Google Sheets NNN"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Obtener y DEDUPLICAR archivos de Drive (Feed y Stories) para evitar multiplicaciones\nconst rawFeed = $('1a. Listar Feed (Drive)').all() || [];\nconst feedDriveFiles = [];\nconst seenFeed = new Set();\nfor (const item of rawFeed) {\n  const file = item.json;\n  if (file && file.id && !seenFeed.has(file.id)) {\n    seenFeed.add(file.id);\n    feedDriveFiles.push(file);\n  }\n}\n\nconst rawStory = $('1b. Listar Stories (Drive)').all() || [];\nconst storyDriveFiles = [];\nconst seenStory = new Set();\nfor (const item of rawStory) {\n  const file = item.json;\n  if (file && file.id && !seenStory.has(file.id)) {\n    seenStory.add(file.id);\n    storyDriveFiles.push(file);\n  }\n}\n\n// 2. Obtener historial de publicados\nlet publishedIds = [];\ntry {\n  const sheetItems = $('2a. Leer Historial (Sheets)').all() || [];\n  publishedIds = sheetItems\n    .map(item => item.json.file_id)\n    .filter(id => id && typeof id === 'string' && id.trim() !== '');\n} catch (e) {\n  publishedIds = [];\n}\n\n// 3. Filtrar archivos que NO estén publicados\nconst pendingFeed = feedDriveFiles.filter(file => !publishedIds.includes(file.id));\nconst pendingStory = storyDriveFiles.filter(file => !publishedIds.includes(file.id));\n\n// Helper para calcular fecha de hoy en Argentina (UTC-3) garantizando siempre 2 dígitos (ej: \"24.07\")\nconst now = new Date();\nconst argentinaOffset = -3 * 60 * 60 * 1000;\nconst localDate = new Date(now.getTime() + argentinaOffset);\nconst dayStr = String(localDate.getUTCDate()).padStart(2, '0'); // \"24\"\nconst monthStr = String(localDate.getUTCMonth() + 1).padStart(2, '0'); // \"07\"\nconst todayDateStr = `${dayStr}.${monthStr}`; // \"24.07\"\n\nconsole.log(`Fecha objetivo para hoy en Argentina: ${todayDateStr}`);\n\n// Helper para extraer día y mes en formato estandarizado \"DD.MM\"\nfunction parseFileDate(filename) {\n  if (!filename) return null;\n  const match = filename.match(/(?:^|[_\\\\-\\s])(\\d{1,2})[\\.\\-](\\d{1,2})(?:[_\\\\-\\s\\.]|$)/);\n  if (match) {\n    const d = match[1].padStart(2, '0');\n    const m = match[2].padStart(2, '0');\n    return `${d}.${m}`;\n  }\n  return null;\n}\n\n// Helper para extraer el número de producto NumXXX\nfunction extractProductNum(filename) {\n  if (!filename) return null;\n  const match = filename.match(/Num(\\d+)/i);\n  return match ? parseInt(match[1], 10) : null;\n}\n\n// 4. Buscar archivo para FEED correspondiente STRICTAMENTE al día de hoy (24.07)\nconst selectedFeedFile = pendingFeed.find(file => {\n  const date = parseFileDate(file.name);\n  return date === todayDateStr;\n});\n\n// 5. Buscar archivo para STORY correspondiente STRICTAMENTE al día de hoy (24.07) o al número de producto del Feed\nlet selectedStoryFile = pendingStory.find(file => {\n  const date = parseFileDate(file.name);\n  return date === todayDateStr;\n});\n\n// Si no hay por fecha exacta en Stories pero tenemos un Feed seleccionado hoy, buscar por el mismo número de producto\nif (!selectedStoryFile && selectedFeedFile) {\n  const targetNum = extractProductNum(selectedFeedFile.name);\n  if (targetNum !== null) {\n    selectedStoryFile = pendingStory.find(file => extractProductNum(file.name) === targetNum);\n  }\n}\n\n// SI NO HAY ARCHIVOS PARA HOY (24.07), NO SE PUBLICA NADA\nif (!selectedFeedFile && !selectedStoryFile) {\n  console.log(`No hay archivos programados para hoy (${todayDateStr}). No se publicará nada.`);\n  return [{\n    json: {\n      feed_files: [],\n      story_files: [],\n      file_id: '',\n      file_name: '',\n      product_num: null,\n      message: `No hay archivos programados para el día de hoy (${todayDateStr}). No se realiza publicación.`,\n      catalog_details: 'Sin publicaciones programadas para hoy.',\n      matched_item: {}\n    }\n  }];\n}\n\n// 6. Extraer número de producto del archivo seleccionado\nconst targetFile = selectedFeedFile || selectedStoryFile;\nconst productNum = extractProductNum(targetFile.name);\n\n// 7. Buscar detalles en el catálogo de Google Sheets\nlet catalogDetailsText = 'No se encontraron especificaciones para este producto en el catálogo.';\nlet matchedItemInfo = {};\nif (productNum !== null) {\n  try {\n    const catalogItems = $('2b. Leer Catálogo (Sheets)').all() || [];\n    const matchingRows = catalogItems\n      .map(item => item.json)\n      .filter(row => {\n         const val = row['Num de foto'] || row.Num || row.num;\n         return val !== undefined && parseInt(val, 10) === productNum;\n      });\n\n    if (matchingRows.length > 0) {\n      matchedItemInfo = matchingRows[0];\n      catalogDetailsText = `Detalles del Producto Num ${productNum}:\\n`;\n      catalogDetailsText += `Categoría/Rubro: ${matchedItemInfo.Rubro || ''}\\n`;\n      catalogDetailsText += `Diseño: ${matchedItemInfo.Diseño || matchedItemInfo.Diseno || ''}\\n`;\n      catalogDetailsText += `Color: ${matchedItemInfo.Color || ''}\\n`;\n      catalogDetailsText += `Características: ${matchedItemInfo.Características || matchedItemInfo.Caracteris || matchedItemInfo.Caracteristicas || ''}\\n`;\n      catalogDetailsText += `Incluye: ${matchedItemInfo.Incluye || ''}\\n`;\n      catalogDetailsText += `Precios y Medidas disponibles:\\n`;\n      \n      matchingRows.forEach(row => {\n        const price = row['Precio publico'] || row.Precio || row.Precio_pul || row['Precio pul'] || '';\n        catalogDetailsText += `- Medida: ${row.Medida || ''} | Precio: ${price}\\n`;\n      });\n    }\n  } catch (e) {\n    console.error('Error al leer el catálogo:', e);\n  }\n}\n\nreturn [{\n  json: {\n    feed_files: selectedFeedFile ? [{ id: selectedFeedFile.id, name: selectedFeedFile.name }] : [],\n    story_files: selectedStoryFile ? [{ id: selectedStoryFile.id, name: selectedStoryFile.name }] : [],\n    file_id: selectedFeedFile ? selectedFeedFile.id : (selectedStoryFile ? selectedStoryFile.id : ''),\n    file_name: selectedFeedFile ? selectedFeedFile.name : (selectedStoryFile ? selectedStoryFile.name : ''),\n    product_num: productNum,\n    message: `Publicación programada encontrada para hoy (${todayDateStr}).`,\n    catalog_details: catalogDetailsText,\n    matched_item: matchedItemInfo\n  }\n}];"
+      },
+      "id": "9daae1b0-0cfb-4d16-bc40-746490baff41",
+      "name": "3. Elegir Archivo Pendiente",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        160,
+        1264
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "name": "OpenAI Chat Model (Post)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        368,
+        1488
+      ],
+      "id": "673c9289-0953-485d-9a0a-41139370025c",
+      "credentials": {
+        "openAiApi": {
+          "id": "TGlBscz4t1q4FX8l",
+          "name": "OpenAi"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Eres el redactor creativo de redes sociales para \"Nacha Home\", una tienda premium de blanquería, sábanas, acolchados y textiles para el hogar.\nTu estilo es cálido, acogedor, hogareño, profesional y enfocado en el confort, descanso y decoración del hogar.\n\nTu tarea es escribir un copy de alta conversión para un post de Instagram que muestre la calidad y valor de nuestro producto en base a los detalles reales del catálogo:\n\nDETALLES REALES DEL PRODUCTO (USAR ESTA INFORMACIÓN PARA EL COPY):\n{{ $json.catalog_details }}\n\nREGLAS CRÍTICAS DE REDACCIÓN:\n1. Sé persuasivo, amigable y enfocado en el deseo de tener un hogar más lindo y descansar mejor.\n2. Hablamos en tono cercano, argentino (directo, profesional pero muy cálido).\n3. Usa emojis de forma inteligente (como 🏠, 🛏️, ✨, 💤, 🌸).\n4. Incluye los precios reales y las medidas reales que figuran en el catálogo.\n5. Incluye una llamada a la acción (Call To Action) directa como \"Comenta 'PRECIO' para enviarte el catálogo por mensaje privado\" o \"Escríbenos al DM para reservar el tuyo antes de que se agote\".\n6. Incluye los hashtags: #NachaHome #Blanqueria #Sabanas #Confort #DecoracionHogar #Acolchados #Edredon.\n7. Mantén la descripción limpia, con saltos de línea legibles y no demasiado larga (máximo 3 párrafos cortos).\n\nEscribe ÚNICAMENTE el copy final listo para publicar. No agregues introducciones ni explicaciones de ningún tipo.",
+        "batching": {}
+      },
+      "name": "Redactar Copy con IA",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        368,
+        1264
+      ],
+      "id": "331b49cb-db4e-447a-9746-ec1f90423093"
+    },
+    {
+      "parameters": {
+        "jsCode": "const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));\n\nasync function waitForContainer(containerId, token, helpers) {\n  let status = 'IN_PROGRESS';\n  let attempts = 0;\n  while ((status === 'IN_PROGRESS' || status === 'PENDING') && attempts < 30) {\n    await sleep(2000);\n    let res;\n    try {\n      res = await helpers.httpRequest({\n        method: 'GET',\n        url: `https://graph.facebook.com/v19.0/${containerId}`,\n        qs: { fields: 'status_code', access_token: token }\n      });\n    } catch (e) {\n      const errData = e.response && e.response.data ? e.response.data : e;\n      throw new Error(`Error consultando estado del contenedor ${containerId}: ` + JSON.stringify(errData));\n    }\n    status = res.status_code;\n    attempts++;\n  }\n  if (status !== 'FINISHED') {\n    throw new Error(`El contenedor ${containerId} no terminó de procesarse. Estado final: ${status}`);\n  }\n}\n\nconst token = 'EAAhBdfc1DpQBRxLcBEwZAqRERIFLsA6P5ZBSS0fwLiBI4t5oYFmgCZBjCietZAhQh473eEgZAl26z0nI7uBBLosPkcaKSHnqquwVwFiMZBQX4ttZB7dVtjiAxAzABjLUu1UyzfZBWZB6yxY4wNJ3rh6ZBmXaIOV4LjeooUmnvu7CxfacU9vZBkwYHKNJHdxTvuwfnZCBzwZDZD';\nconst igUserId = '17841442514639792';\n\nconst chosenInfo = $('3. Elegir Archivo Pendiente').item.json;\nconst files = chosenInfo.feed_files || [];\n\nif (files.length === 0) {\n  return [{ json: { \n    ig_post_id: 'no_feed_post', \n    files: [],\n    file_name: 'no_feed_post'\n  }}];\n}\n\nlet caption = '';\ntry {\n  caption = $('Redactar Copy con IA').item.json.text;\n} catch (e) {\n  caption = '🏠 ¡Nuevo ingreso en Nacha Home! Sábanas, acolchados y la mejor blanquería premium. ✨\\n\\n#NachaHome #Blanqueria #Hogar';\n}\n\nlet igPostId = '';\n\nif (files.length === 1) {\n  const fileId = files[0].id;\n  const fileName = files[0].name.toLowerCase();\n  const fileUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;\n  \n  const isVideo = fileName.endsWith('.mp4') || fileName.endsWith('.mov');\n\n  let createRes;\n  try {\n    if (isVideo) {\n      createRes = await this.helpers.httpRequest({\n        method: 'POST',\n        url: `https://graph.facebook.com/v19.0/${igUserId}/media`,\n        qs: { \n          video_url: fileUrl, \n          media_type: 'REELS', \n          caption: caption, \n          share_to_feed: true, \n          access_token: token \n        }\n      });\n    } else {\n      createRes = await this.helpers.httpRequest({\n        method: 'POST',\n        url: `https://graph.facebook.com/v19.0/${igUserId}/media`,\n        qs: { image_url: fileUrl, caption: caption, access_token: token }\n      });\n    }\n  } catch (error) {\n    const errData = error.response && error.response.data ? error.response.data : error;\n    const tipoStr = isVideo ? 'Reel' : 'Imagen';\n    throw new Error(`Meta API Error al crear contenedor de ${tipoStr}: ` + JSON.stringify(errData));\n  }\n\n  await waitForContainer(createRes.id, token, this.helpers);\n\n  let publishRes;\n  try {\n    publishRes = await this.helpers.httpRequest({\n      method: 'POST',\n      url: `https://graph.facebook.com/v19.0/${igUserId}/media_publish`,\n      qs: { creation_id: createRes.id, access_token: token }\n    });\n  } catch (error) { \n    const errData = error.response && error.response.data ? error.response.data : error;\n    throw new Error('Meta API Error al publicar post/reel: ' + JSON.stringify(errData));\n  }\n\n  igPostId = publishRes.id;\n}\n\nreturn [{ json: {\n  ig_post_id: igPostId,\n  files: files,\n  file_id: files[0].id,\n  fileId: files[0].id,\n  FileID: files[0].id,\n  file_name: files.map(f => f.name).join(', '),\n  fileName: files.map(f => f.name).join(', ')\n}}];"
+      },
+      "name": "5. Publicar Feed (Post)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        640,
+        1264
+      ],
+      "id": "ee0b0338-5896-48b4-8555-83cceceb7e10"
+    },
+    {
+      "parameters": {
+        "jsCode": "const token = 'EAAhBdfc1DpQBRxLcBEwZAqRERIFLsA6P5ZBSS0fwLiBI4t5oYFmgCZBjCietZAhQh473eEgZAl26z0nI7uBBLosPkcaKSHnqquwVwFiMZBQX4ttZB7dVtjiAxAzABjLUu1UyzfZBWZB6yxY4wNJ3rh6ZBmXaIOV4LjeooUmnvu7CxfacU9vZBkwYHKNJHdxTvuwfnZCBzwZDZD';\nconst igUserId = '17841442514639792';\n\nconst chosenInfo = $('3. Elegir Archivo Pendiente').item.json;\nconst storyFiles = chosenInfo.story_files || [];\nconst igPostId = $input.first().json.ig_post_id || '';\n\nconst storyIds = [];\nconst failedStories = [];\nconst sleep = ms => new Promise(resolve => setTimeout(resolve, ms));\n\nasync function waitForContainer(containerId, token, helpers) {\n  let status = 'IN_PROGRESS';\n  let attempts = 0;\n  while ((status === 'IN_PROGRESS' || status === 'PENDING') && attempts < 30) {\n    await sleep(2000);\n    let res;\n    try {\n      res = await helpers.httpRequest({\n        method: 'GET',\n        url: 'https://graph.facebook.com/v19.0/' + containerId,\n        qs: { fields: 'status_code', access_token: token }\n      });\n    } catch (e) {\n      const errData = e.response && e.response.data ? e.response.data : e;\n      throw new Error('Error consultando estado del contenedor de story ' + containerId + ': ' + JSON.stringify(errData));\n    }\n    status = res.status_code;\n    attempts++;\n  }\n  if (status !== 'FINISHED') {\n    throw new Error('El contenedor de story ' + containerId + ' no terminó de procesarse. Estado final: ' + status);\n  }\n}\n\nconst nowAR = new Date().toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' });\n\nif (storyFiles.length === 0) {\n  const feedFiles = chosenInfo.feed_files || [];\n  const primaryId = feedFiles.length > 0 ? feedFiles[0].id : '';\n  const primaryName = feedFiles.length > 0 ? feedFiles[0].name : '';\n  return [{ json: {\n    fecha: nowAR,\n    file_name: primaryName,\n    file_id: primaryId,\n    ig_post_id: igPostId,\n    ig_story_ids: '',\n    estado: igPostId ? 'Post Publicado (Sin Story)' : 'Sin contenido'\n  }}];\n}\n\nfor (const file of storyFiles.slice(0, 10)) {\n  const fileUrl = 'https://drive.google.com/uc?export=download&id=' + file.id;\n  const fileName = file.name.toLowerCase();\n  const isVideo = fileName.endsWith('.mp4') || fileName.endsWith('.mov');\n  \n  try {\n    let createRes;\n    \n    if (isVideo) {\n      createRes = await this.helpers.httpRequest({\n        method: 'POST',\n        url: 'https://graph.facebook.com/v19.0/' + igUserId + '/media',\n        qs: { video_url: fileUrl, media_type: 'STORIES', access_token: token }\n      });\n    } else {\n      createRes = await this.helpers.httpRequest({\n        method: 'POST',\n        url: 'https://graph.facebook.com/v19.0/' + igUserId + '/media',\n        qs: { image_url: fileUrl, media_type: 'STORIES', access_token: token }\n      });\n    }\n\n    await waitForContainer(createRes.id, token, this.helpers);\n\n    const publishRes = await this.helpers.httpRequest({\n      method: 'POST',\n      url: 'https://graph.facebook.com/v19.0/' + igUserId + '/media_publish',\n      qs: { creation_id: createRes.id, access_token: token }\n    });\n\n    storyIds.push(publishRes.id);\n  } catch (error) {\n    let details = '';\n    if (error.response && error.response.data) {\n      details = JSON.stringify(error.response.data);\n    } else if (error.context && error.context.body) {\n      details = JSON.stringify(error.context.body);\n    } else {\n      details = error.message || JSON.stringify(error);\n    }\n    failedStories.push({\n      name: file.name,\n      id: file.id,\n      error: details\n    });\n  }\n}\n\nconst feedFiles = chosenInfo.feed_files || [];\nconst primaryFile = feedFiles.length > 0 ? feedFiles[0] : (storyFiles.length > 0 ? storyFiles[0] : { id: '', name: '' });\n\nreturn [{ json: {\n  fecha: nowAR,\n  file_name: primaryFile.name,\n  file_id: primaryFile.id,\n  ig_post_id: igPostId,\n  ig_story_ids: storyIds.join(', '),\n  estado: (igPostId || storyIds.length > 0) ? 'Publicado OK' : 'Sin contenido'\n}}];"
+      },
+      "name": "6. Publicar Story",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        1264
+      ],
+      "id": "b5eca564-0313-445d-8aea-748573e5ca9c"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "13OZcCBHrVufQSB4HcZu1Vgnu6uYAGLFpWrwW-x347aw",
+          "mode": "list",
+          "cachedResultName": "NachaHome",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/13OZcCBHrVufQSB4HcZu1Vgnu6uYAGLFpWrwW-x347aw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Contenido",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/13OZcCBHrVufQSB4HcZu1Vgnu6uYAGLFpWrwW-x347aw/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "ig_story_ids",
+              "displayName": "ig_story_ids",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "ig_post_id",
+              "displayName": "ig_post_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "file_id",
+              "displayName": "file_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "fileId",
+              "displayName": "fileId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "FileID",
+              "displayName": "FileID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "file_name",
+              "displayName": "file_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "fileName",
+              "displayName": "fileName",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "failed_stories",
+              "displayName": "failed_stories",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "fda188c1-872e-4714-94a9-6bd5f5c268da",
+      "name": "7. Guardar en Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        1024,
+        1264
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "hMRjCOIdJsrsXsOU",
+          "name": "Google Sheets NNN"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1dlWKIScKbKtwNcU0ETTbR06VerGG-OPpAgYQCwRzyMA",
+          "mode": "list",
+          "cachedResultName": "Stock_Bross_JeanC",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1dlWKIScKbKtwNcU0ETTbR06VerGG-OPpAgYQCwRzyMA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1407261418,
+          "mode": "list",
+          "cachedResultName": "JeanCartier_stock",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1dlWKIScKbKtwNcU0ETTbR06VerGG-OPpAgYQCwRzyMA/edit#gid=1407261418"
+        },
+        "options": {}
+      },
+      "id": "b6df92cd-c49b-461e-80df-021da0a166d4",
+      "name": "2b. Leer Catálogo (Sheets)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        -64,
+        1264
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "hMRjCOIdJsrsXsOU",
+          "name": "Google Sheets NNN"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Nacha Home Automatizacion de publicar Post, Reels and Story\n",
+        "height": 672,
+        "width": 2560,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1024,
+        976
+      ],
+      "typeVersion": 1,
+      "id": "d7be047d-a453-4c82-9c36-71e47ad488e2",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "30 9,12,15,18,20,21 * * *"
             }
           ]
         }
@@ -15,11 +381,11 @@
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
       "position": [
-        -1264,
-        2096
+        -976,
+        4592
       ],
-      "id": "207323b9-dcae-45df-8a6d-525c4bd236c9",
-      "name": "Schedule Trigger (18:00 hs Feed)1"
+      "id": "e96ed214-27a2-45e5-940e-bb51e7876454",
+      "name": "Schedule Trigger (09:30 & 20:30 hs)"
     },
     {
       "parameters": {
@@ -28,13 +394,13 @@
         "key": "BOT_STATUS_NNN_IG",
         "options": {}
       },
-      "id": "872b5acf-e646-45c1-ac4b-80aa30a9cd16",
-      "name": "Consultar si IA esta prendida3",
+      "id": "3eb7ebd2-e663-46d0-bbff-77c9cef8fcbb",
+      "name": "Consultar si IA esta prendida",
       "type": "n8n-nodes-base.redis",
       "typeVersion": 1,
       "position": [
-        -992,
-        2096
+        -736,
+        4592
       ],
       "credentials": {
         "redis": {
@@ -67,52 +433,14 @@
         },
         "options": {}
       },
-      "id": "e1edadfa-bc40-425d-b59b-fa05e05a8121",
-      "name": "IA Prendida?3",
+      "id": "b1cf3c0f-c588-4f18-98a3-587b743970d6",
+      "name": "IA Prendida?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        -800,
-        2096
+        -496,
+        4592
       ]
-    },
-    {
-      "parameters": {
-        "resource": "fileFolder",
-        "returnAll": true,
-        "filter": {
-          "driveId": {
-            "__rl": true,
-            "value": "My Drive",
-            "mode": "list",
-            "cachedResultName": "My Drive",
-            "cachedResultUrl": "https://drive.google.com/drive/my-drive"
-          },
-          "folderId": {
-            "__rl": true,
-            "value": "1Tqu0lGDDETlIwtpAA5w7zsjkgLtU8SVv",
-            "mode": "list",
-            "cachedResultName": "NNN.Public.2026",
-            "cachedResultUrl": "https://drive.google.com/drive/folders/1Tqu0lGDDETlIwtpAA5w7zsjkgLtU8SVv"
-          }
-        },
-        "options": {}
-      },
-      "name": "1a. Buscar Fotos Feed2",
-      "type": "n8n-nodes-base.googleDrive",
-      "typeVersion": 3,
-      "position": [
-        -608,
-        1920
-      ],
-      "id": "42e8b441-c7cc-4b44-a25a-9e40ac83ed95",
-      "executeOnce": true,
-      "credentials": {
-        "googleDriveOAuth2Api": {
-          "id": "3HuY6vo5wwgyvfmD",
-          "name": "Google Drive NNN"
-        }
-      }
     },
     {
       "parameters": {
@@ -129,15 +457,14 @@
         },
         "options": {}
       },
-      "name": "1b. Buscar Fotos Story2",
+      "name": "1. Buscar Fotos Story",
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
       "position": [
-        -416,
-        1920
+        -160,
+        4416
       ],
-      "id": "c4767b3c-a8b4-4c51-87a8-9d678752ec66",
-      "executeOnce": true,
+      "id": "e0c8ce9f-d916-47a9-9a46-a869b5cc1bc9",
       "credentials": {
         "googleDriveOAuth2Api": {
           "id": "3HuY6vo5wwgyvfmD",
@@ -147,85 +474,16 @@
     },
     {
       "parameters": {
-        "documentId": {
-          "__rl": true,
-          "value": "13OZcCBHrVufQSB4HcZu1Vgnu6uYAGLFpWrwW-x347aw",
-          "mode": "list",
-          "cachedResultName": "NachaHome",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/13OZcCBHrVufQSB4HcZu1Vgnu6uYAGLFpWrwW-x347aw/edit?usp=drivesdk"
-        },
-        "sheetName": {
-          "__rl": true,
-          "value": 1194881315,
-          "mode": "list",
-          "cachedResultName": "ContenidoNNN",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/13OZcCBHrVufQSB4HcZu1Vgnu6uYAGLFpWrwW-x347aw/edit#gid=1194881315"
-        },
-        "options": {}
+        "jsCode": "// ==========================================\n// 1. OBTENER HORA Y FECHA EN ARGENTINA (UTC-3)\n// Soporta horarios 09:30 (09HS), 12:30 (12HS), 15:30 (15HS), 18:30 (18HS), 20:30 (20HS), 21:30 (21HS)\n// ==========================================\nconst timezoneOffset = -3 * 60;\nconst now = new Date();\nconst localDate = new Date(now.getTime() + (now.getTimezoneOffset() + timezoneOffset) * 60000);\nconst todayDay = localDate.getDate();\nconst todayMonth = localDate.getMonth() + 1;\nconst currentHour = localDate.getHours();\n\nconst currentSlot = String(currentHour).padStart(2, '0') + 'HS';\nconst isClassicSlot = (currentHour === 9 || currentHour === 20);\n\nfunction getFileDate(filename) {\n  if (!filename) return null;\n  const match = filename.match(/(?:^|[^0-9])([0-9]{1,2})[\\/\\-_\\.]([0-9]{1,2})(?:[^0-9]|$)/);\n  if (match) {\n    const p1 = parseInt(match[1], 10);\n    const p2 = parseInt(match[2], 10);\n    if (p1 >= 1 && p1 <= 31 && p2 >= 1 && p2 <= 12) {\n      return { day: p1, month: p2 };\n    }\n  }\n  return null;\n}\n\nfunction extractFileInfo(item) {\n  if (!item) return null;\n  const j = item.json || item;\n  const id = j.id || (item.json && item.json.id) || j.fileId || j.file_id;\n  const name = j.name || (item.json && item.json.name) || j.fileName || j.file_name;\n  if (!id || !name) return null;\n  return { id: String(id).trim(), name: String(name).trim() };\n}\n\nfunction getItemsFromNodes(possibleBases) {\n  const suffixes = ['', '1', '2', '3', '4', '5'];\n  for (const base of possibleBases) {\n    for (const suffix of suffixes) {\n      try {\n        const fullName = base + suffix;\n        const items = $(fullName).all();\n        if (items && items.length > 0) return items;\n      } catch(e) {}\n    }\n  }\n  return [];\n}\n\nconst rawStoryFiles = getItemsFromNodes(['1. Buscar Fotos Story', 'Buscar Fotos Story']);\nconst rawPublished = getItemsFromNodes(['2. Leer Sheets (Publicadas)', 'Leer Sheets (Publicadas)']);\n\nconst publishedSet = new Set();\nrawPublished.forEach(row => {\n  const r = row.json || row;\n  const pubName = r['Publicadado en instagram ?'] || r.file_name || r.fileName || r.Name || r.name;\n  const pubId = r.file_id || r.fileId || r.FileID || r.id;\n  if (pubName && String(pubName).trim().length > 0 && String(pubName).trim().toLowerCase() !== 'no') {\n    publishedSet.add(String(pubName).trim().toLowerCase());\n  }\n  if (pubId && String(pubId).trim().length > 0) {\n    publishedSet.add(String(pubId).trim());\n  }\n});\n\nconst unpostedStories = [];\nrawStoryFiles.forEach(item => {\n  const info = extractFileInfo(item);\n  if (!info) return;\n  if (!publishedSet.has(info.name.toLowerCase()) && !publishedSet.has(info.id)) {\n    unpostedStories.push({\n      ...info,\n      dateInfo: getFileDate(info.name)\n    });\n  }\n});\n\nif (unpostedStories.length === 0) {\n  return [{\n    json: {\n      has_story: false,\n      message: 'No hay historias pendientes por publicar en Google Drive.'\n    }\n  }];\n}\n\nlet selectedStory = unpostedStories.find(s => \n  s.dateInfo && s.dateInfo.day === todayDay && s.dateInfo.month === todayMonth && s.name.toUpperCase().includes(currentSlot)\n);\n\nif (!selectedStory && isClassicSlot) {\n  // En los turnos clásicos (09:30 y 20:30), permitir fallback a historias del día sin etiqueta de otro horario\n  selectedStory = unpostedStories.find(s => \n    s.dateInfo && s.dateInfo.day === todayDay && s.dateInfo.month === todayMonth && !/(09|12|15|18|20|21)HS/i.test(s.name)\n  );\n  if (!selectedStory) {\n    selectedStory = unpostedStories.find(s => s.name.toUpperCase().includes(currentSlot));\n  }\n  if (!selectedStory) {\n    selectedStory = unpostedStories[0];\n  }\n}\n\nif (!selectedStory) {\n  return [{\n    json: {\n      has_story: false,\n      message: `No hay historias programadas para el turno ${currentSlot} de hoy (${todayDay}/${todayMonth}).`\n    }\n  }];\n}\n\nreturn [{\n  json: {\n    has_story: true,\n    slot_ejecutado: currentSlot,\n    story_id: selectedStory.id,\n    story_name: selectedStory.name,\n    file_id: selectedStory.id,\n    file_name: selectedStory.name,\n    date_target: `${todayDay}/${todayMonth}`\n  }\n}];"
       },
-      "name": "2. Leer Sheets (Publicadas)3",
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4,
-      "position": [
-        -224,
-        1920
-      ],
-      "id": "a343bddd-ed43-4efc-8f04-45296f40bc20",
-      "executeOnce": true,
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "hMRjCOIdJsrsXsOU",
-          "name": "Google Sheets NNN"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "documentId": {
-          "__rl": true,
-          "value": "1dlWKIScKbKtwNcU0ETTbR06VerGG-OPpAgYQCwRzyMA",
-          "mode": "list",
-          "cachedResultName": "Stock_Bross_JeanC",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1dlWKIScKbKtwNcU0ETTbR06VerGG-OPpAgYQCwRzyMA/edit?usp=drivesdk"
-        },
-        "sheetName": {
-          "__rl": true,
-          "value": 1258458893,
-          "mode": "list",
-          "cachedResultName": "BrossPrecios",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1dlWKIScKbKtwNcU0ETTbR06VerGG-OPpAgYQCwRzyMA/edit#gid=1258458893"
-        },
-        "options": {}
-      },
-      "name": "2b. Leer Catálogo (Sheets)5",
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4,
-      "position": [
-        -32,
-        1920
-      ],
-      "id": "49c569f9-0e72-483e-baf4-358f4316aa23",
-      "executeOnce": true,
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "hMRjCOIdJsrsXsOU",
-          "name": "Google Sheets NNN"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "jsCode": "// ==========================================\n// 1. OBTENER FECHA Y HORA ACTUAL (ARGENTINA UTC-3)\n// ==========================================\nconst timezoneOffset = -3 * 60;\nconst now = new Date();\nconst localDate = new Date(now.getTime() + (now.getTimezoneOffset() + timezoneOffset) * 60000);\nconst todayDay = localDate.getDate();\nconst todayMonth = localDate.getMonth() + 1;\nconst todayScore = todayMonth * 100 + todayDay;\n\nfunction cleanFileName(filename) {\n  if (!filename) return '';\n  let clean = filename.replace(/\\.[^/.]+$/, '');\n  clean = clean.replace(/^(?:\\d{1,2}[\\/._-]\\d{1,2})[\\s._-]*/i, '');\n  clean = clean.replace(/^(?:FEED|STORY|09HS|18HS|20HS)[\\s._-]*/gi, '');\n  clean = clean.replace(/^(?:Art\\.?|Articulo|Modelo|Num)[\\s._-]*/i, '');\n  clean = clean.replace(/[\\s._-]*(?:FEED|STORY|09HS|18HS|20HS)+$/gi, '');\n  clean = clean.replace(/\\s*(?:\\(\\d+\\)|_\\d+)$/, '');\n  return clean.trim();\n}\n\nfunction getFileDate(filename) {\n  if (!filename) return null;\n  const match = filename.match(/^([0-9]{1,2})[\\/\\-_\\.]([0-9]{1,2})(?:[.\\s_-]+|(?=[A-Za-z0-9]))/);\n  if (match) {\n    const p1 = parseInt(match[1], 10);\n    const p2 = parseInt(match[2], 10);\n    if (p1 >= 1 && p1 <= 31 && p2 >= 1 && p2 <= 12) {\n      return { day: p1, month: p2 };\n    }\n  }\n  return null;\n}\n\nfunction formatPrice(rawPrice) {\n  if (!rawPrice && rawPrice !== 0) return '';\n  const cleanStr = String(rawPrice).replace(/\\s+/g, '');\n  const num = Number(cleanStr.replace(/[^0-9]/g, ''));\n  if (!isNaN(num) && num > 0) {\n    return '$' + num.toLocaleString('es-AR');\n  }\n  const str = String(rawPrice).trim();\n  return str.startsWith('$') ? str : '$' + str;\n}\n\nfunction extractFileInfo(item) {\n  if (!item) return null;\n  const j = item.json || item;\n  const id = j.id || (item.json && item.json.id) || j.fileId || j.file_id;\n  const name = j.name || (item.json && item.json.name) || j.fileName || j.file_name;\n  if (!id || !name) return null;\n  return { id: String(id).trim(), name: String(name).trim() };\n}\n\n// ==========================================\n// 2. OBTENER ITEMS DE NODOS PREVIOS\n// ==========================================\nfunction getItemsFromNodes(possibleBases) {\n  const suffixes = ['', '1', '2', '3', '4', '5', '6', '7', '8', '9'];\n  for (const base of possibleBases) {\n    for (const suffix of suffixes) {\n      try {\n        const fullName = base + suffix;\n        const items = $(fullName).all();\n        if (items && items.length > 0) return items;\n      } catch(e) {}\n    }\n  }\n  return [];\n}\n\nconst rawFeedFiles = getItemsFromNodes(['1a. Buscar Fotos Feed', 'Buscar Fotos Feed']);\nconst rawStoryFiles = getItemsFromNodes(['1b. Buscar Fotos Story', 'Buscar Fotos Story']);\nconst rawPublished = getItemsFromNodes(['2. Leer Sheets (Publicadas)', 'Leer Sheets (Publicadas)']);\nconst rawCatalogSheets = getItemsFromNodes(['2b. Leer Catálogo (Sheets)', 'Leer Catálogo (Sheets)']);\nconst rawCatalogBazar = getItemsFromNodes(['Leer catalogo Bazar', 'catalogo Bazar', 'stock_bazar_nnn']);\n\nconst combinedCatalog = [...rawCatalogSheets, ...rawCatalogBazar];\n\n// ==========================================\n// 3. NORMALIZAR PUBLICACIONES PREVIAS\n// ==========================================\nconst publishedSet = new Set();\nrawPublished.forEach(row => {\n  const r = row.json || row;\n  const pubName = r['Publicadado en instagram ?'] || r.file_name || r.fileName || r.Name || r.name;\n  const pubId = r.file_id || r.fileId || r.FileID || r.id;\n  if (pubName && String(pubName).trim().length > 0 && String(pubName).trim().toLowerCase() !== 'no' && String(pubName).trim().toLowerCase() !== 'false') {\n    String(pubName).split(',').forEach(part => {\n      const p = part.trim().toLowerCase();\n      if (p) publishedSet.add(p);\n    });\n  }\n  if (pubId && String(pubId).trim().length > 0) {\n    publishedSet.add(String(pubId).trim());\n  }\n});\n\n// ==========================================\n// 4. PROCESAR FOTOS DE FEED (RETENIENDO TODAS PARA CARRUSEL)\n// ==========================================\nconst feedFiles = [];\nrawFeedFiles.forEach(item => {\n  const info = extractFileInfo(item);\n  if (!info) return;\n  \n  const nameClean = cleanFileName(info.name);\n  const dateInfo = getFileDate(info.name);\n  const isPub = publishedSet.has(info.name.toLowerCase()) || publishedSet.has(info.id);\n  \n  feedFiles.push({\n    id: info.id,\n    name: info.name,\n    nameClean,\n    dateInfo,\n    isPublished: isPub\n  });\n});\n\nif (feedFiles.length === 0) {\n  return [{\n    json: {\n      has_post: false,\n      message: 'No se encontraron fotos en la carpeta de Feed de Google Drive.'\n    }\n  }];\n}\n\n// ==========================================\n// 5. AGRUPAR FOTOS POR FECHA + ARTÍCULO / SKU BASE (CARRUSEL)\n// ==========================================\nconst grouped = {};\nfeedFiles.forEach(file => {\n  const dateKey = file.dateInfo ? `${file.dateInfo.day}_${file.dateInfo.month}_` : 'NODATE_';\n  const key = dateKey + (file.nameClean || file.name).toUpperCase();\n  if (!grouped[key]) {\n    grouped[key] = {\n      cleanName: file.nameClean || file.name,\n      dateInfo: file.dateInfo,\n      files: [],\n      hasUnpublished: false\n    };\n  }\n  grouped[key].files.push(file);\n  if (!file.isPublished) {\n    grouped[key].hasUnpublished = true;\n  }\n});\n\nconst groups = Object.values(grouped);\n\n// ==========================================\n// 6. SELECCIÓN SEGURA DEL LOTE DE HOY (SIN ROBAR FECHAS FUTURAS)\n// ==========================================\n// Prioridad 1: Foto programada para HOY que aún no se publicó\nlet candidateGroup = groups.find(g => \n  g.hasUnpublished && g.dateInfo && g.dateInfo.day === todayDay && g.dateInfo.month === todayMonth\n);\n\n// Prioridad 2: Fotos de días PASADOS que hayan quedado sin publicar (nunca fechas futuras > hoy)\nif (!candidateGroup) {\n  const unpostedPastDated = groups.filter(g => {\n    if (!g.hasUnpublished || !g.dateInfo) return false;\n    const score = g.dateInfo.month * 100 + g.dateInfo.day;\n    return score <= todayScore;\n  });\n  if (unpostedPastDated.length > 0) {\n    unpostedPastDated.sort((a, b) => {\n      const scoreA = a.dateInfo.month * 100 + a.dateInfo.day;\n      const scoreB = b.dateInfo.month * 100 + b.dateInfo.day;\n      return scoreB - scoreA;\n    });\n    candidateGroup = unpostedPastDated[0];\n  }\n}\n\n// Prioridad 3: Fotos sin fecha en el nombre que aún no se publicaron\nif (!candidateGroup) {\n  candidateGroup = groups.find(g => g.hasUnpublished && !g.dateInfo);\n}\n\nif (!candidateGroup) {\n  return [{\n    json: {\n      has_post: false,\n      message: `No hay publicaciones pendientes para hoy (${todayDay}/${todayMonth}). Las fotos restantes en Drive corresponden a fechas futuras programadas.`\n    }\n  }];\n}\n\nconst selectedFeedFiles = candidateGroup.files.filter(f => !f.isPublished);\nconst filesToPost = selectedFeedFiles.length > 0 ? selectedFeedFiles : candidateGroup.files;\nconst firstImage = filesToPost[0];\n\n// ==========================================\n// 7. BUSCAR STORY CORRESPONDIENTE\n// ==========================================\nlet storyMatch = null;\nrawStoryFiles.forEach(item => {\n  const info = extractFileInfo(item);\n  if (!info) return;\n  const sNameClean = cleanFileName(info.name);\n  const sDate = getFileDate(info.name);\n  \n  if (sNameClean.toLowerCase() === candidateGroup.cleanName.toLowerCase()) {\n    if (!storyMatch || /09hs|18hs|20hs/i.test(info.name)) {\n      storyMatch = info;\n    }\n  } else if (candidateGroup.dateInfo && sDate && sDate.day === candidateGroup.dateInfo.day && sDate.month === candidateGroup.dateInfo.month) {\n    if (!storyMatch) storyMatch = info;\n  }\n});\n\n// ==========================================\n// 8. BUSCAR DATOS EXACTOS EN AMBOS CATÁLOGOS (SKU / ARTÍCULO)\n// ==========================================\nconst skuMatch = firstImage.name.match(/([A-Za-z]{1,4}[-_]?[0-9]{3,5}(?:[-_][0-9]{1,3})?|[0-9]{4,6}(?:[-_][0-9]{1,3})?)/);\nconst targetSku = skuMatch ? skuMatch[1].toUpperCase().replace(/[^A-Z0-9]/g, '') : candidateGroup.cleanName.toUpperCase().replace(/[^A-Z0-9]/g, '');\n\nlet foundCatalog = null;\n\nfor (const row of combinedCatalog) {\n  const r = row.json || row;\n  \n  const skuField = String(r.SKU || r['Artículo'] || r.Articulo || r.Art || r.Codigo || r.Modelo || '').trim().toUpperCase();\n  const cleanSkuField = skuField.replace(/[^A-Z0-9]/g, '');\n\n  if (targetSku && cleanSkuField && (targetSku === cleanSkuField || targetSku.includes(cleanSkuField) || cleanSkuField.includes(targetSku))) {\n    foundCatalog = r;\n    break;\n  }\n\n  const rowValues = Object.values(r).join(' ').toUpperCase();\n  if (candidateGroup.cleanName && rowValues.includes(candidateGroup.cleanName.toUpperCase())) {\n    foundCatalog = r;\n    break;\n  }\n}\n\nlet producto = 'Bross London / NNN';\nlet articulo = candidateGroup.cleanName;\nlet modeloNombre = candidateGroup.cleanName;\nlet precioFinal = '';\nlet caracteristicas = '';\nlet variantes = 'Surtidas / Único';\n\nif (foundCatalog) {\n  const rawPrice = foundCatalog.Precio !== undefined ? foundCatalog.Precio :\n                   foundCatalog.PRECIO !== undefined ? foundCatalog.PRECIO :\n                   foundCatalog['Precio publico'] !== undefined ? foundCatalog['Precio publico'] :\n                   foundCatalog['Precio Mayorista'] !== undefined ? foundCatalog['Precio Mayorista'] : '';\n\n  precioFinal = formatPrice(rawPrice);\n  producto = foundCatalog.Producto || foundCatalog.Nombre || producto;\n  articulo = foundCatalog.SKU || foundCatalog['Artículo'] || foundCatalog.Articulo || foundCatalog.Art || articulo;\n  caracteristicas = foundCatalog.Descripcion || foundCatalog.Descripción || foundCatalog.Caracteristica || foundCatalog.Características || foundCatalog.Detalle || '';\n  variantes = foundCatalog.Medida || foundCatalog.Talles || foundCatalog.Variantes || variantes;\n  modeloNombre = producto ? `${producto} (${articulo})` : articulo;\n}\n\n// ==========================================\n// 9. PAYLOAD DEFINITIVO CON SOPORTE PARA CARRUSEL\n// ==========================================\nreturn [{\n  json: {\n    from_webhook: false,\n    has_post: true,\n    is_feed_post: true,\n    id: firstImage.id,\n    name: firstImage.name,\n    file_id: firstImage.id,\n    file_name: firstImage.name,\n    feed_files: filesToPost,\n    story_files: storyMatch ? [storyMatch] : [],\n    tipo_publicacion: filesToPost.length > 1 ? 'carrusel' : 'post',\n    media_count: filesToPost.length,\n    image_ids: filesToPost.map(f => f.id),\n    image_names: filesToPost.map(f => f.name),\n    story_id: storyMatch ? storyMatch.id : null,\n    story_name: storyMatch ? storyMatch.name : null,\n    producto: producto,\n    articulo: articulo,\n    modelo: modeloNombre,\n    precio: precioFinal || '$59.000',\n    caracteristicas: caracteristicas,\n    variantes: variantes,\n    fecha_detectada: candidateGroup.dateInfo ? `${candidateGroup.dateInfo.day}/${candidateGroup.dateInfo.month}` : 'Sin fecha',\n    date_target: `${todayDay}/${todayMonth}`\n  }\n}];"
-      },
-      "name": "3. Elegir Foto Nueva2",
+      "name": "3. Elegir Story del Slot",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        432,
-        1936
+        224,
+        4416
       ],
-      "id": "77f2c591-1e67-46d5-9cfc-f2ac07e6cc41",
-      "executeOnce": true
+      "id": "7772a663-4286-43e4-b553-86a6fb372a70"
     },
     {
       "parameters": {
@@ -238,8 +496,8 @@
           },
           "conditions": [
             {
-              "id": "c_post",
-              "leftValue": "={{ $json.has_post }}",
+              "id": "c_story",
+              "leftValue": "={{ $json.has_story }}",
               "rightValue": true,
               "operator": {
                 "type": "boolean",
@@ -251,101 +509,27 @@
         },
         "options": {}
       },
-      "name": "Hay Foto para Publicar?2",
+      "name": "Hay Story para Publicar?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
+        416,
+        4416
+      ],
+      "id": "53dca601-904b-4cee-bf7b-c41edf05a0d8"
+    },
+    {
+      "parameters": {
+        "jsCode": "const token = 'EAAITZCnQlvIABRnU3NBVjULr0z46vdpDSlpPkgfaAZANQGRP0ocmfn0jjucOSj3HEFZAcIcYKjlfj7IXQUGMJixZCh0zZBm4oRj5sCyYg3aEENahoubKy8zeb7ZB4Hm506QyQy4Dihs3WbK7MWf5MwYmFkZC3yowkZAtpkswZCScTPJxZCmdIxWxwayiUTaqadJghU6YQZC';\nconst igUserId = '17841475845281408';\n\n// Obtener datos del nodo 3 con búsqueda polimórfica de sufijos\nfunction getStoryData() {\n  const suffixes = ['', '1', '2', '3', '4'];\n  for (const s of suffixes) {\n    try {\n      const info = $(`3. Elegir Story del Slot${s}`).item.json;\n      if (info && info.story_id) return info;\n    } catch(e) {}\n  }\n  return $input.first().json;\n}\n\nconst storyData = getStoryData();\n\nif (!storyData || !storyData.has_story || !storyData.story_id) {\n  return [{ json: { status: 'skipped', message: 'No hay story para publicar en este slot' } }];\n}\n\nconst sleep = ms => new Promise(resolve => setTimeout(resolve, ms));\n\nasync function waitForContainer(containerId, token, helpers) {\n  let status = 'IN_PROGRESS';\n  let attempts = 0;\n  while ((status === 'IN_PROGRESS' || status === 'PENDING') && attempts < 30) {\n    await sleep(2000);\n    let res;\n    try {\n      res = await helpers.httpRequest({\n        method: 'GET',\n        url: `https://graph.facebook.com/v19.0/${containerId}`,\n        qs: { fields: 'status_code', access_token: token }\n      });\n    } catch (e) {\n      const errData = e.response && e.response.data ? e.response.data : e;\n      throw new Error(`Error consultando estado de story ${containerId}: ` + JSON.stringify(errData));\n    }\n    status = res.status_code;\n    attempts++;\n  }\n  if (status !== 'FINISHED') {\n    throw new Error(`El contenedor de story ${containerId} no terminó de procesarse. Estado final: ${status}`);\n  }\n}\n\nconst fileUrl = `https://drive.google.com/uc?export=download&id=${storyData.story_id}`;\n\nlet createRes;\ntry {\n  createRes = await this.helpers.httpRequest({\n    method: 'POST',\n    url: `https://graph.facebook.com/v19.0/${igUserId}/media`,\n    qs: { image_url: fileUrl, media_type: 'STORIES', access_token: token }\n  });\n} catch (error) {\n  const errData = error.response && error.response.data ? error.response.data : error;\n  throw new Error('Meta API Error al crear contenedor de Story: ' + JSON.stringify(errData));\n}\n\nawait waitForContainer(createRes.id, token, this.helpers);\n\nlet publishRes;\ntry {\n  publishRes = await this.helpers.httpRequest({\n    method: 'POST',\n    url: `https://graph.facebook.com/v19.0/${igUserId}/media_publish`,\n    qs: { creation_id: createRes.id, access_token: token }\n  });\n} catch (error) {\n  const errData = error.response && error.response.data ? error.response.data : error;\n  throw new Error('Meta API Error al publicar Story: ' + JSON.stringify(errData));\n}\n\nreturn [{\n  json: {\n    status: 'success',\n    action: 'story_published',\n    slot: storyData.slot_ejecutado || 'STORY',\n    ig_story_id: publishRes.id,\n    file_id: storyData.story_id,\n    fileId: storyData.story_id,\n    FileID: storyData.story_id,\n    file_name: storyData.story_name || storyData.file_name,\n    fileName: storyData.story_name || storyData.file_name,\n    timestamp: new Date().toISOString()\n  }\n}];"
+      },
+      "name": "4. Publicar Story en Meta",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
         608,
-        1936
+        4416
       ],
-      "id": "53820005-5c69-4a68-a5eb-8603ffba796b"
-    },
-    {
-      "parameters": {
-        "model": "gpt-4o-mini",
-        "options": {
-          "temperature": 0.7
-        }
-      },
-      "name": "OpenAI Chat Model (Post)5",
-      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
-      "typeVersion": 1,
-      "position": [
-        864,
-        2208
-      ],
-      "id": "f80c1aad-76ae-47fa-92e2-f971332a9314",
-      "credentials": {
-        "openAiApi": {
-          "id": "TGlBscz4t1q4FX8l",
-          "name": "OpenAi"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "promptType": "define",
-        "text": "=Sos el redactor de contenidos oficial de NNN / Bross London.\nTu objetivo es crear un copy magnético para una publicación en Instagram (Feed/Carrusel) presentando el producto:\n\n- Producto: {{ $json.producto }}\n- Modelo / Artículo: {{ $json.modelo }}\n- Precio: {{ $json.precio }}\n- Características / Detalles: {{ $json.caracteristicas }}\n- Variantes / Medida: {{ $json.variantes }}\n- Tipo de Publicación: {{ $json.tipo_publicacion }}\n\nPAUTAS:\n1. Tono moderno, premium, masculino y directo de la marca Bross.\n2. Adaptá el mensaje al producto específico (si es lunchera/accesorio destaca funcionalidad, durabilidad y estilo; si es indumentaria/boxers destaca comodidad y calce; si son medias destaca diseño y calidad).\n3. Resaltá las características reales del producto y el precio exacto ({{ $json.precio }}).\n4. Incluí llamado a la acción claro para comprar por mayor o menor vía WhatsApp (link en la bio).\n5. Máximo 2 a 3 párrafos cortos y hashtags clave relevantes al producto (#BrossLondon #NNN #ModaMasculina #Accesorios #Mayorista).\n\nEscribí únicamente el texto del post listo para copiar y pegar, sin introducciones."
-      },
-      "name": "Redactar Copy con IA5",
-      "type": "@n8n/n8n-nodes-langchain.chainLlm",
-      "typeVersion": 1.4,
-      "position": [
-        816,
-        1936
-      ],
-      "id": "f944577a-ec32-4446-9380-48628ec3e8c6"
-    },
-    {
-      "parameters": {
-        "operation": "download",
-        "fileId": {
-          "__rl": true,
-          "value": "={{ $('3. Elegir Foto Nueva2').item.json.id }}",
-          "mode": "id"
-        },
-        "options": {}
-      },
-      "name": "4. Descargar Foto Elegida2",
-      "type": "n8n-nodes-base.googleDrive",
-      "typeVersion": 3,
-      "position": [
-        1168,
-        1936
-      ],
-      "id": "f31e4eed-3676-4411-b311-438884553bc7",
-      "credentials": {
-        "googleDriveOAuth2Api": {
-          "id": "3HuY6vo5wwgyvfmD",
-          "name": "Google Drive NNN"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "jsCode": "const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));\n\nasync function waitForContainer(containerId, token, helpers) {\n  let status = 'IN_PROGRESS';\n  let attempts = 0;\n  while ((status === 'IN_PROGRESS' || status === 'PENDING') && attempts < 30) {\n    await sleep(2000);\n    let res;\n    try {\n      res = await helpers.httpRequest({\n        method: 'GET',\n        url: `https://graph.facebook.com/v19.0/${containerId}`,\n        qs: { fields: 'status_code', access_token: token }\n      });\n    } catch (e) {\n      const errData = e.response && e.response.data ? e.response.data : e;\n      throw new Error(`Error consultando estado del contenedor ${containerId}: ` + JSON.stringify(errData));\n    }\n    status = res.status_code;\n    attempts++;\n  }\n  if (status !== 'FINISHED') {\n    throw new Error(`El contenedor ${containerId} no terminó de procesarse. Estado final: ${status}`);\n  }\n}\n\nconst token = 'EAAITZCnQlvIABRnU3NBVjULr0z46vdpDSlpPkgfaAZANQGRP0ocmfn0jjucOSj3HEFZAcIcYKjlfj7IXQUGMJixZCh0zZBm4oRj5sCyYg3aEENahoubKy8zeb7ZB4Hm506QyQy4Dihs3WbK7MWf5MwYmFkZC3yowkZAtpkswZCScTPJxZCmdIxWxwayiUTaqadJghU6YQZC';\nconst igUserId = '17841475845281408';\n\n// Soportar tanto entrada desde el Portal Web (from_webhook: true) como el Cron de las 18:00 hs\nconst inputData = $input.first().json || {};\nfunction getChosenInfo() {\n  if (inputData && inputData.from_webhook) {\n    return inputData;\n  }\n  const suffixes = ['', '1', '2', '3', '4', '5', '6'];\n  for (const s of suffixes) {\n    try {\n      const info = $(`3. Elegir Foto Nueva${s}`).item.json;\n      if (info && (info.feed_files || info.id)) return info;\n    } catch(e) {}\n  }\n  return inputData;\n}\n\nconst chosenInfo = getChosenInfo();\nlet files = chosenInfo.feed_files || [];\nif (files.length === 0 && chosenInfo.id && chosenInfo.is_feed_post !== false) {\n  files = [{ id: chosenInfo.id, name: chosenInfo.name }];\n}\n\nif (files.length === 0) {\n  return [{ json: { \n    ig_post_id: 'no_feed_post', \n    files: [],\n    story_files: chosenInfo.story_files || [],\n    from_webhook: Boolean(chosenInfo.from_webhook),\n    uploaded_files: chosenInfo.uploaded_files || [],\n    file_name: 'no_feed_post'\n  }}];\n}\n\n// Si vino recién subido desde el Portal Web, dar 2 seg a Google Drive para propagación de permisos del archivo\nif (chosenInfo.from_webhook) {\n  await sleep(2000);\n}\n\n// 1. Priorizar Copy personalizado enviado desde el Portal Web; 2. sino usar Copy de OpenAI\nlet caption = chosenInfo.custom_caption ? String(chosenInfo.custom_caption).trim() : '';\nif (!caption) {\n  const copySuffixes = ['', '1', '2', '3', '4', '5', '6'];\n  for (const s of copySuffixes) {\n    try {\n      const aiItem = $(`Redactar Copy con IA${s}`).item.json;\n      caption = aiItem.text || aiItem.output || aiItem.response || '';\n      if (caption) break;\n    } catch(e) {}\n  }\n}\n\nif (!caption) {\n  caption = `🔥 ${chosenInfo.producto || 'Novedades'} ${chosenInfo.articulo || ''} 🔥\\n\\n${chosenInfo.caracteristicas || ''}\\n\\n💰 Precio: ${chosenInfo.precio || ''}\\n\\n📦 Envíos a todo el país.\\n👉 Comprá al link de la bio.`;\n}\n\nlet igPostId = '';\n\nif (files.length === 1) {\n  const fileId = files[0].id;\n  const fileName = files[0].name.toLowerCase();\n  const fileUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;\n  \n  const isVideo = fileName.endsWith('.mp4') || fileName.endsWith('.mov');\n\n  let createRes;\n  try {\n    if (isVideo) {\n      createRes = await this.helpers.httpRequest({\n        method: 'POST',\n        url: `https://graph.facebook.com/v19.0/${igUserId}/media`,\n        qs: { \n          video_url: fileUrl, \n          media_type: 'REELS', \n          caption: caption, \n          share_to_feed: true, \n          access_token: token \n        }\n      });\n    } else {\n      createRes = await this.helpers.httpRequest({\n        method: 'POST',\n        url: `https://graph.facebook.com/v19.0/${igUserId}/media`,\n        qs: { image_url: fileUrl, caption: caption, access_token: token }\n      });\n    }\n  } catch (error) {\n    const errData = error.response && error.response.data ? error.response.data : error;\n    const tipoStr = isVideo ? 'Reel' : 'Imagen';\n    throw new Error(`Meta API Error al crear contenedor de ${tipoStr}: ` + JSON.stringify(errData));\n  }\n\n  await waitForContainer(createRes.id, token, this.helpers);\n\n  let publishRes;\n  try {\n    publishRes = await this.helpers.httpRequest({\n      method: 'POST',\n      url: `https://graph.facebook.com/v19.0/${igUserId}/media_publish`,\n      qs: { creation_id: createRes.id, access_token: token }\n    });\n  } catch (error) { \n    const errData = error.response && error.response.data ? error.response.data : error;\n    throw new Error('Meta API Error al publicar post/reel: ' + JSON.stringify(errData));\n  }\n\n  igPostId = publishRes.id;\n\n} else {\n  const childContainerIds = [];\n\n  for (const file of files.slice(0, 10)) {\n    const imageUrl = `https://drive.google.com/uc?export=download&id=${file.id}`;\n    let itemRes;\n    try {\n      itemRes = await this.helpers.httpRequest({\n        method: 'POST',\n        url: `https://graph.facebook.com/v19.0/${igUserId}/media`,\n        qs: { image_url: imageUrl, is_carousel_item: true, access_token: token }\n      });\n    } catch (error) {\n      const errData = error.response && error.response.data ? error.response.data : error;\n      throw new Error(`Meta API Error al crear item de carrusel para ${file.name}: ` + JSON.stringify(errData));\n    }\n    childContainerIds.push(itemRes.id);\n  }\n\n  for (const containerId of childContainerIds) {\n    await waitForContainer(containerId, token, this.helpers);\n  }\n\n  let carouselRes;\n  try {\n    carouselRes = await this.helpers.httpRequest({\n      method: 'POST',\n      url: `https://graph.facebook.com/v19.0/${igUserId}/media`,\n      qs: { \n        media_type: 'CAROUSEL',\n        children: childContainerIds.join(','), \n        caption: caption, \n        access_token: token \n      }\n    });\n  } catch (error) {\n    const errData = error.response && error.response.data ? error.response.data : error;\n    throw new Error('Meta API Error al crear contenedor carrusel: ' + JSON.stringify(errData));\n  }\n\n  await waitForContainer(carouselRes.id, token, this.helpers);\n\n  let publishRes;\n  try {\n    publishRes = await this.helpers.httpRequest({\n      method: 'POST',\n      url: `https://graph.facebook.com/v19.0/${igUserId}/media_publish`,\n      qs: { creation_id: carouselRes.id, access_token: token }\n    });\n  } catch (error) {\n    const errData = error.response && error.response.data ? error.response.data : error;\n    throw new Error('Meta API Error al publicar carrusel: ' + JSON.stringify(errData));\n  }\n\n  igPostId = publishRes.id;\n}\n\nreturn [{ json: { \n  ig_post_id: igPostId,\n  files: files,\n  story_files: chosenInfo.story_files || [],\n  from_webhook: Boolean(chosenInfo.from_webhook),\n  uploaded_files: chosenInfo.uploaded_files || [],\n  file_id: files[0].id,\n  fileId: files[0].id,\n  FileID: files[0].id,\n  file_name: files.map(f => f.name).join(', '),\n  fileName: files.map(f => f.name).join(', ')\n}}];"
-      },
-      "name": "5. Publicar Feed (Post)5",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        1408,
-        1936
-      ],
-      "id": "9d2b4c9f-a349-4a0a-85c0-68adf9a61f34"
-    },
-    {
-      "parameters": {
-        "jsCode": "const token = 'EAAITZCnQlvIABRnU3NBVjULr0z46vdpDSlpPkgfaAZANQGRP0ocmfn0jjucOSj3HEFZAcIcYKjlfj7IXQUGMJixZCh0zZBm4oRj5sCyYg3aEENahoubKy8zeb7ZB4Hm506QyQy4Dihs3WbK7MWf5MwYmFkZC3yowkZAtpkswZCScTPJxZCmdIxWxwayiUTaqadJghU6YQZC';\nconst igUserId = '17841475845281408';\n\nconst inputData = $input.first().json || {};\nfunction getChosenInfo() {\n  if (inputData && inputData.from_webhook) {\n    return inputData;\n  }\n  const suffixes = ['', '1', '2', '3', '4', '5', '6'];\n  for (const s of suffixes) {\n    try {\n      const info = $(`3. Elegir Foto Nueva${s}`).item.json;\n      if (info && (info.story_files || info.story_id)) return info;\n    } catch(e) {}\n  }\n  return inputData;\n}\n\nconst chosenInfo = getChosenInfo();\nlet storyFiles = chosenInfo.story_files || [];\nif (storyFiles.length === 0 && chosenInfo.story_id) {\n  storyFiles = [{ id: chosenInfo.story_id, name: chosenInfo.story_name || 'Story' }];\n}\n\nconst igPostId = inputData.ig_post_id;\n\nconst storyIds = [];\nconst successfulStoryIds = [];\nconst failedStories = [];\nconst sleep = ms => new Promise(resolve => setTimeout(resolve, ms));\n\nasync function waitForContainer(containerId, token, helpers) {\n  let status = 'IN_PROGRESS';\n  let attempts = 0;\n  while ((status === 'IN_PROGRESS' || status === 'PENDING') && attempts < 30) {\n    await sleep(2000);\n    let res;\n    try {\n      res = await helpers.httpRequest({\n        method: 'GET',\n        url: `https://graph.facebook.com/v19.0/${containerId}`,\n        qs: { fields: 'status_code', access_token: token }\n      });\n    } catch (e) {\n      const errData = e.response && e.response.data ? e.response.data : e;\n      throw new Error(`Error consultando estado del contenedor de story ${containerId}: ` + JSON.stringify(errData));\n    }\n    status = res.status_code;\n    attempts++;\n  }\n  if (status !== 'FINISHED') {\n    throw new Error(`El contenedor de story ${containerId} no terminó de procesarse. Estado final: ${status}`);\n  }\n}\n\nfor (const file of storyFiles.slice(0, 10)) {\n  const fileUrl = `https://drive.google.com/uc?export=download&id=${file.id}`;\n  const isVideo = /\\.(mp4|mov)$/i.test(file.name || '');\n  \n  try {\n    const qsParams = isVideo\n      ? { video_url: fileUrl, media_type: 'STORIES', access_token: token }\n      : { image_url: fileUrl, media_type: 'STORIES', access_token: token };\n\n    const createRes = await this.helpers.httpRequest({\n      method: 'POST',\n      url: `https://graph.facebook.com/v19.0/${igUserId}/media`,\n      qs: qsParams\n    });\n\n    await waitForContainer(createRes.id, token, this.helpers);\n\n    const publishRes = await this.helpers.httpRequest({\n      method: 'POST',\n      url: `https://graph.facebook.com/v19.0/${igUserId}/media_publish`,\n      qs: { creation_id: createRes.id, access_token: token }\n    });\n\n    storyIds.push(publishRes.id);\n    successfulStoryIds.push(file.id);\n  } catch (error) {\n    const errData = error.response && error.response.data ? error.response.data : error;\n    failedStories.push({\n      name: file.name,\n      id: file.id,\n      error: error.message || JSON.stringify(errData)\n    });\n  }\n}\n\nconst feedFiles = inputData.files || [];\nconst allPublished = [];\nconst nowIso = new Date().toISOString();\n\nfor (const f of feedFiles) {\n  allPublished.push({\n    ig_story_ids: storyIds.join(', '),\n    ig_post_id: igPostId,\n    file_id: f.id,\n    fileId: f.id,\n    FileID: f.id,\n    file_name: f.name,\n    fileName: f.name,\n    timestamp: nowIso,\n    from_webhook: Boolean(inputData.from_webhook)\n  });\n}\n\nfor (const f of storyFiles) {\n  if (successfulStoryIds.includes(f.id)) {\n    if (!feedFiles.some(feedF => feedF.id === f.id)) {\n      allPublished.push({\n        ig_story_ids: storyIds.join(', '),\n        ig_post_id: igPostId,\n        file_id: f.id,\n        fileId: f.id,\n        FileID: f.id,\n        file_name: f.name,\n        fileName: f.name,\n        timestamp: nowIso,\n        from_webhook: Boolean(inputData.from_webhook)\n      });\n    }\n  }\n}\n\nif (allPublished.length === 0) {\n  return [{ json: { \n    ig_post_id: igPostId,\n    ig_story_ids: storyIds.join(', '),\n    from_webhook: Boolean(inputData.from_webhook),\n    status: 'no_publications_saved', \n    failed_stories: failedStories \n  }}];\n}\n\nconst result = allPublished.map((item, index) => {\n  if (index === 0) {\n    return { json: { ...item, failed_stories: failedStories } };\n  }\n  return { json: item };\n});\n\nreturn result;"
-      },
-      "name": "6. Publicar Story5",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        1584,
-        1936
-      ],
-      "id": "655c7e76-6e45-4255-938c-60238f4d28c9"
+      "id": "d6864aca-bea5-4b2a-a465-51b54843fde9"
     },
     {
       "parameters": {
@@ -430,14 +614,14 @@
         },
         "options": {}
       },
-      "name": "7. Guardar en Sheets5",
+      "name": "5. Guardar en Sheets",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        1760,
-        1936
+        800,
+        4416
       ],
-      "id": "ebe4bd4a-0fc9-4ca8-bd64-f30051732ccb",
+      "id": "6566a77c-f16c-4ce2-b64b-155942867fa4",
       "credentials": {
         "googleSheetsOAuth2Api": {
           "id": "hMRjCOIdJsrsXsOU",
@@ -450,11 +634,11 @@
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
       "position": [
-        -512,
-        2320
+        -320,
+        4672
       ],
-      "id": "e0b4ca1f-3df5-46cb-b2c2-3eb314e3b89e",
-      "name": "No Operation, do nothing3"
+      "id": "2c21f0e8-9671-4e56-9935-e24e67d77aab",
+      "name": "No Operation, do nothing"
     },
     {
       "parameters": {},
@@ -462,32 +646,60 @@
       "typeVersion": 1,
       "position": [
         608,
-        2240
+        4592
       ],
-      "id": "fb38d789-6e36-4bb3-a2f9-6f46a3335e51",
-      "name": "No Post Hoy, do nothing2"
+      "id": "a8ca662a-330e-47ff-8d18-6b65ea2d1d8f",
+      "name": "No Story, do nothing"
     },
     {
       "parameters": {
-        "operation": "get",
-        "dataTableId": {
+        "documentId": {
           "__rl": true,
-          "value": "iaf1feUEB4CfADYj",
+          "value": "13OZcCBHrVufQSB4HcZu1Vgnu6uYAGLFpWrwW-x347aw",
           "mode": "list",
-          "cachedResultName": "stock_bazar_nnn",
-          "cachedResultUrl": "/projects/6oZmAsyQxxzsVzs1/datatables/iaf1feUEB4CfADYj"
+          "cachedResultName": "NachaHome",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/13OZcCBHrVufQSB4HcZu1Vgnu6uYAGLFpWrwW-x347aw/edit?usp=drivesdk"
         },
-        "returnAll": true
+        "sheetName": {
+          "__rl": true,
+          "value": 1194881315,
+          "mode": "list",
+          "cachedResultName": "ContenidoNNN",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/13OZcCBHrVufQSB4HcZu1Vgnu6uYAGLFpWrwW-x347aw/edit#gid=1194881315"
+        },
+        "options": {}
       },
-      "type": "n8n-nodes-base.dataTable",
-      "typeVersion": 1.1,
+      "name": "2. Leer Sheets (Publicadas)1",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
       "position": [
-        208,
-        1936
+        32,
+        4416
       ],
-      "id": "8301fc48-daa1-4ca3-8c68-f0a61cae9742",
-      "name": "Leer catalogo Bazar1",
-      "executeOnce": true
+      "id": "dcfcbdc7-6c0f-41b4-9378-08d149b03f27",
+      "executeOnce": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "hMRjCOIdJsrsXsOU",
+          "name": "Google Sheets NNN"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "##STORY\n\n**Double click** to edit me. [Guide](https://docs.n8n.io/workflows/components/sticky-notes/)",
+        "height": 528,
+        "width": 2112,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1088,
+        4368
+      ],
+      "typeVersion": 1,
+      "id": "caa85064-f764-44e3-97e9-4f0b564dd74c",
+      "name": "Sticky Note3"
     },
     {
       "parameters": {},
@@ -509,27 +721,27 @@
           "allowedOrigins": "*"
         }
       },
-      "id": "a1b2c3d4-0001-4000-8000-000000000001",
+      "id": "0806af38-c727-44b2-a2e1-2783235daf46",
       "name": "Webhook Portal Autopublicador",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        -608,
-        1520
+        -416,
+        2960
       ],
       "webhookId": "crocscale-autopublicador-upload"
     },
     {
       "parameters": {
-        "jsCode": "// ==========================================\n// RECIBIR ARCHIVOS DESDE PORTAL WEB (app.crocscale.com)\n// Soporta application/json y text/plain (CORS Simple Request)\n// ==========================================\nconst raw = $input.first().json || {};\nlet body = raw.body !== undefined ? raw.body : raw;\nif (typeof body === 'string') {\n  try {\n    body = JSON.parse(body);\n  } catch (e) {\n    body = {};\n  }\n}\n\nconst uploads = Array.isArray(body.uploads) ? body.uploads : [];\nconst store = body.store || 'nnn';\nconst schedule = body.schedule || {};\nconst product = body.product || {};\nconst publishNow = Boolean(body.publishNow);\nconst caption = body.caption || '';\n\nconst defaultFeedFolder = '1Tqu0lGDDETlIwtpAA5w7zsjkgLtU8SVv'; // NNN.Public.2026\nconst defaultStoryFolder = '1WDQSvu9qvL7MadLJDuJwhrgf2XdRXd1T'; // NNN.Story.2026\n\nconst outItems = [];\nfor (let i = 0; i < uploads.length; i++) {\n  const u = uploads[i];\n  if (!u || !u.base64Data) continue;\n\n  const cleanB64 = String(u.base64Data).includes(',')\n    ? String(u.base64Data).split(',')[1]\n    : String(u.base64Data);\n\n  const buffer = Buffer.from(cleanB64, 'base64');\n  const fileName = u.fileName || `post_${Date.now()}_${i}.jpg`;\n  const mimeType = u.mimeType || (fileName.toLowerCase().endsWith('.mp4') ? 'video/mp4' : 'image/jpeg');\n\n  const binaryData = await this.helpers.prepareBinaryData(buffer, fileName, mimeType);\n  const role = u.role || 'feed';\n  const folderId = u.folderId || (role === 'story' ? defaultStoryFolder : defaultFeedFolder);\n\n  outItems.push({\n    json: {\n      uploadIdx: i,\n      store,\n      role,\n      folderId,\n      fileName,\n      mimeType,\n      isVideo: Boolean(u.isVideo) || /\\.(mp4|mov)$/i.test(fileName),\n      publishNow,\n      caption,\n      sku: product.sku || '',\n      productName: product.name || '',\n      price: product.price || '',\n      variants: product.variants || '',\n      features: product.features || '',\n      scheduledDate: schedule.date || '',\n      target: schedule.target || 'both'\n    },\n    binary: {\n      data: binaryData\n    }\n  });\n}\n\nif (outItems.length === 0) {\n  throw new Error('No se recibieron archivos válidos en uploads[] desde el portal.');\n}\n\nreturn outItems;"
+        "jsCode": "// ==========================================\n// RECIBIR ARCHIVOS DESDE PORTAL WEB (app.crocscale.com)\n// Soporta Archivos Separados para PUBLICACIÓN (Feed/Carrusel/Reel) y STORY (9:16)\n// ==========================================\nconst raw = $input.first().json || {};\nlet body = raw.body !== undefined ? raw.body : raw;\nif (typeof body === 'string') {\n  try {\n    body = JSON.parse(body);\n  } catch (e) {\n    body = {};\n  }\n}\n\nconst uploads = Array.isArray(body.uploads) ? body.uploads : [];\nconst store = body.store || 'nnn';\nconst schedule = body.schedule || {};\nconst product = body.product || {};\nconst publishNow = Boolean(body.publishNow);\nconst caption = body.caption || '';\n\nconst defaultFeedFolder = '1Tqu0lGDDETlIwtpAA5w7zsjkgLtU8SVv'; // NNN.Public.2026\nconst defaultStoryFolder = '1WDQSvu9qvL7MadLJDuJwhrgf2XdRXd1T'; // NNN.Story.2026\n\nconst outItems = [];\nfor (let i = 0; i < uploads.length; i++) {\n  const u = uploads[i];\n  if (!u || !u.base64Data) continue;\n\n  const cleanB64 = String(u.base64Data).includes(',')\n    ? String(u.base64Data).split(',')[1]\n    : String(u.base64Data);\n\n  const buffer = Buffer.from(cleanB64, 'base64');\n  const fileName = u.fileName || `post_${Date.now()}_${i}.jpg`;\n  const mimeType = u.mimeType || (fileName.toLowerCase().endsWith('.mp4') ? 'video/mp4' : 'image/jpeg');\n\n  const binaryData = await this.helpers.prepareBinaryData(buffer, fileName, mimeType);\n  const role = u.role || 'feed';\n  const folderId = u.folderId || (role === 'story' ? defaultStoryFolder : defaultFeedFolder);\n\n  outItems.push({\n    json: {\n      uploadIdx: i,\n      store,\n      role,\n      folderId,\n      fileName,\n      mimeType,\n      isVideo: Boolean(u.isVideo) || /\\.(mp4|mov)$/i.test(fileName),\n      scheduleTime: u.scheduleTime || (role === 'story' ? (schedule.storyTime || '20:30') : (schedule.feedTime || '18:00')),\n      publishNow,\n      caption,\n      sku: product.sku || '',\n      productName: product.name || '',\n      price: product.price || '',\n      variants: product.variants || '',\n      features: product.features || '',\n      scheduledDate: schedule.date || '',\n      feedTime: schedule.feedTime || '18:00',\n      storyTime: schedule.storyTime || '20:30',\n      target: schedule.target || 'both'\n    },\n    binary: {\n      data: binaryData\n    }\n  });\n}\n\nif (outItems.length === 0) {\n  throw new Error('No se recibieron archivos válidos en uploads[] desde el portal.');\n}\n\nreturn outItems;"
       },
-      "id": "a1b2c3d4-0002-4000-8000-000000000002",
+      "id": "dc0f973b-4fdc-4c4e-899a-e36e462108ca",
       "name": "8a. Preparar Archivos del Portal",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -352,
-        1520
+        -160,
+        2960
       ]
     },
     {
@@ -549,13 +761,13 @@
         },
         "options": {}
       },
-      "id": "a1b2c3d4-0003-4000-8000-000000000003",
+      "id": "70cf59c9-e8ce-4cd5-b22d-1c4d2968fb22",
       "name": "8b. Subir Archivo a Drive NNN",
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
       "position": [
-        -96,
-        1520
+        96,
+        2960
       ],
       "credentials": {
         "googleDriveOAuth2Api": {
@@ -566,17 +778,16 @@
     },
     {
       "parameters": {
-        "jsCode": "// ==========================================\n// CONSOLIDAR ARCHIVOS SUBIDOS A GOOGLE DRIVE\n// Y PREPARAR ESTRUCTURA SI EL USUARIO ELIGIÓ 'PUBLICAR AHORA'\n// ==========================================\nconst uploadedItems = $input.all();\nconst prepItems = $('8a. Preparar Archivos del Portal').all();\n\nconst firstPrep = (prepItems[0] && prepItems[0].json) ? prepItems[0].json : {};\nconst publishNow = Boolean(firstPrep.publishNow);\n\nconst feedFiles = [];\nconst storyFiles = [];\nconst allUploaded = [];\n\nfor (let i = 0; i < uploadedItems.length; i++) {\n  const up = uploadedItems[i].json || {};\n  const meta = (prepItems[i] && prepItems[i].json) ? prepItems[i].json : firstPrep;\n  const fileId = up.id;\n  const fileName = up.name || meta.fileName || 'post.jpg';\n  const role = meta.role || 'feed';\n\n  if (fileId) {\n    const fileObj = {\n      id: String(fileId).trim(),\n      name: String(fileName).trim(),\n      role,\n      folderId: meta.folderId || ''\n    };\n    allUploaded.push(fileObj);\n    if (role === 'story') {\n      storyFiles.push({ id: fileObj.id, name: fileObj.name });\n    } else {\n      feedFiles.push({ id: fileObj.id, name: fileObj.name });\n    }\n  }\n}\n\nconst firstFeed = feedFiles[0] || storyFiles[0] || { id: '', name: '' };\nconst firstStory = storyFiles[0] || null;\n\nreturn [{\n  json: {\n    from_webhook: true,\n    publish_now: publishNow,\n    has_post: true,\n    is_feed_post: feedFiles.length > 0,\n    id: firstFeed.id,\n    name: firstFeed.name,\n    file_id: firstFeed.id,\n    file_name: firstFeed.name,\n    feed_files: feedFiles,\n    story_files: storyFiles,\n    uploaded_files: allUploaded,\n    tipo_publicacion: feedFiles.length > 1 ? 'carrusel' : 'post',\n    media_count: feedFiles.length || storyFiles.length || 1,\n    image_ids: feedFiles.map(f => f.id),\n    image_names: feedFiles.map(f => f.name),\n    story_id: firstStory ? firstStory.id : null,\n    story_name: firstStory ? firstStory.name : null,\n    producto: firstPrep.productName || 'Bross London / NNN',\n    articulo: firstPrep.sku || '',\n    modelo: firstPrep.productName ? `${firstPrep.productName} (${firstPrep.sku})` : (firstPrep.sku || ''),\n    precio: firstPrep.price || '$59.000',\n    caracteristicas: firstPrep.features || '',\n    variantes: firstPrep.variants || 'Surtidas / Único',\n    custom_caption: firstPrep.caption || '',\n    scheduled_date: firstPrep.scheduledDate || '',\n    target: firstPrep.target || 'both'\n  }\n}];"
+        "jsCode": "// ==========================================\n// CONSOLIDAR TODOS LOS ARCHIVOS SUBIDOS A GOOGLE DRIVE (FEED/REEL + STORY)\n// IMPORTANTE: Sin executeOnce para que $input.all() reciba TODOS los archivos\n// ==========================================\nconst uploadedItems = $input.all();\nconst prepItems = $('8a. Preparar Archivos del Portal').all();\n\nconst firstPrep = (prepItems[0] && prepItems[0].json) ? prepItems[0].json : {};\nconst publishNow = Boolean(firstPrep.publishNow);\nconst storyFolderId = '1WDQSvu9qvL7MadLJDuJwhrgf2XdRXd1T';\n\nconst feedFiles = [];\nconst storyFiles = [];\nconst allUploaded = [];\n\nfor (let i = 0; i < uploadedItems.length; i++) {\n  const up = uploadedItems[i].json || {};\n  const meta = (prepItems[i] && prepItems[i].json) ? prepItems[i].json : firstPrep;\n  const fileId = up.id;\n  const fileName = up.name || meta.fileName || 'post.jpg';\n  const parents = Array.isArray(up.parents) ? up.parents : [];\n  const role = (meta && meta.role) ? meta.role : (parents.includes(storyFolderId) ? 'story' : 'feed');\n  const isVideo = Boolean(meta && meta.isVideo) || /\\.(mp4|mov)$/i.test(fileName);\n  const scheduleTime = (meta && meta.scheduleTime) || (role === 'story' ? (firstPrep.storyTime || '20:30') : (firstPrep.feedTime || '18:00'));\n\n  if (fileId) {\n    const fileObj = {\n      id: String(fileId).trim(),\n      name: String(fileName).trim(),\n      role,\n      isVideo,\n      scheduleTime,\n      folderId: (meta && meta.folderId) || parents[0] || ''\n    };\n    allUploaded.push(fileObj);\n    if (role === 'story') {\n      storyFiles.push({ id: fileObj.id, name: fileObj.name, isVideo, scheduleTime });\n    } else {\n      feedFiles.push({ id: fileObj.id, name: fileObj.name, isVideo, scheduleTime });\n    }\n  }\n}\n\nconst firstFeed = feedFiles[0] || storyFiles[0] || { id: '', name: '' };\nconst firstStory = storyFiles[0] || null;\nconst hasFeed = feedFiles.length > 0;\nconst tipoPub = !hasFeed\n  ? 'story_only'\n  : (feedFiles.length > 1 ? 'carrusel' : (feedFiles[0].isVideo ? 'reel' : 'post'));\n\nreturn [{\n  json: {\n    from_webhook: true,\n    publish_now: publishNow,\n    has_post: hasFeed || storyFiles.length > 0,\n    is_feed_post: hasFeed,\n    has_story: storyFiles.length > 0,\n    id: firstFeed.id,\n    name: firstFeed.name,\n    file_id: firstFeed.id,\n    file_name: firstFeed.name,\n    feed_files: feedFiles,\n    story_files: storyFiles,\n    uploaded_files: allUploaded,\n    tipo_publicacion: tipoPub,\n    media_count: feedFiles.length || storyFiles.length || 1,\n    image_ids: feedFiles.map(f => f.id),\n    image_names: feedFiles.map(f => f.name),\n    story_id: firstStory ? firstStory.id : null,\n    story_name: firstStory ? firstStory.name : null,\n    producto: firstPrep.productName || 'Bross London / NNN',\n    articulo: firstPrep.sku || '',\n    modelo: firstPrep.productName ? `${firstPrep.productName} (${firstPrep.sku})` : (firstPrep.sku || ''),\n    precio: firstPrep.price || '$59.000',\n    caracteristicas: firstPrep.features || '',\n    variantes: firstPrep.variants || 'Surtidas / Único',\n    custom_caption: firstPrep.caption || '',\n    scheduled_date: firstPrep.scheduledDate || '',\n    feed_schedule_time: firstPrep.feedTime || '18:00',\n    story_schedule_time: firstPrep.storyTime || '20:30',\n    target: firstPrep.target || 'both'\n  }\n}];"
       },
-      "id": "a1b2c3d4-0004-4000-8000-000000000004",
+      "id": "1ee53588-e861-463f-b16c-5838ef8b0a9f",
       "name": "8c. Consolidar Subida Drive",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        160,
-        1520
-      ],
-      "executeOnce": true
+        352,
+        2960
+      ]
     },
     {
       "parameters": {
@@ -602,19 +813,19 @@
         },
         "options": {}
       },
-      "id": "a1b2c3d4-0005-4000-8000-000000000005",
+      "id": "1ef9809d-8c1c-4c2f-b45e-631cc6039715",
       "name": "8d. ¿Publicar Ahora en IG?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        432,
-        1520
+        624,
+        2960
       ]
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ JSON.stringify({ ok: true, mode: 'scheduled', message: 'Archivos subidos a Google Drive correctamente', uploaded_files: $json.uploaded_files || [], scheduled_date: $json.scheduled_date || '' }) }}",
+        "responseBody": "={{ JSON.stringify({ ok: true, mode: 'scheduled', message: 'Archivos subidos a Google Drive correctamente con sus horarios programados', uploaded_files: $json.uploaded_files || [], feed_files: $json.feed_files || [], story_files: $json.story_files || [], scheduled_date: $json.scheduled_date || '', feed_schedule_time: $json.feed_schedule_time || '18:00', story_schedule_time: $json.story_schedule_time || '20:30', timestamp: new Date().toISOString() }) }}",
         "options": {
           "responseHeaders": {
             "entries": [
@@ -626,13 +837,13 @@
           }
         }
       },
-      "id": "a1b2c3d4-0006-4000-8000-000000000006",
+      "id": "cee5d245-5c82-44bb-9cf8-35a12e7bc023",
       "name": "9b. Responder Portal (Programado en Drive)",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        736,
-        1424
+        928,
+        2864
       ]
     },
     {
@@ -659,20 +870,20 @@
         },
         "options": {}
       },
-      "id": "a1b2c3d4-0007-4000-8000-000000000007",
+      "id": "c19b9a8a-6fc1-4e47-87ef-2c7d22e058b4",
       "name": "8e. ¿Vino del Portal Web?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        1968,
-        1936
+        2160,
+        3376
       ],
       "executeOnce": true
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ JSON.stringify({ ok: true, mode: 'published_now', message: 'Publicado en Instagram y guardado en Google Drive y Sheets', ig_post_id: $('6. Publicar Story5').first().json.ig_post_id || '', ig_story_ids: $('6. Publicar Story5').first().json.ig_story_ids || '', uploaded_files: $('8c. Consolidar Subida Drive').first().json.uploaded_files || [] }) }}",
+        "responseBody": "={{ JSON.stringify({ ok: Boolean(($('6. Publicar Story6').first().json.ig_post_id && $('6. Publicar Story6').first().json.ig_post_id !== 'no_feed_post') || $('6. Publicar Story6').first().json.ig_story_ids), mode: 'published_now', message: 'Ejecución completada en Instagram, Google Drive y Sheets', ig_post_id: $('6. Publicar Story6').first().json.ig_post_id || '', ig_story_ids: $('6. Publicar Story6').first().json.ig_story_ids || '', feed_error: $('6. Publicar Story6').first().json.feed_error || null, failed_stories: $('6. Publicar Story6').first().json.failed_stories || [], uploaded_files: $('8c. Consolidar Subida Drive').first().json.uploaded_files || [], feed_files: $('8c. Consolidar Subida Drive').first().json.feed_files || [], story_files: $('8c. Consolidar Subida Drive').first().json.story_files || [], feed_schedule_time: $('8c. Consolidar Subida Drive').first().json.feed_schedule_time || '18:00', story_schedule_time: $('8c. Consolidar Subida Drive').first().json.story_schedule_time || '20:30', timestamp: $('6. Publicar Story6').first().json.timestamp || new Date().toISOString() }) }}",
         "options": {
           "responseHeaders": {
             "entries": [
@@ -684,202 +895,717 @@
           }
         }
       },
-      "id": "a1b2c3d4-0008-4000-8000-000000000008",
+      "id": "dfdf3eee-29fe-448a-a1f1-a1221efca788",
       "name": "9a. Responder Portal (Publicado Ahora OK)",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        2192,
-        1872
+        2480,
+        3312
       ],
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9,12,15,18,20,21 * * *"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1072,
+        3536
+      ],
+      "id": "7b86aacf-5c40-4d41-8621-bd987088d843",
+      "name": "Schedule Trigger (18:00 hs Feed)"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "propertyName": "estado_ia",
+        "key": "BOT_STATUS_NNN_IG",
+        "options": {}
+      },
+      "id": "ee2ff919-0bc8-4d48-bedc-024f2b2173d6",
+      "name": "Consultar si IA esta prendida4",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        -800,
+        3536
+      ],
+      "credentials": {
+        "redis": {
+          "id": "g18Rp5JLDMbWqCcr",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.estado_ia }}",
+              "rightValue": "OFF",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "555103a7-5a53-4e04-aa97-4f7f25c1f4a1",
+      "name": "IA Prendida?4",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -608,
+        3536
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "returnAll": true,
+        "filter": {
+          "driveId": {
+            "__rl": true,
+            "value": "My Drive",
+            "mode": "list",
+            "cachedResultName": "My Drive",
+            "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+          },
+          "folderId": {
+            "__rl": true,
+            "value": "1Tqu0lGDDETlIwtpAA5w7zsjkgLtU8SVv",
+            "mode": "list",
+            "cachedResultName": "NNN.Public.2026",
+            "cachedResultUrl": "https://drive.google.com/drive/folders/1Tqu0lGDDETlIwtpAA5w7zsjkgLtU8SVv"
+          }
+        },
+        "options": {}
+      },
+      "name": "1a. Buscar Fotos Feed",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -416,
+        3360
+      ],
+      "id": "64bac359-8b41-4b8f-9566-6245f1b166e2",
+      "executeOnce": true,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "3HuY6vo5wwgyvfmD",
+          "name": "Google Drive NNN"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "returnAll": true,
+        "filter": {
+          "folderId": {
+            "__rl": true,
+            "value": "1WDQSvu9qvL7MadLJDuJwhrgf2XdRXd1T",
+            "mode": "list",
+            "cachedResultName": "NNN.Story.2026",
+            "cachedResultUrl": "https://drive.google.com/drive/folders/1WDQSvu9qvL7MadLJDuJwhrgf2XdRXd1T"
+          }
+        },
+        "options": {}
+      },
+      "name": "1b. Buscar Fotos Story",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -224,
+        3360
+      ],
+      "id": "dca26926-7a13-4d21-ab38-0c6d0f6c1bf8",
+      "executeOnce": true,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "3HuY6vo5wwgyvfmD",
+          "name": "Google Drive NNN"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "13OZcCBHrVufQSB4HcZu1Vgnu6uYAGLFpWrwW-x347aw",
+          "mode": "list",
+          "cachedResultName": "NachaHome",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/13OZcCBHrVufQSB4HcZu1Vgnu6uYAGLFpWrwW-x347aw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1194881315,
+          "mode": "list",
+          "cachedResultName": "ContenidoNNN",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/13OZcCBHrVufQSB4HcZu1Vgnu6uYAGLFpWrwW-x347aw/edit#gid=1194881315"
+        },
+        "options": {}
+      },
+      "name": "2. Leer Sheets (Publicadas)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        -32,
+        3360
+      ],
+      "id": "c48d2dc6-85ba-4d47-9284-9da4c7b3ada8",
+      "executeOnce": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "hMRjCOIdJsrsXsOU",
+          "name": "Google Sheets NNN"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1dlWKIScKbKtwNcU0ETTbR06VerGG-OPpAgYQCwRzyMA",
+          "mode": "list",
+          "cachedResultName": "Stock_Bross_JeanC",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1dlWKIScKbKtwNcU0ETTbR06VerGG-OPpAgYQCwRzyMA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1258458893,
+          "mode": "list",
+          "cachedResultName": "BrossPrecios",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1dlWKIScKbKtwNcU0ETTbR06VerGG-OPpAgYQCwRzyMA/edit#gid=1258458893"
+        },
+        "options": {}
+      },
+      "name": "2b. Leer Catálogo (Sheets)6",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        160,
+        3360
+      ],
+      "id": "5f43b69b-6ccd-4240-ac6c-320dc11327d8",
+      "executeOnce": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "hMRjCOIdJsrsXsOU",
+          "name": "Google Sheets NNN"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// ==========================================\n// 1. OBTENER FECHA Y HORA ACTUAL (ARGENTINA UTC-3)\n// Soporta múltiples horarios programados (09, 12, 15, 18, 20, 21 hs) para Feed, Carrusel y Reels\n// ==========================================\nconst timezoneOffset = -3 * 60;\nconst now = new Date();\nconst localDate = new Date(now.getTime() + (now.getTimezoneOffset() + timezoneOffset) * 60000);\nconst todayDay = localDate.getDate();\nconst todayMonth = localDate.getMonth() + 1;\nconst todayScore = todayMonth * 100 + todayDay;\nconst currentHour = localDate.getHours();\n\nfunction getFileHourTag(filename) {\n  if (!filename) return null;\n  const m = filename.match(/(?:^|[\\s._-])([0-9]{2})hs(?:[\\s._-]|\\.|$)/i);\n  if (m) return parseInt(m[1], 10);\n  return null;\n}\n\nfunction cleanFileName(filename) {\n  if (!filename) return '';\n  let clean = filename.replace(/\\.[^/.]+$/, '');\n  clean = clean.replace(/^(?:\\d{1,2}[\\/._-]\\d{1,2})[\\s._-]*/i, '');\n  clean = clean.replace(/^(?:FEED|STORY|REEL|[0-9]{2}HS)[\\s._-]*/gi, '');\n  clean = clean.replace(/^(?:Art\\.?|Articulo|Modelo|Num)[\\s._-]*/i, '');\n  clean = clean.replace(/[\\s._-]*(?:FEED|STORY|REEL|[0-9]{2}HS)+$/gi, '');\n  clean = clean.replace(/\\s*(?:\\(\\d+\\)|_\\d+)$/, '');\n  return clean.trim();\n}\n\nfunction getFileDate(filename) {\n  if (!filename) return null;\n  const match = filename.match(/^([0-9]{1,2})[\\/\\-_\\.]([0-9]{1,2})(?:[.\\s_-]+|(?=[A-Za-z0-9]))/);\n  if (match) {\n    const p1 = parseInt(match[1], 10);\n    const p2 = parseInt(match[2], 10);\n    if (p1 >= 1 && p1 <= 31 && p2 >= 1 && p2 <= 12) {\n      return { day: p1, month: p2 };\n    }\n  }\n  return null;\n}\n\nfunction formatPrice(rawPrice) {\n  if (!rawPrice && rawPrice !== 0) return '';\n  const cleanStr = String(rawPrice).replace(/\\s+/g, '');\n  const num = Number(cleanStr.replace(/[^0-9]/g, ''));\n  if (!isNaN(num) && num > 0) {\n    return '$' + num.toLocaleString('es-AR');\n  }\n  const str = String(rawPrice).trim();\n  return str.startsWith('$') ? str : '$' + str;\n}\n\nfunction extractFileInfo(item) {\n  if (!item) return null;\n  const j = item.json || item;\n  const id = j.id || (item.json && item.json.id) || j.fileId || j.file_id;\n  const name = j.name || (item.json && item.json.name) || j.fileName || j.file_name;\n  if (!id || !name) return null;\n  return { id: String(id).trim(), name: String(name).trim() };\n}\n\nfunction getItemsFromNodes(possibleBases) {\n  const suffixes = ['', '1', '2', '3', '4', '5', '6', '7', '8', '9'];\n  for (const base of possibleBases) {\n    for (const suffix of suffixes) {\n      try {\n        const fullName = base + suffix;\n        const items = $(fullName).all();\n        if (items && items.length > 0) return items;\n      } catch(e) {}\n    }\n  }\n  return [];\n}\n\nconst rawFeedFiles = getItemsFromNodes(['1a. Buscar Fotos Feed', 'Buscar Fotos Feed']);\nconst rawStoryFiles = getItemsFromNodes(['1b. Buscar Fotos Story', 'Buscar Fotos Story']);\nconst rawPublished = getItemsFromNodes(['2. Leer Sheets (Publicadas)', 'Leer Sheets (Publicadas)']);\nconst rawCatalogSheets = getItemsFromNodes(['2b. Leer Catálogo (Sheets)', 'Leer Catálogo (Sheets)']);\nconst rawCatalogBazar = getItemsFromNodes(['Leer catalogo Bazar', 'catalogo Bazar', 'stock_bazar_nnn']);\n\nconst combinedCatalog = [...rawCatalogSheets, ...rawCatalogBazar];\n\nconst publishedSet = new Set();\nrawPublished.forEach(row => {\n  const r = row.json || row;\n  const pubName = r['Publicadado en instagram ?'] || r.file_name || r.fileName || r.Name || r.name;\n  const pubId = r.file_id || r.fileId || r.FileID || r.id;\n  if (pubName && String(pubName).trim().length > 0 && String(pubName).trim().toLowerCase() !== 'no' && String(pubName).trim().toLowerCase() !== 'false') {\n    String(pubName).split(',').forEach(part => {\n      const p = part.trim().toLowerCase();\n      if (p) publishedSet.add(p);\n    });\n  }\n  if (pubId && String(pubId).trim().length > 0) {\n    publishedSet.add(String(pubId).trim());\n  }\n});\n\nconst feedFiles = [];\nrawFeedFiles.forEach(item => {\n  const info = extractFileInfo(item);\n  if (!info) return;\n  \n  const nameClean = cleanFileName(info.name);\n  const dateInfo = getFileDate(info.name);\n  const hourTag = getFileHourTag(info.name);\n  const isPub = publishedSet.has(info.name.toLowerCase()) || publishedSet.has(info.id);\n  \n  feedFiles.push({\n    id: info.id,\n    name: info.name,\n    nameClean,\n    dateInfo,\n    hourTag,\n    isPublished: isPub\n  });\n});\n\nif (feedFiles.length === 0) {\n  return [{\n    json: {\n      has_post: false,\n      message: 'No se encontraron fotos en la carpeta de Feed de Google Drive.'\n    }\n  }];\n}\n\nconst grouped = {};\nfeedFiles.forEach(file => {\n  const dateKey = file.dateInfo ? `${file.dateInfo.day}_${file.dateInfo.month}_` : 'NODATE_';\n  const hourKey = file.hourTag ? `_${file.hourTag}HS_` : '_DEF18HS_';\n  const key = dateKey + hourKey + (file.nameClean.toLowerCase() || file.id);\n  if (!grouped[key]) {\n    grouped[key] = {\n      cleanName: file.nameClean,\n      dateInfo: file.dateInfo,\n      hourTag: file.hourTag,\n      files: [],\n      hasUnpublished: false\n    };\n  }\n  grouped[key].files.push(file);\n  if (!file.isPublished) {\n    grouped[key].hasUnpublished = true;\n  }\n});\n\nObject.values(grouped).forEach(g => {\n  g.files.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));\n});\n\nconst groups = Object.values(grouped);\nlet candidateGroup = null;\n\n// Si estamos en un horario distinto del clásico 18:00 hs (ej. 09, 12, 15, 20, 21), buscar solo posteos con ese tag de hora explícito\nif (currentHour !== 18) {\n  candidateGroup = groups.find(g =>\n    g.hasUnpublished &&\n    g.dateInfo &&\n    g.dateInfo.day === todayDay &&\n    g.dateInfo.month === todayMonth &&\n    g.hourTag === currentHour\n  );\n  if (!candidateGroup) {\n    return [{\n      json: {\n        has_post: false,\n        message: `Sin publicaciones de Feed/Reel programadas específicamente para las ${currentHour}:00 hs hoy (${todayDay}/${todayMonth}).`\n      }\n    }];\n  }\n} else {\n  // Horario central 18:00 hs: Prioridad 1 -> Hoy con tag 18hs o sin tag de hora\n  candidateGroup = groups.find(g =>\n    g.hasUnpublished &&\n    g.dateInfo &&\n    g.dateInfo.day === todayDay &&\n    g.dateInfo.month === todayMonth &&\n    (!g.hourTag || g.hourTag === 18)\n  );\n\n  // Prioridad 2: Fechas pasadas no publicadas (sin otro horario reservado)\n  if (!candidateGroup) {\n    const unpostedPastDated = groups.filter(g => {\n      if (!g.hasUnpublished || !g.dateInfo) return false;\n      if (g.hourTag && g.hourTag !== 18) return false;\n      const score = g.dateInfo.month * 100 + g.dateInfo.day;\n      return score <= todayScore;\n    });\n    if (unpostedPastDated.length > 0) {\n      unpostedPastDated.sort((a, b) => {\n        const scoreA = a.dateInfo.month * 100 + a.dateInfo.day;\n        const scoreB = b.dateInfo.month * 100 + b.dateInfo.day;\n        return scoreB - scoreA;\n      });\n      candidateGroup = unpostedPastDated[0];\n    }\n  }\n\n  // Prioridad 3: Fotos sin fecha que aún no se publicaron\n  if (!candidateGroup) {\n    candidateGroup = groups.find(g => g.hasUnpublished && !g.dateInfo && (!g.hourTag || g.hourTag === 18));\n  }\n}\n\nif (!candidateGroup) {\n  return [{\n    json: {\n      has_post: false,\n      message: `No hay publicaciones pendientes para hoy (${todayDay}/${todayMonth} ${currentHour}:00 hs).`\n    }\n  }];\n}\n\nconst selectedFeedFiles = candidateGroup.files.filter(f => !f.isPublished);\nconst filesToPost = selectedFeedFiles.length > 0 ? selectedFeedFiles : candidateGroup.files;\nconst firstImage = filesToPost[0];\n\n// 7. BUSCAR STORY CORRESPONDIENTE (Solo si la Story no fue publicada aún y no tiene un horario distinto reservado como 09hs o 20hs)\nlet storyMatch = null;\nrawStoryFiles.forEach(item => {\n  const info = extractFileInfo(item);\n  if (!info) return;\n  if (publishedSet.has(info.name.toLowerCase()) || publishedSet.has(info.id)) return;\n  const sNameClean = cleanFileName(info.name);\n  const sHourTag = getFileHourTag(info.name);\n  // Si la story tiene explícitamente _09hs o _20hs (y estamos en otro horario), dejar que el Cron de Stories la publique en su turno\n  if (sHourTag && sHourTag !== currentHour) return;\n  if (sNameClean.toLowerCase() === candidateGroup.cleanName.toLowerCase()) {\n    storyMatch = info;\n  }\n});\n\n// 8. BUSCAR DATOS EXACTOS EN AMBOS CATÁLOGOS (SKU / ARTÍCULO)\nconst skuMatch = firstImage.name.match(/([A-Za-z]{1,4}[-_]?[0-9]{3,5}(?:[-_][0-9]{1,3})?|[0-9]{4,6}(?:[-_][0-9]{1,3})?)/);\nconst targetSku = skuMatch ? skuMatch[1].toUpperCase().replace(/[^A-Z0-9]/g, '') : candidateGroup.cleanName.toUpperCase().replace(/[^A-Z0-9]/g, '');\n\nlet foundCatalog = null;\n\nfor (const row of combinedCatalog) {\n  const r = row.json || row;\n  const skuField = String(r.SKU || r['Artículo'] || r.Articulo || r.Art || r.Codigo || r.Modelo || '').trim().toUpperCase();\n  const cleanSkuField = skuField.replace(/[^A-Z0-9]/g, '');\n\n  if (targetSku && cleanSkuField && (targetSku === cleanSkuField || targetSku.includes(cleanSkuField) || cleanSkuField.includes(targetSku))) {\n    foundCatalog = r;\n    break;\n  }\n\n  const rowValues = Object.values(r).join(' ').toUpperCase();\n  if (candidateGroup.cleanName && rowValues.includes(candidateGroup.cleanName.toUpperCase())) {\n    foundCatalog = r;\n    break;\n  }\n}\n\nlet producto = 'Bross London / NNN';\nlet articulo = candidateGroup.cleanName;\nlet modeloNombre = candidateGroup.cleanName;\nlet precioFinal = '';\nlet caracteristicas = '';\nlet variantes = 'Surtidas / Único';\n\nif (foundCatalog) {\n  const rawPrice = foundCatalog.Precio !== undefined ? foundCatalog.Precio :\n                   foundCatalog.PRECIO !== undefined ? foundCatalog.PRECIO :\n                   foundCatalog['Precio publico'] !== undefined ? foundCatalog['Precio publico'] :\n                   foundCatalog['Precio Mayorista'] !== undefined ? foundCatalog['Precio Mayorista'] : '';\n\n  precioFinal = formatPrice(rawPrice);\n  producto = foundCatalog.Producto || foundCatalog.Nombre || producto;\n  articulo = foundCatalog.SKU || foundCatalog['Artículo'] || foundCatalog.Articulo || foundCatalog.Art || articulo;\n  caracteristicas = foundCatalog.Descripcion || foundCatalog.Descripción || foundCatalog.Caracteristica || foundCatalog.Características || foundCatalog.Detalle || '';\n  variantes = foundCatalog.Medida || foundCatalog.Talles || foundCatalog.Variantes || variantes;\n  modeloNombre = producto ? `${producto} (${articulo})` : articulo;\n}\n\nreturn [{\n  json: {\n    from_webhook: false,\n    has_post: true,\n    is_feed_post: true,\n    id: firstImage.id,\n    name: firstImage.name,\n    file_id: firstImage.id,\n    file_name: firstImage.name,\n    feed_files: filesToPost,\n    story_files: storyMatch ? [storyMatch] : [],\n    tipo_publicacion: filesToPost.length > 1 ? 'carrusel' : 'post',\n    media_count: filesToPost.length,\n    image_ids: filesToPost.map(f => f.id),\n    image_names: filesToPost.map(f => f.name),\n    story_id: storyMatch ? storyMatch.id : null,\n    story_name: storyMatch ? storyMatch.name : null,\n    producto: producto,\n    articulo: articulo,\n    modelo: modeloNombre,\n    precio: precioFinal || '$59.000',\n    caracteristicas: caracteristicas,\n    variantes: variantes,\n    fecha_detectada: candidateGroup.dateInfo ? `${candidateGroup.dateInfo.day}/${candidateGroup.dateInfo.month}` : 'Sin fecha',\n    date_target: `${todayDay}/${todayMonth}`\n  }\n}];"
+      },
+      "name": "3. Elegir Foto Nueva",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        624,
+        3376
+      ],
+      "id": "1e1e8402-6dd8-4d98-a1c7-b732f6e67126",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "c_post",
+              "leftValue": "={{ $json.has_post }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Hay Foto para Publicar?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        800,
+        3376
+      ],
+      "id": "310f854f-a626-4e79-a50f-e380ecc6c09e"
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "options": {
+          "temperature": 0.7
+        }
+      },
+      "name": "OpenAI Chat Model (Post)6",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        1056,
+        3648
+      ],
+      "id": "bf916804-d15b-4bdf-a225-201b3788c43a",
+      "credentials": {
+        "openAiApi": {
+          "id": "TGlBscz4t1q4FX8l",
+          "name": "OpenAi"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Sos el redactor de contenidos oficial de NNN / Bross London.\nTu objetivo es crear un copy magnético para una publicación en Instagram (Feed/Carrusel) presentando el producto:\n\n- Producto: {{ $json.producto }}\n- Modelo / Artículo: {{ $json.modelo }}\n- Precio: {{ $json.precio }}\n- Características / Detalles: {{ $json.caracteristicas }}\n- Variantes / Medida: {{ $json.variantes }}\n- Tipo de Publicación: {{ $json.tipo_publicacion }}\n\nPAUTAS:\n1. Tono moderno, premium, masculino y directo de la marca Bross.\n2. Adaptá el mensaje al producto específico (si es lunchera/accesorio destaca funcionalidad, durabilidad y estilo; si es indumentaria/boxers destaca comodidad y calce; si son medias destaca diseño y calidad).\n3. Resaltá las características reales del producto y el precio exacto ({{ $json.precio }}).\n4. Incluí llamado a la acción claro para comprar por mayor o menor vía WhatsApp (link en la bio).\n5. Máximo 2 a 3 párrafos cortos y hashtags clave relevantes al producto (#BrossLondon #NNN #ModaMasculina #Accesorios #Mayorista).\n\nEscribí únicamente el texto del post listo para copiar y pegar, sin introducciones."
+      },
+      "name": "Redactar Copy con IA6",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.4,
+      "position": [
+        1008,
+        3376
+      ],
+      "id": "6c44cfcd-6e24-4afc-a467-45380e3ab66f"
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('3. Elegir Foto Nueva').item.json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "name": "4. Descargar Foto Elegida",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1360,
+        3376
+      ],
+      "id": "4d20313b-b852-4dd5-a78a-2c761a066808",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "3HuY6vo5wwgyvfmD",
+          "name": "Google Drive NNN"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));\n\nasync function waitForContainer(containerId, token, helpers) {\n  let status = 'IN_PROGRESS';\n  let attempts = 0;\n  while ((status === 'IN_PROGRESS' || status === 'PENDING') && attempts < 45) {\n    await sleep(2000);\n    let res;\n    try {\n      res = await helpers.httpRequest({\n        method: 'GET',\n        url: `https://graph.facebook.com/v19.0/${containerId}`,\n        qs: { fields: 'status_code,status', access_token: token }\n      });\n    } catch (e) {\n      const errData = e.response && e.response.data ? e.response.data : e;\n      throw new Error(`Error consultando estado del contenedor ${containerId}: ` + JSON.stringify(errData));\n    }\n    status = res.status_code;\n    attempts++;\n  }\n  if (status !== 'FINISHED') {\n    throw new Error(`El contenedor ${containerId} no terminó de procesarse. Estado final: ${status}`);\n  }\n}\n\nconst token = 'EAAITZCnQlvIABRnU3NBVjULr0z46vdpDSlpPkgfaAZANQGRP0ocmfn0jjucOSj3HEFZAcIcYKjlfj7IXQUGMJixZCh0zZBm4oRj5sCyYg3aEENahoubKy8zeb7ZB4Hm506QyQy4Dihs3WbK7MWf5MwYmFkZC3yowkZAtpkswZCScTPJxZCmdIxWxwayiUTaqadJghU6YQZC';\nconst igUserId = '17841475845281408';\n\nconst inputData = $input.first().json || {};\nfunction getChosenInfo() {\n  if (inputData && inputData.from_webhook) {\n    return inputData;\n  }\n  const suffixes = ['', '1', '2', '3', '4', '5', '6'];\n  for (const s of suffixes) {\n    try {\n      const info = $(`3. Elegir Foto Nueva${s}`).item.json;\n      if (info && (info.feed_files || info.id)) return info;\n    } catch(e) {}\n  }\n  return inputData;\n}\n\nconst chosenInfo = getChosenInfo();\nlet files = Array.isArray(chosenInfo.feed_files) ? chosenInfo.feed_files : [];\nif (files.length === 0 && chosenInfo.id && chosenInfo.is_feed_post !== false && chosenInfo.target !== 'story') {\n  files = [{ id: chosenInfo.id, name: chosenInfo.name }];\n}\n\n// Si es SOLO STORY (no hay archivos de Feed/Reel), saltar Feed y pasar directo a Story\nif (files.length === 0) {\n  return [{ json: { \n    ig_post_id: 'no_feed_post', \n    feed_error: null,\n    files: [],\n    story_files: chosenInfo.story_files || [],\n    from_webhook: Boolean(chosenInfo.from_webhook),\n    uploaded_files: chosenInfo.uploaded_files || [],\n    feed_schedule_time: chosenInfo.feed_schedule_time || '18:00',\n    story_schedule_time: chosenInfo.story_schedule_time || '20:30',\n    scheduled_date: chosenInfo.scheduled_date || '',\n    file_name: 'no_feed_post'\n  }}];\n}\n\n// Si vino recién subido desde el Portal Web, dar 2.5 seg a Google Drive para propagar permisos\nif (chosenInfo.from_webhook) {\n  await sleep(2500);\n}\n\nlet caption = chosenInfo.custom_caption ? String(chosenInfo.custom_caption).trim() : '';\nif (!caption) {\n  const copySuffixes = ['', '1', '2', '3', '4', '5', '6'];\n  for (const s of copySuffixes) {\n    try {\n      const aiItem = $(`Redactar Copy con IA${s}`).item.json;\n      caption = aiItem.text || aiItem.output || aiItem.response || '';\n      if (caption) break;\n    } catch(e) {}\n  }\n}\n\nif (!caption) {\n  caption = `🔥 ${chosenInfo.producto || 'Novedades'} ${chosenInfo.articulo || ''} 🔥\\n\\n${chosenInfo.caracteristicas || ''}\\n\\n💰 Precio: ${chosenInfo.precio || ''}\\n\\n📦 Envíos a todo el país.\\n👉 Comprá al link de la bio.`;\n}\n\nlet igPostId = '';\nlet feedError = null;\n\ntry {\n  if (files.length === 1) {\n    const fileId = files[0].id;\n    const fileName = (files[0].name || '').toLowerCase();\n    const fileUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;\n    const isVideo = Boolean(files[0].isVideo) || fileName.endsWith('.mp4') || fileName.endsWith('.mov');\n\n    let createRes;\n    try {\n      if (isVideo) {\n        createRes = await this.helpers.httpRequest({\n          method: 'POST',\n          url: `https://graph.facebook.com/v19.0/${igUserId}/media`,\n          qs: { \n            video_url: fileUrl, \n            media_type: 'REELS', \n            caption: caption, \n            share_to_feed: true, \n            access_token: token \n          }\n        });\n      } else {\n        createRes = await this.helpers.httpRequest({\n          method: 'POST',\n          url: `https://graph.facebook.com/v19.0/${igUserId}/media`,\n          qs: { image_url: fileUrl, caption: caption, access_token: token }\n        });\n      }\n    } catch (error) {\n      const errData = error.response && error.response.data ? error.response.data : error;\n      const tipoStr = isVideo ? 'Reel' : 'Imagen Feed';\n      throw new Error(`Meta API Error al crear contenedor de ${tipoStr}: ` + JSON.stringify(errData));\n    }\n\n    await waitForContainer(createRes.id, token, this.helpers);\n\n    let publishRes;\n    try {\n      publishRes = await this.helpers.httpRequest({\n        method: 'POST',\n        url: `https://graph.facebook.com/v19.0/${igUserId}/media_publish`,\n        qs: { creation_id: createRes.id, access_token: token }\n      });\n    } catch (error) { \n      const errData = error.response && error.response.data ? error.response.data : error;\n      throw new Error('Meta API Error al publicar post/reel: ' + JSON.stringify(errData));\n    }\n\n    igPostId = publishRes.id;\n\n  } else {\n    const childContainerIds = [];\n\n    for (const file of files.slice(0, 10)) {\n      const fileUrl = `https://drive.google.com/uc?export=download&id=${file.id}`;\n      const isVideo = Boolean(file.isVideo) || /\\.(mp4|mov)$/i.test(file.name || '');\n      let itemRes;\n      try {\n        const qs = isVideo\n          ? { video_url: fileUrl, media_type: 'VIDEO', is_carousel_item: true, access_token: token }\n          : { image_url: fileUrl, is_carousel_item: true, access_token: token };\n        itemRes = await this.helpers.httpRequest({\n          method: 'POST',\n          url: `https://graph.facebook.com/v19.0/${igUserId}/media`,\n          qs\n        });\n      } catch (error) {\n        const errData = error.response && error.response.data ? error.response.data : error;\n        throw new Error(`Meta API Error al crear item de carrusel para ${file.name}: ` + JSON.stringify(errData));\n      }\n      childContainerIds.push(itemRes.id);\n    }\n\n    for (const containerId of childContainerIds) {\n      await waitForContainer(containerId, token, this.helpers);\n    }\n\n    let carouselRes;\n    try {\n      carouselRes = await this.helpers.httpRequest({\n        method: 'POST',\n        url: `https://graph.facebook.com/v19.0/${igUserId}/media`,\n        qs: { \n          media_type: 'CAROUSEL',\n          children: childContainerIds.join(','), \n          caption: caption, \n          access_token: token \n        }\n      });\n    } catch (error) {\n      const errData = error.response && error.response.data ? error.response.data : error;\n      throw new Error('Meta API Error al crear contenedor carrusel: ' + JSON.stringify(errData));\n    }\n\n    await waitForContainer(carouselRes.id, token, this.helpers);\n\n    let publishRes;\n    try {\n      publishRes = await this.helpers.httpRequest({\n        method: 'POST',\n        url: `https://graph.facebook.com/v19.0/${igUserId}/media_publish`,\n        qs: { creation_id: carouselRes.id, access_token: token }\n      });\n    } catch (error) {\n      const errData = error.response && error.response.data ? error.response.data : error;\n      throw new Error('Meta API Error al publicar carrusel: ' + JSON.stringify(errData));\n    }\n\n    igPostId = publishRes.id;\n  }\n} catch (err) {\n  if (!chosenInfo.from_webhook) {\n    throw err;\n  }\n  feedError = err.message || String(err);\n}\n\nreturn [{ json: { \n  ig_post_id: igPostId || '',\n  feed_error: feedError,\n  files: files,\n  story_files: chosenInfo.story_files || [],\n  from_webhook: Boolean(chosenInfo.from_webhook),\n  uploaded_files: chosenInfo.uploaded_files || [],\n  feed_schedule_time: chosenInfo.feed_schedule_time || '18:00',\n  story_schedule_time: chosenInfo.story_schedule_time || '20:30',\n  scheduled_date: chosenInfo.scheduled_date || '',\n  file_id: files[0].id,\n  fileId: files[0].id,\n  FileID: files[0].id,\n  file_name: files.map(f => f.name).join(', '),\n  fileName: files.map(f => f.name).join(', ')\n}}];"
+      },
+      "name": "5. Publicar Feed (Post)6",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1600,
+        3376
+      ],
+      "id": "32ba1fb4-9776-46a6-97c7-8d5789edbcb8"
+    },
+    {
+      "parameters": {
+        "jsCode": "const token = 'EAAITZCnQlvIABRnU3NBVjULr0z46vdpDSlpPkgfaAZANQGRP0ocmfn0jjucOSj3HEFZAcIcYKjlfj7IXQUGMJixZCh0zZBm4oRj5sCyYg3aEENahoubKy8zeb7ZB4Hm506QyQy4Dihs3WbK7MWf5MwYmFkZC3yowkZAtpkswZCScTPJxZCmdIxWxwayiUTaqadJghU6YQZC';\nconst igUserId = '17841475845281408';\n\nconst inputData = $input.first().json || {};\nfunction getChosenInfo() {\n  if (inputData && inputData.from_webhook) {\n    return inputData;\n  }\n  const suffixes = ['', '1', '2', '3', '4', '5', '6'];\n  for (const s of suffixes) {\n    try {\n      const info = $(`3. Elegir Foto Nueva${s}`).item.json;\n      if (info && (info.story_files || info.story_id)) return info;\n    } catch(e) {}\n  }\n  return inputData;\n}\n\nconst chosenInfo = getChosenInfo();\nlet storyFiles = Array.isArray(inputData.story_files) && inputData.story_files.length > 0\n  ? inputData.story_files\n  : (chosenInfo.story_files || []);\nif (storyFiles.length === 0 && chosenInfo.story_id) {\n  storyFiles = [{ id: chosenInfo.story_id, name: chosenInfo.story_name || 'Story' }];\n}\n\nconst igPostId = inputData.ig_post_id || '';\nconst feedError = inputData.feed_error || null;\n\nconst storyIds = [];\nconst successfulStoryIds = [];\nconst failedStories = [];\nconst sleep = ms => new Promise(resolve => setTimeout(resolve, ms));\n\n// Si es solo Story desde el Portal Web, esperar 2.5 seg para que Google Drive propague permisos del archivo\nif (inputData.from_webhook && (!inputData.files || inputData.files.length === 0) && storyFiles.length > 0) {\n  await sleep(2500);\n}\n\nasync function waitForContainer(containerId, token, helpers) {\n  let status = 'IN_PROGRESS';\n  let attempts = 0;\n  while ((status === 'IN_PROGRESS' || status === 'PENDING') && attempts < 45) {\n    await sleep(2000);\n    let res;\n    try {\n      res = await helpers.httpRequest({\n        method: 'GET',\n        url: `https://graph.facebook.com/v19.0/${containerId}`,\n        qs: { fields: 'status_code,status', access_token: token }\n      });\n    } catch (e) {\n      const errData = e.response && e.response.data ? e.response.data : e;\n      throw new Error(`Error consultando estado del contenedor de story ${containerId}: ` + JSON.stringify(errData));\n    }\n    status = res.status_code;\n    attempts++;\n  }\n  if (status !== 'FINISHED') {\n    throw new Error(`El contenedor de story ${containerId} no terminó de procesarse. Estado final: ${status}`);\n  }\n}\n\nfor (const file of storyFiles.slice(0, 10)) {\n  const fileUrl = `https://drive.google.com/uc?export=download&id=${file.id}`;\n  const isVideo = Boolean(file.isVideo) || /\\.(mp4|mov)$/i.test(file.name || '');\n  \n  try {\n    const qsParams = isVideo\n      ? { video_url: fileUrl, media_type: 'STORIES', access_token: token }\n      : { image_url: fileUrl, media_type: 'STORIES', access_token: token };\n\n    const createRes = await this.helpers.httpRequest({\n      method: 'POST',\n      url: `https://graph.facebook.com/v19.0/${igUserId}/media`,\n      qs: qsParams\n    });\n\n    await waitForContainer(createRes.id, token, this.helpers);\n\n    const publishRes = await this.helpers.httpRequest({\n      method: 'POST',\n      url: `https://graph.facebook.com/v19.0/${igUserId}/media_publish`,\n      qs: { creation_id: createRes.id, access_token: token }\n    });\n\n    storyIds.push(publishRes.id);\n    successfulStoryIds.push(file.id);\n  } catch (error) {\n    const errData = (error.response && error.response.data) ? error.response.data : (error.message || error);\n    failedStories.push({\n      name: file.name,\n      id: file.id,\n      error: typeof errData === 'object' ? JSON.stringify(errData) : String(errData)\n    });\n  }\n}\n\nconst feedFiles = (igPostId && igPostId !== 'no_feed_post' && !feedError) ? (inputData.files || []) : [];\nconst allPublished = [];\nconst nowIso = new Date().toISOString();\n\nfor (const f of feedFiles) {\n  allPublished.push({\n    ig_story_ids: storyIds.join(', '),\n    ig_post_id: igPostId,\n    feed_error: feedError,\n    file_id: f.id,\n    fileId: f.id,\n    FileID: f.id,\n    file_name: f.name,\n    fileName: f.name,\n    timestamp: nowIso,\n    from_webhook: Boolean(inputData.from_webhook)\n  });\n}\n\nfor (const f of storyFiles) {\n  if (successfulStoryIds.includes(f.id)) {\n    if (!feedFiles.some(feedF => feedF.id === f.id)) {\n      allPublished.push({\n        ig_story_ids: storyIds.join(', '),\n        ig_post_id: igPostId,\n        feed_error: feedError,\n        file_id: f.id,\n        fileId: f.id,\n        FileID: f.id,\n        file_name: f.name,\n        fileName: f.name,\n        timestamp: nowIso,\n        from_webhook: Boolean(inputData.from_webhook)\n      });\n    }\n  }\n}\n\nif (allPublished.length === 0) {\n  return [{ json: { \n    ig_post_id: igPostId,\n    ig_story_ids: storyIds.join(', '),\n    feed_error: feedError,\n    from_webhook: Boolean(inputData.from_webhook),\n    status: 'no_publications_saved', \n    failed_stories: failedStories,\n    timestamp: nowIso\n  }}];\n}\n\nconst result = allPublished.map((item, index) => {\n  if (index === 0) {\n    return { json: { ...item, failed_stories: failedStories } };\n  }\n  return { json: item };\n});\n\nreturn result;"
+      },
+      "name": "6. Publicar Story6",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1776,
+        3376
+      ],
+      "id": "45a903f3-be6b-4ddd-bb77-e68f08cfe824"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "13OZcCBHrVufQSB4HcZu1Vgnu6uYAGLFpWrwW-x347aw",
+          "mode": "list",
+          "cachedResultName": "NachaHome",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/13OZcCBHrVufQSB4HcZu1Vgnu6uYAGLFpWrwW-x347aw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1194881315,
+          "mode": "list",
+          "cachedResultName": "ContenidoNNN",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/13OZcCBHrVufQSB4HcZu1Vgnu6uYAGLFpWrwW-x347aw/edit#gid=1194881315"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {
+            "Publicadado en instagram ?": "={{ $json.file_name }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Modelo",
+              "displayName": "Modelo",
+              "type": "string"
+            },
+            {
+              "id": "Art",
+              "displayName": "Art",
+              "type": "string"
+            },
+            {
+              "id": "Publicadado en instagram ?",
+              "displayName": "Publicadado en instagram ?",
+              "type": "string"
+            },
+            {
+              "id": "ig_story_id",
+              "displayName": "ig_story_id",
+              "type": "string"
+            },
+            {
+              "id": "ig_post_id",
+              "displayName": "ig_post_id",
+              "type": "string"
+            },
+            {
+              "id": "file_id",
+              "displayName": "file_id",
+              "type": "string"
+            },
+            {
+              "id": "file_name",
+              "displayName": "file_name",
+              "type": "string"
+            },
+            {
+              "id": "ig_story_ids",
+              "displayName": "ig_story_ids",
+              "type": "string"
+            },
+            {
+              "id": "fileId",
+              "displayName": "fileId",
+              "type": "string"
+            },
+            {
+              "id": "FileID",
+              "displayName": "FileID",
+              "type": "string"
+            },
+            {
+              "id": "fileName",
+              "displayName": "fileName",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "7. Guardar en Sheets6",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        1952,
+        3376
+      ],
+      "id": "c0f93ce9-223c-4de4-8d1e-fc0b1a99379a",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "hMRjCOIdJsrsXsOU",
+          "name": "Google Sheets NNN"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -320,
+        3760
+      ],
+      "id": "9c974191-554f-43de-a6e6-8cb2a0c984f5",
+      "name": "No Operation, do nothing4"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        800,
+        3680
+      ],
+      "id": "97b71de9-2735-49c5-aa6b-863c804d94d9",
+      "name": "No Post Hoy, do nothing"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "iaf1feUEB4CfADYj",
+          "mode": "list",
+          "cachedResultName": "stock_bazar_nnn",
+          "cachedResultUrl": "/projects/6oZmAsyQxxzsVzs1/datatables/iaf1feUEB4CfADYj"
+        },
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        400,
+        3376
+      ],
+      "id": "3a441abb-ca7e-4236-b6dd-ee49b3d2adbd",
+      "name": "Leer catalogo Bazar",
       "executeOnce": true
     }
   ],
   "connections": {
-    "Schedule Trigger (18:00 hs Feed)1": {
+    "Cron todos los días 12hs": {
       "main": [
         [
           {
-            "node": "Consultar si IA esta prendida3",
+            "node": "1a. Listar Feed (Drive)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Consultar si IA esta prendida3": {
+    "1a. Listar Feed (Drive)": {
       "main": [
         [
           {
-            "node": "IA Prendida?3",
+            "node": "1b. Listar Stories (Drive)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "IA Prendida?3": {
+    "1b. Listar Stories (Drive)": {
       "main": [
         [
           {
-            "node": "1a. Buscar Fotos Feed2",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "No Operation, do nothing3",
+            "node": "2a. Leer Historial (Sheets)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "1a. Buscar Fotos Feed2": {
+    "2a. Leer Historial (Sheets)": {
       "main": [
         [
           {
-            "node": "1b. Buscar Fotos Story2",
+            "node": "2b. Leer Catálogo (Sheets)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "1b. Buscar Fotos Story2": {
+    "3. Elegir Archivo Pendiente": {
       "main": [
         [
           {
-            "node": "2. Leer Sheets (Publicadas)3",
+            "node": "Redactar Copy con IA",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "2. Leer Sheets (Publicadas)3": {
-      "main": [
-        [
-          {
-            "node": "2b. Leer Catálogo (Sheets)5",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "2b. Leer Catálogo (Sheets)5": {
-      "main": [
-        [
-          {
-            "node": "Leer catalogo Bazar1",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Leer catalogo Bazar1": {
-      "main": [
-        [
-          {
-            "node": "3. Elegir Foto Nueva2",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "3. Elegir Foto Nueva2": {
-      "main": [
-        [
-          {
-            "node": "Hay Foto para Publicar?2",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Hay Foto para Publicar?2": {
-      "main": [
-        [
-          {
-            "node": "Redactar Copy con IA5",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "No Post Hoy, do nothing2",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "OpenAI Chat Model (Post)5": {
+    "OpenAI Chat Model (Post)": {
       "ai_languageModel": [
         [
           {
-            "node": "Redactar Copy con IA5",
+            "node": "Redactar Copy con IA",
             "type": "ai_languageModel",
             "index": 0
           }
         ]
       ]
     },
-    "Redactar Copy con IA5": {
+    "Redactar Copy con IA": {
       "main": [
         [
           {
-            "node": "4. Descargar Foto Elegida2",
+            "node": "5. Publicar Feed (Post)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "4. Descargar Foto Elegida2": {
+    "5. Publicar Feed (Post)": {
       "main": [
         [
           {
-            "node": "5. Publicar Feed (Post)5",
+            "node": "6. Publicar Story",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "5. Publicar Feed (Post)5": {
+    "6. Publicar Story": {
       "main": [
         [
           {
-            "node": "6. Publicar Story5",
+            "node": "7. Guardar en Sheets",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "6. Publicar Story5": {
+    "2b. Leer Catálogo (Sheets)": {
       "main": [
         [
           {
-            "node": "7. Guardar en Sheets5",
+            "node": "3. Elegir Archivo Pendiente",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "7. Guardar en Sheets5": {
+    "Schedule Trigger (09:30 & 20:30 hs)": {
+      "main": [
+        []
+      ]
+    },
+    "Consultar si IA esta prendida": {
       "main": [
         [
           {
-            "node": "8e. ¿Vino del Portal Web?",
+            "node": "IA Prendida?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IA Prendida?": {
+      "main": [
+        [
+          {
+            "node": "1. Buscar Fotos Story",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "1. Buscar Fotos Story": {
+      "main": [
+        [
+          {
+            "node": "2. Leer Sheets (Publicadas)1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3. Elegir Story del Slot": {
+      "main": [
+        [
+          {
+            "node": "Hay Story para Publicar?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hay Story para Publicar?": {
+      "main": [
+        [
+          {
+            "node": "4. Publicar Story en Meta",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Story, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "4. Publicar Story en Meta": {
+      "main": [
+        [
+          {
+            "node": "5. Guardar en Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2. Leer Sheets (Publicadas)1": {
+      "main": [
+        [
+          {
+            "node": "3. Elegir Story del Slot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking Execute Workflow": {
+      "main": [
+        [
+          {
+            "node": "Consultar si IA esta prendida4",
             "type": "main",
             "index": 0
           }
@@ -891,18 +1617,6 @@
         [
           {
             "node": "9a. Responder Portal (Publicado Ahora OK)",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        []
-      ]
-    },
-    "When clicking Execute Workflow": {
-      "main": [
-        [
-          {
-            "node": "Consultar si IA esta prendida3",
             "type": "main",
             "index": 0
           }
@@ -957,7 +1671,7 @@
       "main": [
         [
           {
-            "node": "5. Publicar Feed (Post)5",
+            "node": "5. Publicar Feed (Post)6",
             "type": "main",
             "index": 0
           }
@@ -970,11 +1684,200 @@
           }
         ]
       ]
+    },
+    "Schedule Trigger (18:00 hs Feed)": {
+      "main": [
+        [
+          {
+            "node": "Consultar si IA esta prendida4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar si IA esta prendida4": {
+      "main": [
+        [
+          {
+            "node": "IA Prendida?4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IA Prendida?4": {
+      "main": [
+        [
+          {
+            "node": "1a. Buscar Fotos Feed",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "1a. Buscar Fotos Feed": {
+      "main": [
+        [
+          {
+            "node": "1b. Buscar Fotos Story",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "1b. Buscar Fotos Story": {
+      "main": [
+        [
+          {
+            "node": "2. Leer Sheets (Publicadas)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2. Leer Sheets (Publicadas)": {
+      "main": [
+        [
+          {
+            "node": "2b. Leer Catálogo (Sheets)6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2b. Leer Catálogo (Sheets)6": {
+      "main": [
+        [
+          {
+            "node": "Leer catalogo Bazar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3. Elegir Foto Nueva": {
+      "main": [
+        [
+          {
+            "node": "Hay Foto para Publicar?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hay Foto para Publicar?": {
+      "main": [
+        [
+          {
+            "node": "Redactar Copy con IA6",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Post Hoy, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model (Post)6": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Redactar Copy con IA6",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redactar Copy con IA6": {
+      "main": [
+        [
+          {
+            "node": "4. Descargar Foto Elegida",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "4. Descargar Foto Elegida": {
+      "main": [
+        [
+          {
+            "node": "5. Publicar Feed (Post)6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "5. Publicar Feed (Post)6": {
+      "main": [
+        [
+          {
+            "node": "6. Publicar Story6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "6. Publicar Story6": {
+      "main": [
+        [
+          {
+            "node": "7. Guardar en Sheets6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "7. Guardar en Sheets6": {
+      "main": [
+        [
+          {
+            "node": "8e. ¿Vino del Portal Web?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer catalogo Bazar": {
+      "main": [
+        [
+          {
+            "node": "3. Elegir Foto Nueva",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "pinData": {},
-  "meta": {
-    "templateCredsSetupCompleted": true,
-    "instanceId": "19a9905f59da33a056a3b1698218b4ec28df50c11cd5806e774ab9b2fe385986"
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
   }
 }

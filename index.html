@@ -1082,6 +1082,11 @@
                     <i class="fa-solid fa-rotate" id="ap-refresh-icon"></i> <span>Sincronizar Drive & Sheets</span>
                 </button>
 
+                <!-- Botón Registro de Logs en Vivo -->
+                <button onclick="openApLogsSection()" class="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-cyan-300 rounded-xl font-bold text-xs flex items-center gap-1.5 border border-cyan-500/30 transition" title="Ver Registro de Logs y Ejecuciones de n8n / Meta API">
+                    <i class="fa-solid fa-terminal"></i> <span>Registro de Logs (<span id="ap-header-logs-count">0</span>)</span>
+                </button>
+
                 <!-- Botón Configurar Webhook / Carpetas Drive -->
                 <button onclick="toggleApConfigPanel()" class="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-amber-400 rounded-xl font-bold text-xs flex items-center gap-1.5 border border-slate-800 transition" title="Configurar Webhook n8n y Carpetas de Google Drive">
                     <i class="fa-solid fa-sliders"></i> <span class="hidden sm:inline">Conexión n8n & Drive</span>
@@ -1368,43 +1373,80 @@
                     </div>
                 </div>
 
-                <!-- PASO 2: FECHA Y FORMATO / DESTINO (FEED, CARRUSEL, STORY 09HS/20HS) -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-                    <div>
-                        <div class="flex items-center justify-between mb-1.5">
-                            <label class="text-xs font-bold text-slate-200 flex items-center gap-1.5">
-                                <i class="fa-regular fa-calendar-days text-pink-400"></i> 2. Fecha de Publicación
-                            </label>
-                            <button type="button" onclick="pickNextFreeApDate()" class="text-[11px] text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1">
-                                <i class="fa-solid fa-forward-step"></i> Próximo día libre
-                            </button>
+                <!-- PASO 2 & 3: FECHA, DESTINO Y HORARIOS PERSONALIZADOS PARA PUBLICACIÓN (FEED/REEL) Y STORY -->
+                <div class="p-4 rounded-2xl bg-slate-950/90 border border-slate-800 space-y-3.5">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        <div>
+                            <div class="flex items-center justify-between mb-1.5">
+                                <label class="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                                    <i class="fa-regular fa-calendar-days text-pink-400"></i> 2. Fecha de Publicación
+                                </label>
+                                <button type="button" onclick="pickNextFreeApDate()" class="text-[11px] text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1">
+                                    <i class="fa-solid fa-forward-step"></i> Próximo día libre
+                                </button>
+                            </div>
+                            <input type="date" id="ap-input-date" onchange="updateApGeneratedFilename()" class="w-full bg-slate-900 text-white text-xs font-bold rounded-xl px-3.5 py-2.5 border border-slate-800 focus:outline-none focus:border-pink-500">
                         </div>
-                        <input type="date" id="ap-input-date" onchange="updateApGeneratedFilename()" class="w-full bg-slate-950 text-white text-xs font-bold rounded-xl px-3.5 py-2.5 border border-slate-800 focus:outline-none focus:border-pink-500">
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-200 mb-1.5 flex items-center gap-1.5">
+                                <i class="fa-solid fa-layer-group text-pink-400"></i> 3. ¿Qué querés publicar?
+                            </label>
+                            <select id="ap-input-target" onchange="onApTargetModeChange()" class="w-full bg-slate-900 text-white text-xs font-bold rounded-xl px-3.5 py-2.5 border border-slate-800 focus:outline-none focus:border-pink-500 cursor-pointer">
+                                <option value="both">🔥 Pack Completo: Publicación (Feed / Carrusel / Reel) + Story 9:16</option>
+                                <option value="feed">📸 Solo Publicación (Feed / Carrusel / Reel)</option>
+                                <option value="story">📱 Solo Story (Historia Vertical 9:16)</option>
+                            </select>
+                        </div>
                     </div>
 
-                    <div>
-                        <label class="block text-xs font-bold text-slate-200 mb-1.5 flex items-center gap-1.5">
-                            <i class="fa-solid fa-layer-group text-pink-400"></i> 3. Destino y Horario Automático
-                        </label>
-                        <select id="ap-input-target" onchange="updateApGeneratedFilename()" class="w-full bg-slate-950 text-white text-xs font-bold rounded-xl px-3.5 py-2.5 border border-slate-800 focus:outline-none focus:border-pink-500 cursor-pointer">
-                            <option value="both">🔥 Pack Completo: Feed / Carrusel + Story Sincronizada</option>
-                            <option value="feed">📸 Solo Feed / Reel / Carrusel (Carpeta Publicaciones)</option>
-                            <option value="story_09">🌅 Solo Story Mañana — 09:30 hs (Tag 09HS)</option>
-                            <option value="story_20">🌙 Solo Story Noche — 20:30 hs (Tag 20HS)</option>
-                            <option value="story">📱 Solo Story del Día (Sincronizada por SKU)</option>
-                        </select>
+                    <!-- SELECTORES INDEPENDIENTES DE HORARIO PARA PUBLICACIÓN Y STORY -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2 border-t border-slate-800/80">
+                        <div id="ap-feed-schedule-box">
+                            <label class="block text-[11px] font-extrabold text-pink-300 mb-1 flex items-center justify-between">
+                                <span><i class="fa-solid fa-clock mr-1"></i> Horario Publicación (Feed / Carrusel / Reel)</span>
+                                <span class="text-[9px] px-1.5 py-0.5 rounded bg-pink-500/20 text-pink-300">Post & Reels</span>
+                            </label>
+                            <select id="ap-input-feed-time" onchange="updateApGeneratedFilename()" class="w-full bg-slate-900 text-white text-xs font-bold rounded-xl px-3 py-2 border border-pink-500/30 focus:outline-none focus:border-pink-500 cursor-pointer">
+                                <option value="18:00" selected>🕕 18:00 hs — Horario Central NNN (Clásico)</option>
+                                <option value="12:00">🕛 12:00 hs — Mediodía (Post / Carrusel / Reel)</option>
+                                <option value="15:00">🕒 15:00 hs — Tarde (Post / Carrusel / Reel)</option>
+                                <option value="20:00">🕗 20:00 hs — Noche Prime (Post / Carrusel / Reel)</option>
+                                <option value="21:00">🕘 21:00 hs — Cierre Nocturno (Post / Carrusel / Reel)</option>
+                                <option value="09:00">🕘 09:00 hs — Mañana (Post / Carrusel / Reel)</option>
+                            </select>
+                        </div>
+
+                        <div id="ap-story-schedule-box">
+                            <label class="block text-[11px] font-extrabold text-cyan-300 mb-1 flex items-center justify-between">
+                                <span><i class="fa-solid fa-mobile-screen mr-1"></i> Horario Story (Historia 9:16)</span>
+                                <span class="text-[9px] px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300">Stories IG</span>
+                            </label>
+                            <select id="ap-input-story-time" onchange="updateApGeneratedFilename()" class="w-full bg-slate-900 text-white text-xs font-bold rounded-xl px-3 py-2 border border-cyan-500/30 focus:outline-none focus:border-cyan-500 cursor-pointer">
+                                <option value="20:30" selected>🌙 20:30 hs — Turno Noche (Tag _20hs)</option>
+                                <option value="09:30">🌅 09:30 hs — Turno Mañana (Tag _09hs)</option>
+                                <option value="both_09_20">⚡ Doble Turno — 09:30 hs + 20:30 hs (Sube ambos)</option>
+                                <option value="12:30">🕛 12:30 hs — Mediodía (Tag _12hs)</option>
+                                <option value="15:30">🕒 15:30 hs — Tarde (Tag _15hs)</option>
+                                <option value="18:30">🕡 18:30 hs — Tarde/Noche (Tag _18hs)</option>
+                                <option value="with_feed">🔗 Junto con la Publicación (Mismo horario Feed)</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
-                <!-- VISTA EN VIVO DEL NOMBRE DE ARCHIVO QUE SE GUARDARÁ EN GOOGLE DRIVE -->
+                <!-- VISTA EN VIVO DE LOS NOMBRES DE ARCHIVO QUE SE GUARDARÁN EN GOOGLE DRIVE -->
                 <div class="p-3 rounded-2xl bg-emerald-950/25 border border-emerald-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div class="flex items-center gap-2.5">
-                        <div class="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-sm">
+                        <div class="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-sm shrink-0">
                             <i class="fa-solid fa-file-signature"></i>
                         </div>
-                        <div>
-                            <div class="text-[10px] uppercase tracking-wider font-extrabold text-emerald-400">Nombre Oficial Auto-Generado para Drive</div>
-                            <div class="text-xs sm:text-sm font-mono font-black text-white" id="ap-preview-filename">20-10 CRG-035.jpg</div>
+                        <div class="space-y-0.5">
+                            <div class="text-[10px] uppercase tracking-wider font-extrabold text-emerald-400">Nombres Oficiales Auto-Generados para Google Drive</div>
+                            <div class="flex flex-wrap items-center gap-2 text-xs font-mono font-black text-white">
+                                <span class="px-2 py-0.5 rounded bg-pink-500/20 text-pink-200 border border-pink-500/30" id="ap-preview-filename">📸 28.10_CRG-035.jpg</span>
+                                <span class="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-200 border border-cyan-500/30" id="ap-preview-story-filename">📱 28.10_CRG-035_20hs.jpg</span>
+                            </div>
                         </div>
                     </div>
                     <div class="text-[11px] text-slate-400 sm:text-right" id="ap-preview-folder-label">
@@ -1412,37 +1454,89 @@
                     </div>
                 </div>
 
-                <!-- PASO 3: ZONA DRAG & DROP DE IMÁGENES / VIDEOS (SOPORTA CARRUSEL) -->
-                <div class="space-y-2.5">
-                    <div class="flex items-center justify-between">
-                        <label class="text-xs font-bold text-slate-200 flex items-center gap-1.5">
-                            <i class="fa-solid fa-cloud-arrow-up text-pink-400"></i> 4. Subí tus Fotos o Videos (1 foto = Post | 2+ fotos = Carrusel | MP4 = Reel)
-                        </label>
-                        <button type="button" onclick="clearApSelectedFiles()" id="btn-ap-clear-files" class="hidden text-[11px] text-rose-400 hover:text-rose-300 font-bold">
-                            <i class="fa-solid fa-trash-can"></i> Limpiar archivos
-                        </button>
-                    </div>
+                <!-- PASO 4 DIVIDIDO: ZONA 4A (PUBLICACIÓN: POST / CARRUSEL / REEL) Y ZONA 4B (STORY VERTICAL 9:16) -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- ZONA 4A: PUBLICACIÓN (FEED / CARRUSEL / REEL) -->
+                    <div id="ap-zone-feed-wrap" class="p-3.5 rounded-2xl bg-slate-950/80 border border-pink-500/30 space-y-2.5 flex flex-col justify-between">
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between gap-1">
+                                <label class="text-xs font-extrabold text-pink-300 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-images"></i> 4A. Publicación (Post / Carrusel / Reel)
+                                </label>
+                                <button type="button" onclick="clearApSelectedFiles()" id="btn-ap-clear-files" class="hidden text-[10px] text-rose-400 hover:text-rose-300 font-bold">
+                                    <i class="fa-solid fa-trash-can"></i> Limpiar
+                                </button>
+                            </div>
+                            <p class="text-[10px] text-slate-400 leading-snug">
+                                Subí <b>1 foto</b> (Post), <b>2 a 10 fotos</b> (Carrusel) o un <b>video .MP4</b> (Reel). Se guarda en <span class="text-pink-300 font-mono">NNN.Public.2026</span>.
+                            </p>
 
-                    <div id="ap-dropzone" 
-                         ondragover="handleApDragOver(event)" 
-                         ondragleave="handleApDragLeave(event)" 
-                         ondrop="handleApDrop(event)"
-                         onclick="document.getElementById('ap-file-input').click()"
-                         class="border-2 border-dashed border-slate-700 hover:border-pink-500/70 bg-slate-950/70 hover:bg-slate-950 rounded-2xl p-6 text-center cursor-pointer transition group">
-                        <input type="file" id="ap-file-input" multiple accept="image/*,video/mp4,video/quicktime" onchange="handleApFileSelect(event)" class="hidden">
-                        <div class="w-12 h-12 rounded-2xl bg-pink-500/10 border border-pink-500/20 text-pink-400 flex items-center justify-center mx-auto mb-2.5 group-hover:scale-110 transition">
-                            <i class="fa-solid fa-images text-xl"></i>
+                            <div id="ap-dropzone" 
+                                 ondragover="handleApDragOver(event)" 
+                                 ondragleave="handleApDragLeave(event)" 
+                                 ondrop="handleApDrop(event)"
+                                 onclick="document.getElementById('ap-file-input').click()"
+                                 class="border-2 border-dashed border-slate-700 hover:border-pink-500/70 bg-slate-900/70 hover:bg-slate-900 rounded-xl p-4 text-center cursor-pointer transition group">
+                                <input type="file" id="ap-file-input" multiple accept="image/*,video/mp4,video/quicktime" onchange="handleApFileSelect(event)" class="hidden">
+                                <div class="w-10 h-10 rounded-xl bg-pink-500/10 border border-pink-500/20 text-pink-400 flex items-center justify-center mx-auto mb-1.5 group-hover:scale-110 transition">
+                                    <i class="fa-solid fa-camera-retro text-lg"></i>
+                                </div>
+                                <p class="text-xs font-bold text-white">
+                                    Subir Fotos / Carrusel / Reel <span class="text-pink-400 underline">acá</span>
+                                </p>
+                                <p class="text-[10px] text-slate-400 mt-0.5">
+                                    Formato 1:1 (1080×1080), 4:5 o Video Reel
+                                </p>
+                            </div>
                         </div>
-                        <p class="text-xs sm:text-sm font-bold text-white">
-                            Arrastrá tus fotos o videos acá o <span class="text-pink-400 underline">hacé clic para buscar</span>
-                        </p>
-                        <p class="text-[11px] text-slate-400 mt-1">
-                            Soporta JPG, PNG, MP4 y MOV &bull; Si seleccionás varias imágenes, el bot armará un <b>Carrusel automático</b> en Instagram
-                        </p>
+
+                        <!-- Miniaturas de archivos de Feed / Carrusel / Reel -->
+                        <div id="ap-files-preview-grid" class="hidden grid grid-cols-2 gap-2 pt-1"></div>
                     </div>
 
-                    <!-- Miniaturas de archivos cargados -->
-                    <div id="ap-files-preview-grid" class="hidden grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-2"></div>
+                    <!-- ZONA 4B: STORY VERTICAL (FORMATO HISTORIA 9:16 - 1080x1920) -->
+                    <div id="ap-zone-story-wrap" class="p-3.5 rounded-2xl bg-slate-950/80 border border-cyan-500/30 space-y-2.5 flex flex-col justify-between">
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between gap-1">
+                                <label class="text-xs font-extrabold text-cyan-300 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-mobile-screen-button"></i> 4B. Story Vertical (Formato 9:16)
+                                </label>
+                                <button type="button" onclick="clearApSelectedStoryFiles()" id="btn-ap-clear-story-files" class="hidden text-[10px] text-rose-400 hover:text-rose-300 font-bold">
+                                    <i class="fa-solid fa-trash-can"></i> Limpiar
+                                </button>
+                            </div>
+                            <p class="text-[10px] text-slate-400 leading-snug">
+                                Subí tu diseño vertical <b>9:16 (1080×1920)</b> para Historia o generalo en 1 clic desde la foto de la publicación. Se guarda en <span class="text-cyan-300 font-mono">NNN.Story.2026</span>.
+                            </p>
+
+                            <div id="ap-story-dropzone" 
+                                 ondragover="handleApStoryDragOver(event)" 
+                                 ondragleave="handleApStoryDragLeave(event)" 
+                                 ondrop="handleApStoryDrop(event)"
+                                 onclick="document.getElementById('ap-story-file-input').click()"
+                                 class="border-2 border-dashed border-slate-700 hover:border-cyan-500/70 bg-slate-900/70 hover:bg-slate-900 rounded-xl p-4 text-center cursor-pointer transition group">
+                                <input type="file" id="ap-story-file-input" multiple accept="image/*,video/mp4,video/quicktime" onchange="handleApStoryFileSelect(event)" class="hidden">
+                                <div class="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center mx-auto mb-1.5 group-hover:scale-110 transition">
+                                    <i class="fa-solid fa-wand-magic-sparkles text-lg"></i>
+                                </div>
+                                <p class="text-xs font-bold text-white">
+                                    Subir Archivo Story 9:16 <span class="text-cyan-400 underline">acá</span>
+                                </p>
+                                <p class="text-[10px] text-slate-400 mt-0.5">
+                                    Vertical 1080×1920 px (JPG, PNG o MP4)
+                                </p>
+                            </div>
+
+                            <!-- Botón Mágico para Auto-Generar Story 9:16 Vertical (1080x1920) desde la foto de Feed -->
+                            <button type="button" onclick="generateApVerticalStoryFromFeed()" class="w-full py-2 px-3 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 text-[11px] font-extrabold transition flex items-center justify-center gap-1.5 shadow">
+                                <i class="fa-solid fa-crop-simple"></i>
+                                <span>✨ Auto-Generar Story 9:16 (1080×1920) desde Foto 4A</span>
+                            </button>
+                        </div>
+
+                        <!-- Miniaturas de archivos de Story 9:16 -->
+                        <div id="ap-story-files-preview-grid" class="hidden grid grid-cols-2 gap-2 pt-1"></div>
+                    </div>
                 </div>
 
                 <!-- PASO 4: REDACCIÓN Y EDICIÓN DE COPY CON IA -->
@@ -1469,10 +1563,10 @@
                 <div class="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
                     <button type="button" onclick="submitAutopublisherJob(false)" id="btn-ap-submit-schedule" class="flex-1 py-3 px-4 bg-gradient-to-r from-pink-600 via-fuchsia-600 to-indigo-600 hover:from-pink-500 hover:to-indigo-500 text-white rounded-xl font-extrabold text-xs sm:text-sm shadow-lg shadow-pink-950/50 transition flex items-center justify-center gap-2">
                         <i class="fa-solid fa-cloud-arrow-up"></i>
-                        <span>Subir a Drive & Programar Fecha</span>
+                        <span>Subir a Drive & Programar Horario</span>
                     </button>
 
-                    <button type="button" onclick="submitAutopublisherJob(true)" id="btn-ap-submit-now" class="py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-extrabold text-xs sm:text-sm shadow-lg shadow-emerald-950/40 transition flex items-center justify-center gap-1.5" title="Sube a Drive y ejecuta la publicación inmediata en Instagram">
+                    <button type="button" onclick="submitAutopublisherJob(true)" id="btn-ap-submit-now" class="py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-extrabold text-xs sm:text-sm shadow-lg shadow-emerald-950/40 transition flex items-center justify-center gap-1.5" title="Sube a Drive y ejecuta la publicación inmediata en Instagram (Feed + Story)">
                         <i class="fa-solid fa-bolt"></i>
                         <span>Publicar Ahora</span>
                     </button>
@@ -1481,6 +1575,21 @@
                         <i class="fa-solid fa-download"></i>
                         <span class="sm:hidden lg:inline">Bajar Renombrado</span>
                     </button>
+                </div>
+
+                <!-- MINI-CONSOLA DE REGISTRO DE LOGS EN VIVO (ÚLTIMAS EJECUCIONES N8N / META API) -->
+                <div class="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <div class="text-xs font-extrabold text-cyan-300 flex items-center gap-1.5">
+                            <i class="fa-solid fa-terminal"></i> Registro de Actividad en Vivo (n8n & Meta API)
+                        </div>
+                        <button type="button" onclick="openApLogsSection()" class="text-[11px] text-cyan-400 hover:text-cyan-300 font-bold underline">
+                            Ver historial completo de logs &rarr;
+                        </button>
+                    </div>
+                    <div id="ap-mini-logs-container" class="space-y-2 max-h-52 overflow-y-auto pr-1 text-[11px]">
+                        <div class="text-slate-500 text-center py-3">Sin ejecuciones registradas todavía.</div>
+                    </div>
                 </div>
             </div>
 
@@ -1542,7 +1651,7 @@
                                     <div class="w-14 h-14 rounded-2xl bg-slate-800/80 text-slate-500 flex items-center justify-center mx-auto text-2xl">
                                         <i class="fa-brands fa-instagram"></i>
                                     </div>
-                                    <p class="text-xs font-bold text-slate-400">Subí una foto o video para previsualizar el post</p>
+                                    <p class="text-xs font-bold text-slate-400">Subí una foto o video en 4A para previsualizar el post</p>
                                     <p class="text-[10px] text-slate-500 font-mono" id="ap-ig-placeholder-sku">SKU: Sin seleccionar</p>
                                 </div>
                                 <img id="ap-ig-preview-img" src="" alt="Preview" class="hidden w-full h-full object-cover">
@@ -1591,14 +1700,16 @@
                                     <div class="flex items-center gap-2">
                                         <div class="w-6 h-6 rounded-full bg-pink-600 flex items-center justify-center text-[10px] font-black">N</div>
                                         <span class="font-bold text-[11px] drop-shadow" id="ap-ig-story-user">nnntienda.ar</span>
-                                        <span class="text-[10px] text-slate-300" id="ap-ig-story-slot-label">09:30 hs</span>
+                                        <span class="text-[10px] text-slate-300" id="ap-ig-story-slot-label">20:30 hs</span>
                                     </div>
                                     <i class="fa-solid fa-xmark"></i>
                                 </div>
                             </div>
                             <img id="ap-ig-story-img" src="" alt="Story Preview" class="hidden w-full h-full object-cover">
-                            <div id="ap-ig-story-placeholder" class="text-center p-6 text-slate-400 text-xs">
-                                Vista previa formato Historia 9:16
+                            <video id="ap-ig-story-video" src="" controls playsinline class="hidden w-full h-full object-cover"></video>
+                            <div id="ap-ig-story-placeholder" class="text-center p-6 text-slate-400 text-xs space-y-2">
+                                <div class="text-cyan-400 text-2xl"><i class="fa-solid fa-mobile-screen"></i></div>
+                                <div>Subí una imagen en <b>4B. Story 9:16</b> o tocá <b>"✨ Auto-Generar Story 9:16"</b></div>
                             </div>
                             <div class="absolute bottom-4 inset-x-4 flex items-center gap-2">
                                 <div class="flex-1 rounded-full border border-white/40 bg-black/40 backdrop-blur px-3 py-1.5 text-[11px] text-white/80">
@@ -1613,9 +1724,9 @@
         </div>
 
         <!-- ========================================================= -->
-        <!-- PESTAÑAS INFERIORES: COLA PROGRAMADA | HISTORIAL | STOCK  -->
+        <!-- PESTAÑAS INFERIORES: COLA | HISTORIAL | CATÁLOGO | LOGS   -->
         <!-- ========================================================= -->
-        <div class="bg-slate-900/80 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
+        <div id="ap-bottom-tabs-section" class="bg-slate-900/80 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl scroll-mt-20">
             <div class="p-4 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900/60">
                 <div class="flex items-center gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800 flex-wrap">
                     <button type="button" onclick="switchApSubTab('queue')" id="btn-aptab-queue" class="px-3.5 py-2 rounded-lg text-xs font-bold bg-pink-600 text-white transition flex items-center gap-1.5 shadow">
@@ -1630,11 +1741,15 @@
                         <i class="fa-solid fa-boxes-stacked"></i>
                         <span>Semáforo de Catálogo (<span id="ap-tab-count-catalog">0</span>)</span>
                     </button>
+                    <button type="button" onclick="switchApSubTab('logs')" id="btn-aptab-logs" class="px-3.5 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-terminal text-cyan-400"></i>
+                        <span>Registro de Logs &amp; Auditoría (<span id="ap-tab-count-logs">0</span>)</span>
+                    </button>
                 </div>
 
                 <div class="text-xs text-slate-400 flex items-center gap-2">
                     <i class="fa-solid fa-circle-info text-pink-400"></i>
-                    <span id="ap-subtab-helper-text">El bot de n8n revisa la carpeta de Drive todos los días y publica el archivo que coincida con la fecha del día.</span>
+                    <span id="ap-subtab-helper-text">El bot de n8n revisa las carpetas de Drive en cada horario programado y publica automáticamente Feed, Reels y Stories.</span>
                 </div>
             </div>
 
@@ -1683,6 +1798,29 @@
                         </tr>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- SUB-TAB 4: REGISTRO DE LOGS Y AUDITORÍA TÉCNICA (N8N + DRIVE + META GRAPH API) -->
+            <div id="ap-subview-logs" class="hidden p-4 sm:p-6 space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+                    <div>
+                        <h3 class="text-sm font-extrabold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-terminal text-cyan-400"></i> Registro Completo de Ejecuciones y Logs (n8n + Google Drive + Meta API)
+                        </h3>
+                        <p class="text-xs text-slate-400 mt-0.5">
+                            Acá ves cada intento de subida o publicación en vivo: IDs de archivos en Drive, IDs de Post/Reel y Story en Instagram, horarios asignados y cualquier error de Meta API.
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="refreshAutopublisherData(true)" class="px-3 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 text-emerald-300 border border-emerald-500/30 text-xs font-bold flex items-center gap-1.5">
+                            <i class="fa-solid fa-rotate"></i> Sincronizar Ahora
+                        </button>
+                        <button type="button" onclick="clearAutopublisherLogs()" class="px-3 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 text-rose-400 border border-rose-500/30 text-xs font-bold flex items-center gap-1.5">
+                            <i class="fa-solid fa-trash-can"></i> Limpiar Logs Locales
+                        </button>
+                    </div>
+                </div>
+                <div id="ap-full-logs-list" class="space-y-3"></div>
             </div>
         </div>
 
@@ -8366,7 +8504,8 @@
             nacha: { feed: [{"id":"1L0f7Mw82Y98Qx0TDHfFPj74rwoXZVBnc","name":"29.08"},{"id":"1BbqZFvY8y6TDLNS9qJYhsPaQV6v7bFNh","name":"Acolchado_Kioto_14.08.mp4"},{"id":"1ThKlMpJlD0gR1I43Q7JCL9f0vR-2Gfsh","name":"Acolchado_Seul_23.08.mp4"},{"id":"1GH4Fq6FWpCo0BtX2v0nZMxKOOOMKhucJ","name":"Num046_22.08.jpg"},{"id":"1ReZtgqXWKP6te956D8rE6Pt6lKR8C49i","name":"Num047_22.08.jpg"},{"id":"1mZpsUWeSvdRjJGfgffWddsg4xVG7DC0X","name":"Num048_22.08.jpg"},{"id":"1rAALJv8rLi6xqPWI-LO_rmVRoJRqb2wj","name":"Num052_17.08.jpg"},{"id":"18EavXeBGdsfVc7e5IJkjFQt2iXg5xAnc","name":"Num053_17.08.jpg"},{"id":"1PDA-uBGwBc0wqKxUnEhx_KdK8_8PkVpT","name":"Num054_17.08.jpg"},{"id":"1IEWoc4pYRq4brFYgMPAyI7SmwFjeCebr","name":"Num055_17.08.jpg"},{"id":"1LELKzIX6MHU_2IItHSkl4xoFOlOSA5a7","name":"Num061_30.07.jpg"},{"id":"1JhtAofd-lmtpdfSRbkCvzNsg0mXK6NRD","name":"Num062_31.07.jpg"},{"id":"1BYZY9-8-k75iC6m0ukruPQBrLbP7xSgQ","name":"Num063_01/08.jpg"},{"id":"18IF05Svx7h06Vloy5z7JKH-46oxc_tM_","name":"Num064_02.08.jpg"},{"id":"1jKYFr-W06Josb-vsA-Bxhj05wWinXFY3","name":"Num065_14.08.jpg"},{"id":"1_KbhKdmh-aTuZbr4iLsAdv0a0NCzxxRj","name":"Num066_14.08.jpg"},{"id":"1S7aSjK4v_k5pUBf5S1B71ebkLdm7_NKp","name":"Num067_14.08.jpg"},{"id":"1sCl-kT1aqX1g-yoKm7CkdStq0hQNIMiQ","name":"Num084.Manta_Premium_29.07.mp4"},{"id":"1gjlVzavz5ACzRTESpPVAXYm45ysD4Xs6","name":"Num084_28.07.png"},{"id":"1oglv9IS4t6YW5h1EsPgKcoYaHHWro0Ty","name":"Num085.Manta_Basic_28.07.mp4"},{"id":"1Ddmbss59YJj01my8DKdNrNcTMRWssLiq","name":"Num085_27.07.png"},{"id":"1UhmTTfE6kCfZUVEdU3tisv07aE7oysJk","name":"Num086_25.07.png"},{"id":"1LU7mf--fLxp6fuq0WDpQoJ4Xu7o2pEw_","name":"Num086Manta_Everest_26.07.mp4"},{"id":"1XGlfUKy-cHUXTvaE4cFftu6IcbMVt40H","name":"Num087_25.07.png"},{"id":"1p8Y_XFWwDP5Wl8aU_jSv5THMHfw-kCRv","name":"Num141_18.08.jpg"},{"id":"1iVhqVbcy24csXKXz-D5OAVGcuN88a3zQ","name":"Num142_18.08.jpg"},{"id":"1gKW3GIIKW0MdXffHKv46OSFDH0bU7-8p","name":"Num143_18.08.jpg"},{"id":"1GT8A8wKus4G6IZ-fKjypYmLsziQYeHMe","name":"Num144_18.08.jpg"},{"id":"1kJ296umM7n9TJdMqPscUBpW1P4VhcF2p","name":"Num146_19.08.jpg"},{"id":"1RQ-vLo6J_LUD_gt3uSN-9Cc71Awm1xCJ","name":"Num147_19.08.jpg"},{"id":"14ZEKa6CT9gvsfyzWnqXCuvuMbzHNRT9e","name":"Num149_19.08.jpg"},{"id":"1Cynarp4fFTf2HH7T4AXQ93aYRbDytL-q","name":"Num150_19.08.jpg"},{"id":"1a4800W-dN-b6zAM2SUeLkjd0V76q8lUF","name":"Num151_19.08.jpg"},{"id":"1IRXIQWu_ezB9p_mf3sGNI9_6B-zDwhUv","name":"Num153_19.08.jpg"},{"id":"1azLDtrcvBy-5mRNIGNK34Ccnnb7vJTUy","name":"Num156_16.08.jpg"},{"id":"1HKeQQnp8HeI0eysufr25FS-OPCOf58dz","name":"Num157_16.08.jpg"},{"id":"1mxPFZna0dYR7afIwR6VyVLCXPWUeVTXz","name":"Num159_16.08.jpg"},{"id":"1dBPbieYxAVysoat8Tq866QGFSFMi7sSj","name":"Num160_16.08.jpg"},{"id":"1PZeGsZ4hzG8gxvIL3wQTOJRlzpOVDuTY","name":"Num161_16.08.jpg"},{"id":"1-Aj4V4wGDg5ivx5as54OtreTWlAKulsp","name":"Num162_16.08.jpg"},{"id":"1oMOlTpASAtZEaleXMERx3SPZmvXFARFi","name":"Num163_16.08.jpg"},{"id":"1OVjbp8pFYOwz5XIq-qniHf7rIeP4JUKv","name":"Num164_16.08.jpg"},{"id":"1Y0lx-uCubaMrljSzUGmjxhVixEmnt2_A","name":"Num165_16.08.jpg"},{"id":"1jNRfAxI4d8AAt_3tB4M9dvSuDQl5OCoS","name":"Num166_16.08.jpg"},{"id":"1fHRm7vrhIwal7Xt-3Q2_WoKOVfALgi6H","name":"Num167_20.08.jpg"},{"id":"1mugSEkdfD1qtonnIryjuX4Hh1q69tUjG","name":"Num168_20.08.jpg"},{"id":"1RP3OOx2BczahU81sN-qFC6VuYawZd5rm","name":"Num169_22.08.jpg"},{"id":"1cJ7h4bODI0kRJtz8xMIMe2uTQk7Z4uZj","name":"Num170_20.08.jpg"},{"id":"153HI0InYxfttvQFUa5O8mQEXIf71YjjX","name":"Num171_20.08.jpg"},{"id":"1S22bQhhTlS9Hb5NZoUPjFlcxu3TJxBb4","name":"Num172_20.08.jpg"},{"id":"1nSnCw-wgA1ermtwesVUX5y9k_iqRJ7qs","name":"Num173_03.08.jpg"},{"id":"12SqcIkCipFDlMJ4gJxSbwG_Chb3uustW","name":"Num174_03.08.png"},{"id":"1dRaw4R5uQtfTB7V_epuC55aJGLQ6LRJc","name":"Num175_03.08.jpg"},{"id":"1rXZ4VRi51tD9oswDKTfptwc0cmTjBQ-T","name":"Num176_03.08.png"},{"id":"1THVVVnuywRN33hkNmhePbuw3L6u1PTHO","name":"Num177_03.08.jpg"},{"id":"1rkbluQeWPYANnsHzfpjClRSABegxg7Fa","name":"Num178_03.08.jpg"},{"id":"1SfOAM0ZMDQ5m8g4x97v90j8xsciYmSGL","name":"Num179_03.08.jpg"},{"id":"19MyqQlUBui-lQbssIvZPKi0-QZ1ibxgB","name":"Num180_03.08.jpg"},{"id":"1ra2ntn0eVkNCYCCrfeoK1YLB6efmPnXq","name":"Num181_03.08.jpg"},{"id":"1-c_rxYpfjnNZq2HF0H0gVn7rpLccV_2s","name":"Num182_03.08.jpg"},{"id":"1BRGlc0187xUntjArpqJIqD_LsvAawlhJ","name":"Num185_10.08.jpg"},{"id":"1wIj2E2D0ArkQzvYAra0Ldnc0b5onhqj9","name":"Num186_10.08.jpg"},{"id":"17lCC93onHC45N8WBTIKfa-tVHLaSSL8E","name":"Num187_10.08.jpg"},{"id":"1Ra7R6P1HdTs8EmV0VyYpweWGz5trp7Py","name":"Num188_10.08.jpg"},{"id":"1XzJodQA7TeAPJCOCmLlBEuQWGLT_gBiv","name":"Num189_10.08.jpg"},{"id":"1UKM5OTaHTD-vMymcwXvrW2lATZnqx1uA","name":"Num190_10.08.jpg"},{"id":"15xvU9pK6FSlXeK9EHfVyAKtKbGvfWMXv","name":"Num191_23.08.jpg"},{"id":"1-tTOmrya_GfCpciJyacCWZTtjh8Rtaha","name":"Num192_24.08.jpg"},{"id":"1C7b4DugcztNrQAYxLB0NxlnYIAK8vI5q","name":"Num193_25.08.jpg"},{"id":"1ULBjmhzeoLsCiHP2VRMg_PxWnHjbmrpA","name":"Num196_17.07.jpg"},{"id":"187oW-ebxLWvTSnptBhKZ32Lx6w8bQ24B","name":"Num197_18.07.jpg"},{"id":"1I-PkTkEC27NQcH_qf47saqPLa7m9DFSy","name":"Num198_19.07.jpg"},{"id":"1JcVl2GbdDBUWc0rIkS3K0cG8CMtvn3Lb","name":"Num199_20.07.jpg"},{"id":"1FjtoGCkL7yVisXzNySe9x-4OPt0o4Rn6","name":"Num200_21.07.jpg"},{"id":"1jL6uI4rD5r2l_GRJWKf0oitX-TnCFCB2","name":"Num201_22.07.jpg"},{"id":"14kTkwLyvjpcSV5aUIYaO4zwUC-o9J-Gp","name":"Num202_23.07.jpg"},{"id":"1dde9sIW2aSBsoNocCIqICICIPsnyTASe","name":"Num203_24.07.jpg"},{"id":"1eYj2v7-njRCc2_yQRXEDqmiK4SiNHwDI","name":"Num212_13.08.jpg"},{"id":"1lzCZh6s1G2WWeSN2MgKEn0E8P1lf-Nfs","name":"Num213_13.08.jpg"},{"id":"1sRK5iYEtQfPl_vS6myeyfcoEixpr49s0","name":"Num214_13.08.jpg"},{"id":"1StCeAPKy7txqhGMMzQepsmr_mwK6VFXm","name":"Num215_13.08.jpg"},{"id":"11GM8ecxb4nI0TYigGeIdFYuapjdLf92l","name":"Num216_13.08.jpg"},{"id":"14jiay-2rhE9v1po5wylwmG5kLBCUfPvP","name":"Num217_13.08.jpg"},{"id":"1lPgXFAswvqSjTA2TeWoz0x074vSDCR_m","name":"Num218_13.08.jpg"},{"id":"13XKnkURkDXCuZkbr_VyuReDHpsNbQG9b","name":"Num219_13.08.jpg"},{"id":"1ZFgjtrsfHmlW0x3zfTaECZoKPgWkRWqx","name":"Num234_21.08.jpg"},{"id":"1qT4OIrhTdmsgg_gIVZx1B5EcVAgRE0vP","name":"Num236_12.08.jpg"},{"id":"1kXsgisvRNFtJe161sORf3RrmsEtJJbJL","name":"Num237_12.08.jpg"},{"id":"1tOqzFAED3GeHOqCi14JS5xz97HKMCMVQ","name":"Num238_12.08.jpg"},{"id":"1uzOqOjFSyjb3zcQ1WUs9qZwT2_7uyNSH","name":"Num239_12.08.jpg"},{"id":"1z5MP7FEDBCW2qOIjRCQSnOHgjJbCFBVz","name":"Num240_12.08.jpg"},{"id":"1p2qmXJq1C7kqRfYp6HHrWy0hgesTHBCm","name":"Num241_12.08.jpg"},{"id":"1QFU-XiEpWdKYCWyQaBs1QHVmlit50BtR","name":"Num242_12.08.jpg"},{"id":"1vAhGsehJGmOSpD3YaH2-MRgoPq6peHw1","name":"Num243_12.08.jpg"},{"id":"18YXjVF_LX0bOj9iAFShHfsdhz6Hd4-fB","name":"Num244_12.08.jpg"},{"id":"12ywJaJ0nIahre1JId68t93om6e2_InAt","name":"Num245_12.08.jpg"},{"id":"127EfPeB4ANDq0WkVBUPIHeqqnBS22j8B","name":"Num246_11.08.jpg"},{"id":"1tf1rlxxn4p_1tcqflPYCfhlWa4USG1y6","name":"Num265_03.09.jpg"},{"id":"1n17uAB0QitQzBB_jGelUM2KGvvyum8W3","name":"Num266_04.09.jpg"},{"id":"1PaS2Du25XGLtDRUFmOz_rsi5GgnEZ1vx","name":"Num268_26.08.jpg"},{"id":"1nkkcV9jg2y7U8wJ71bPJ33fB288aBDQ4","name":"Num269_27.08.jpg"},{"id":"14T6ZN8X2w9V_oK2_vwkqfHU5wGqwDAjb","name":"Num270_28.08.jpg"},{"id":"1nxZWtwnwmg0Xatw-Zq0h8DvsRkmoCJpL","name":"Num272_30.08.jpg"},{"id":"1loKPdmRtnh0aP7RR7FPCW0CX-Ld3w_Xm","name":"Num273_31.08.jpg"},{"id":"1WuvP3ogx48Xq1c-i7bNJEX42DfAg92XN","name":"Num274_01.09.jpg"},{"id":"1bpUWnklqildHxvIfqYkramhYdSwbgEcS","name":"Num393_06.09.jpg"},{"id":"17IHi5TUcijop0Tqd8TaeBNpZkHBQszlb","name":"Num394_07.09.jpg"},{"id":"1B2X3muxMga19wNqKKoWmM0lTwuh2iuAF","name":"Num395_08.09.jpg"},{"id":"15FZd2DozE72rI6qKAH8gg46hCsNOOfdQ","name":"Num396_09.09.jpg"},{"id":"11dAJ6lmkEAKlDmeQjJJgwazl22FnpnfO","name":"Num397_10.09.jpg"},{"id":"1lGg_hB8Q7pkbUsp3o1JyheY6re6EEFbC","name":"Num398_11.09.jpg"},{"id":"1HQmCpfZXLaU_56zFcGXB1ut0rs--Ffty","name":"Num399_12.09.jpg"},{"id":"1G1mHgvDyOrlCplSxhxI3lcJWs4frmeb5","name":"Num400_13.09.jpg"},{"id":"1E0DUkPKenGqPQKR_lSWIvNE7hIHgBiAI","name":"Num401_14.09.jpg"},{"id":"1t8ndor4s9Hdi4o2iV_SAFFT6JngIVizA","name":"Num402_15.09.jpg"},{"id":"1juvs61ueFQU-PdFemWFoQmDn6BgWdv-C","name":"Num403_16.09.jpg"},{"id":"1PsenpWOa4lhG5Oz7bj9ogfNiYwjXzobs","name":"Num404_17.09.jpg"},{"id":"1bDDrou2PuTycZLOH0lg7uq_MgNGHcllk","name":"Num405_18.09.jpg"},{"id":"1Q8MSbIHi-X_17xS6QTw__QyTSEX5_WYB","name":"Num406_18.09.jpg"},{"id":"155Zo5ldbBDOrvIfZ7N_wHnv6Fqzaelho","name":"Num407_18.09.jpg"},{"id":"1rmzTSkkq-sVLReJNY5WUeGrdzERde23M","name":"Num408_19.09.jpg"},{"id":"1P9PGMvXX2plu2AtYUZSW6v7ZorPsWo9G","name":"Num409_20.09.jpg"},{"id":"1-RhRa24x30JL2TdfhIGU_ox0xvQEzKpH","name":"Num410_21.09.jpg"},{"id":"1cB9rCWXlSGGxt5Bmpfa7xxR9cGweHV8G","name":"Num411_22.09.jpg"},{"id":"11FaEOFtqdf_-Oo7uxbO1mzPdi0edYfQZ","name":"Num412_23.09.jpg"},{"id":"1hJpfdz9UYol65jL5QVTAHNvWnuaytkSg","name":"Num413_23.09.jpg"},{"id":"18HeY2u2kJKAB4lwSVNzxynRFiqbm1SDz","name":"Num414_24.09.jpg"},{"id":"16B2WrqgZNL7f0ocoj1tnxnWYQ3oMGWUt","name":"Num415_25.09.jpg"},{"id":"1sql97xlQA7giORiRB7RsvUDktibgejB9","name":"Num416_25.09.jpg"},{"id":"1f5_rXk4IYrJ_b7XMksVhD4BvupA8eY2o","name":"Num417_26.09.jpg"},{"id":"1x-JCyWOrC-PpjtufjRBDfemkI_qHAak7","name":"Num418_27.09.jpg"},{"id":"1UOEvaolp3-FeI1jCh4E0a0h2sHT1IcZu","name":"Num419_28.09.jpg"},{"id":"1ImE05sAzbsg0S9LRHSh1DPiGhrq3fyyD","name":"Num420_29.09.jpg"},{"id":"1AxOhpDxAkFMrOYtiSfaeyxCYmOsTNJYU","name":"Num421_30.09.jpg"},{"id":"1ZoX5r-evTu-ArpWbcWPfpDlF4oPA5sHQ","name":"Num422_01.10.jpg"},{"id":"1Uj8UOuao8lcMIHwfHI5xMVMzXa7RAKxp","name":"Num423_02.10.jpg"},{"id":"1IJgL8rRSAfsIO7xEKj1S0Fw6khh0O5A8","name":"Num424_03.10.jpg"},{"id":"1rzpmIL8w8RPEq1fclZp7m3w1OjIE40fY","name":"Num425_04.10.jpg"},{"id":"1nWRxtPdaLy6mPlBgTo2hGDx-tSvXo-iy","name":"Num426_05.10.jpg"},{"id":"16yKYfD1cickpYHtk-W7DEE3rHsfq1S5k","name":"Num427_06.10.jpg"},{"id":"1D4E_YZd30AKr1Os687puRb85JxLv_JkY","name":"Num428_07.10.jpg"},{"id":"1Jlu4uqeP5GjECswNdayeSCd71d_d5fpO","name":"Num429_08.10.jpg"},{"id":"1n06Q3Jrt_p4T5d_EAVT9CRGYpTjf1Ky8","name":"Num430_09.10.jpg"}], story: [{"id":"1EcZ2YZZL5x03AIyM_GXD9F6qWK5FotQO","name":"Acolchado_Kioto_14.08.mp4"},{"id":"1dIbMmOHDnl7SQ1wHiYSFUAjay5K666a9","name":"Acolchado_Seul_23.08.mp4"},{"id":"14UWeGT6r1LaXJJphQc1YolPPWenV1F4C","name":"Num046_22.08.jpg"},{"id":"1qMPf6ynQDpm4kBlS6ohxYz_G0mObnFCw","name":"Num047_22.08.jpg"},{"id":"1HoIjHbX4QBcMVi3Flik4Cg8u-10N5tks","name":"Num048_22.08.jpg"},{"id":"178pwTBRW8WJ6yPcZ_QzhZBiJQxnwVgPk","name":"Num052_17.08.jpg"},{"id":"1iTKTz7gQIsKqOLJLYvASWuII56wQIrfu","name":"Num053_17.08.jpg"},{"id":"1lyUsdnivPidDVDeBayRlR_qhm4Sl_eNZ","name":"Num054_17.08.jpg"},{"id":"1TZHxXWXFQRKQaHGVJA1y2fhzhn5-ml83","name":"Num055_17.08.jpg"},{"id":"1-rqd2k0cuE99LP8K8oaanWWNXjyc5zN0","name":"Num061_30.07.jpg"},{"id":"1xjstFndwEgRtcK3ctgyBwkExi3aX8wGG","name":"Num062_31.07.jpg"},{"id":"1V0KPf5Xuqxk1J2CE8FOn5G09QDDUnXDE","name":"Num063_01.08.jpg"},{"id":"1Qy3ymatbKT1DdubD0ijJcH0I8kiV1k31","name":"Num064_02.08.jpg"},{"id":"15TKzdbSnkQx9f8jh340NzCbLvnl6tWCN","name":"Num065_14.08.jpg"},{"id":"1EkR1FSAZq6vjOjQdj2e4XA4Vc7Z24SM0","name":"Num066_14.08.jpg"},{"id":"1WxIRx3qH3g_GWzxkF9FimjoOnZvR8J4m","name":"Num067_14.08.jpg"},{"id":"1Ol0CmUqzBow8FIlE7RAknNYr4HrzMFb6","name":"Num084.Manta_Premium_29.07.mp4"},{"id":"1G8IWlsmlIrnuaYO1475qzCtvcrUsOwXq","name":"Num084_28.07.png"},{"id":"1wppl8VDSpP1CB6CwQwAZy7s0n468HXWZ","name":"Num085.Manta_Basic_28.07.mp4"},{"id":"1COjKqFGViKnidxWcCaEFn6SDUCQ_kVyj","name":"Num085_27.07.png"},{"id":"1xcEay63HpfkLDUfh-mfock-ZJJBFg0WX","name":"Num086_25.07.png"},{"id":"1LsWkE5cOv_PmrdghFQtmishcGeuBjroW","name":"Num086Manta_Everest_26.07.mp4"},{"id":"1QjcXwga9_6ikdUhEjtTJcI4my-G_Epr8","name":"Num087_25.07.png"},{"id":"1b5eDoDsea4LdFNVGoyeuE1_E-w81kAOF","name":"Num141_18.08.jpg"},{"id":"1CEypDeE4ZftGO--G6wftcfC5V0glKkwM","name":"Num142_18.08.jpg"},{"id":"17GqQTS7A9j85Efi9haYRPOoxukkYKFUC","name":"Num143_18.08.jpg"},{"id":"1UfzXvouKretn7r--G-kbBM9BSVBOh8W0","name":"Num144_18.08.jpg"},{"id":"1x2GpBqvNdOINAV-b2bWrgIgyHSR-pfWc","name":"Num145_18.08.jpg"},{"id":"12-f6E-9hNwJREleffHm8PMbLWJyf_MI4","name":"Num146_19.08.jpg"},{"id":"1ESYO_ir7hFUR66zWlQNNuYwruI8hqOGF","name":"Num147_19.08.jpg"},{"id":"1al3zo6CgcnKuQtA31srIDhrzFtU6sepe","name":"Num148_19.08.jpg"},{"id":"1Wn3iaNwYNZoLRhZGugLJexGJDe3MHILc","name":"Num149_19.08.jpg"},{"id":"1ZfywZTnBXmNqFNniVY7_yRmTcwEU2n1K","name":"Num150_19.08.jpg"},{"id":"1JW5eHJBWZoyqvw9r7eipzkROUVRid3iN","name":"Num151_19.08.jpg"},{"id":"1rKNqz2zXqvdYNkWDKP4Is-EpEc3l64NJ","name":"Num153_19.08.jpg"},{"id":"16TJ63d70sRa82Zjkmhg1PPR10d2QENt7","name":"Num156_16.08.jpg"},{"id":"1fFhljfsaga4bSlSCqC_dn9dR1f6RyTpl","name":"Num157_16.08.jpg"},{"id":"1F3t7QoLf7wc2fqSVzKZQWriyAk02V9lr","name":"Num158_16.08.jpg"},{"id":"1boJa0PACnl6q_g84iGCaCrSULiv3Deqx","name":"Num159_16.08.jpg"},{"id":"1qZx8ZP-zJlNwsAho5MMclgQggQHDOtKa","name":"Num160_16.08.jpg"},{"id":"1PEhLjCweMlFpNCGtV2mzeAW_hEh7sdFR","name":"Num161_16.08.jpg"},{"id":"1O-vIAVEGlVltcNA0HJRbxZLlWqpV_F5z","name":"Num162_16.08.jpg"},{"id":"1rKCqq9uMDqscOZi99IuvKvAdPJUWpDJg","name":"Num163_16.08.jpg"},{"id":"1WDoYsV0R0QzsDnHVAgDvT-oiIwdKg-Vn","name":"Num164_16.08.jpg"},{"id":"1TiuCSThqM4-FfWYCqbAAnkHWZhvO2INT","name":"Num165_16.08.jpg"},{"id":"1fx-tKKv1vk0diaVyG1nhYjBp1JrmgLo4","name":"Num166_16.08.jpg"},{"id":"17lqN_WZ_nU0mf-KWVpMLKQ3DVskiBdsl","name":"Num167_20.08.jpg"},{"id":"1bb0Fb-dXy2z20efv8f3b7l88BiEH8zbI","name":"Num168_20.08.jpg"},{"id":"1x5k02A5VGrFd2UO2E8SoTli0mGu-rroS","name":"Num169_20.08.jpg"},{"id":"1EYmsdgh68WEdeVaP07MVy_NGpffsGd7W","name":"Num170_20.08.jpg"},{"id":"1IeNN-PhCGygof2y6W3NDMSAR_57KUvu8","name":"Num171_20.08.jpg"},{"id":"1wf6NJVUVHMnmdY6x5hzTsP5xDDou9iVx","name":"Num172_20.08.jpg"},{"id":"1LZYWWaPW_MBmbOhh53_l8AWh9q9aA1hV","name":"Num173_03.08.jpg"},{"id":"1c7ubmVGvZRBUyoYOr1GYH5hHZVJU4nCc","name":"Num174_03.08.jpg"},{"id":"1uPHeVj1AM_mq-rxdUOh_F4PcBeyM8_8U","name":"Num175_03.08.jpg"},{"id":"1lP6yE7DBRqZoTv2-TWm2TIG7Dwap8q8t","name":"Num176_03.08.jpg"},{"id":"1R2uPPvtDMZWCBPZmfyjkKO-JfHFvLDFo","name":"Num177_03.08.jpg"},{"id":"1aR6s8Ql56DXh7Jjjex5C8eZsNoF5FaKx","name":"Num178_03.08.jpg"},{"id":"1MNNZB1LbV31lX7MY6zss138NfyglWZcU","name":"Num179_03.08.jpg"},{"id":"1Jr5QH4C_rNHUsuntlxIOCX8Ivq46wPdW","name":"Num180_03.08.jpg"},{"id":"1oPEjqYNaDlHtD44LPieFkj--snlLPSej","name":"Num181_03.08.jpg"},{"id":"1w87L24AfSX0KX4IJ3x2VEhmaVRTDP2yw","name":"Num182_03.08.jpg"},{"id":"1W9QlU6VQijbFw9ipooST-baGjqBfA1zR","name":"Num185_04.08.jpg"},{"id":"1JzSrqNVe1XdwUTuMCZmIV3gBeTq4xQdA","name":"Num185_10.08.jpg"},{"id":"1XH9rwJ9P1VGFdDg-DDYD5seBHrBu-2JW","name":"Num186_05.08.jpg"},{"id":"1RJEn58e4EtK4viwZPmB6Pbi5pCGVGkrH","name":"Num186_10.08.jpg"},{"id":"1Nf1_bW8rO5c2gzeMNTlWcJ5llg_ogcIk","name":"Num187_06.08.jpg"},{"id":"1608Tcx75eF_J4G_3g-6i8t8N36GYVBvU","name":"Num187_10.08.jpg"},{"id":"1Fhqns2b-2-KwXUn0HUMZ_tVx0rL5bVO3","name":"Num188_07.08.jpg"},{"id":"1sdi-LiR4dnIRBFP0hX3Gx7LHC-ZTSokK","name":"Num188_10.08.jpg"},{"id":"1WljAftjzjSTC_-YL231fqnIEWMui6je0","name":"Num189_08.08.jpg"},{"id":"16vexEe-zgZYBDQve9oxm6xpQSAahkAmp","name":"Num189_10.08.jpg"},{"id":"1gqetsajvK8BFwuKFFkBu6oatej-wal3y","name":"Num190_09.08.jpg"},{"id":"1DOGGQIU7O3td9QUBNOWP6Xhy2NkOC7Bs","name":"Num190_10.08.jpg"},{"id":"1t7UlK8GwXeiuBUnjZfc3v49fgzFJk2sH","name":"Num191_23.08.jpg"},{"id":"1XEHVvng2_eDBdNXKFri3SUgs1kM8XzH0","name":"Num192_24.08.jpg"},{"id":"1jE7-X9NbV_zCpSNsAhRvRqKYvYuBqZ0b","name":"Num193_25.08.jpg"},{"id":"1SoyrS1Vkwb_0XvFVqAKBoUNcECz4eONa","name":"Num196_17.07.jpg"},{"id":"17FQiNdMpfIwK594LJekXGjiDxt1bUxYN","name":"Num197_18.07.jpg"},{"id":"1tXjL02Qh-LQnAWbNfqrJdTNFqaMO_lRF","name":"Num198_19.07.jpg"},{"id":"1iyYNLxKAaDg5d1CUFAxMvET2yrVChD9K","name":"Num199_20.07.jpg"},{"id":"1kjr2V6_UWbTs3NyUF72S6qZvLIoaPGcG","name":"Num200_21.07.jpg"},{"id":"1uVsdtWT2BKHsjYFBlPkxpARedh6WxJgg","name":"Num201_22.07.jpg"},{"id":"1dyCNM3vzDCxviMh57d26JvKPkpLi_XCS","name":"Num202_23.07.jpg"},{"id":"16waS51hemBtW29Ht-xy5vGBsnSJCjOa9","name":"Num203_24.07.jpg"},{"id":"1S64eaL6-nZ05_OgoPrtzSPNQu2bW_hEw","name":"Num212_13.08.jpg"},{"id":"1n2rPlJOtOJnAt-5KzXUOuiZazn5KTZQj","name":"Num213_13.08.jpg"},{"id":"1GfgeZdAVBS865vTM6aHs2TQTzHfAGK1a","name":"Num214_13.08.jpg"},{"id":"13rW8GmHw1RwY8cX8XHFibGM9vFdkw83_","name":"Num215_13.08.jpg"},{"id":"1CIfYZKi24bOwRRFRhXdxlBsohQ8cT_RC","name":"Num216_13.08.jpg"},{"id":"1_YcLXPXLeG-1cP5AAQ6MolAbWSrxs9pt","name":"Num217_13.08.jpg"},{"id":"17jRO249ozOt_rxkvfduAqxnGOXTYX_ZP","name":"Num218_13.08.jpg"},{"id":"1tCx6jasDAFsjLtSufCtC5Tj8OkVNNIqO","name":"Num219_13.08.jpg"},{"id":"1s8DJmqRGcHD_gCkqdOde9L5BMT1K_Fuv","name":"Num234_21.08.jpg"},{"id":"1O87ecRjoVucXT6_fp49A3sToLJDh0wjh","name":"Num236_12.08.jpg"},{"id":"1A4ZDVeyJqF8bHWqbMe0Agz8aHySYcK2S","name":"Num237_12.08.jpg"},{"id":"1RK9PWViEdnsfvVKyUvlfRWzZVl36zPXH","name":"Num238_12.08.jpg"},{"id":"1pV5KTXnEDi2rw8_XS4XE9EpyCwux8ZJO","name":"Num239_12.08.jpg"},{"id":"1iB7y6Zsk3rdjypXMQ5WGkeQPMFKNPAIc","name":"Num240_12.08.jpg"},{"id":"1RgHPDJrYv8yEn6ERV-z5Q5JE-FMST1Mq","name":"Num241_12.08.jpg"},{"id":"1vfhCrPUDdPsbpGiBklOeVo7f9F4g5lEA","name":"Num242_12.08.jpg"},{"id":"1EaaRX3dowGZc6X23eu-EKtmTJDsLF8Hg","name":"Num243_12.08.jpg"},{"id":"1fpXwVtuPTgzZP3P7zbbPgJSdvgst-RgX","name":"Num244_12.08.jpg"},{"id":"1-P4CpI83jWlFbf2_Ea-M6jXkTTfxGH62","name":"Num245_12.08.jpg"},{"id":"1cKvGWizGouP79PUK14K-kjP4xzJXk1gS","name":"Num246_11.08.jpg"},{"id":"1_WfbUxO8363LYJaiQFiaPxB_azCGJYvp","name":"Num265_03.09.jpg"},{"id":"1PtrkCOgVgm4S7J4rqLiwcAcEYN4fBsXH","name":"Num266_04.09.jpg"},{"id":"10Gx55zzyk-sH912fIafDW5mTbwhtMHrj","name":"Num267_05.09.jpg"},{"id":"1lTPIB2JdGIKWoLWPn9pF-PS2WVUiwVgY","name":"Num268_26.08.jpg"},{"id":"1vuPW16cTBn9EZnFWDhn6v52d7Fk6sQR7","name":"Num269_27.08.jpg"},{"id":"1XIMc5CRSzt4ARF5u1S1vRoeENcg7uk33","name":"Num270_28.08.jpg"},{"id":"1Q5n3AX_9Bn1GEl0wHwZnOTNFgxp8ZQVV","name":"Num271_29.08.jpg"},{"id":"1azP047krNS1tby_y6bXPrVf23_d1xbO6","name":"Num272_30.08.jpg"},{"id":"1U7nBxsw_sELVzG8oAkltizKhMzOE8Du3","name":"Num273_31.08.jpg"},{"id":"1wLCFD8ZllsQuQ6J46zAPFzNadqTWHkLg","name":"Num274_01.09.jpg"},{"id":"1N7cyeUOoKwReTSKS6tHssUZftmy1nr8p","name":"Num275_02.09.jpg"},{"id":"1DD7d0lhlDPIk-EblL5dmqUTdh5_xJZhq","name":"Num393_06.09.jpg"},{"id":"18AiDKa1ac_0PDOvg4mH9EjpDVnr5GYyB","name":"Num394_07.09.jpg"},{"id":"1Jsrx6KEqXkbb9L1ivN4cX_BrrKsQH0H6","name":"Num395_08.09.jpg"},{"id":"16swZR5q0RN9mu0dSaib_R-yC3uwrRNco","name":"Num396_09.09.jpg"},{"id":"1BgVr1CnCvlOjWbhlQEvYNvHSfinYaXjX","name":"Num397_10.09.jpg"},{"id":"1Q-JBaBd8ndihAquF2JMTXkYVVTES7JVb","name":"Num398_11.09.jpg"},{"id":"1hVyZ1SIrDj-wIBxtjZuSHSSLR4v9DkGd","name":"Num399_12.09.jpg"},{"id":"1ox_8dZYPWQW6fPJ4pWSmrPN41WNVpuns","name":"Num400_13.09.jpg"},{"id":"1rkpAaytaZcbQIZ5-47po9exg50uhHSoi","name":"Num401_14.09.jpg"},{"id":"1cixngYp6MYg-kAifXXDG1rcDOFozytB_","name":"Num402_15.09.jpg"},{"id":"1pLoM_tpAg6qUTSg7bPagrFzQo0PHIxmg","name":"Num403_16.09.jpg"},{"id":"1C8l73omJmU6PK0CK4gldFMNl0vfdgJqN","name":"Num404_17.09.jpg"},{"id":"1lda23QuOX7aehdA9jhhrfp6MioP5IGGw","name":"Num405_18.09.jpg"},{"id":"16CYWUzEwG-FJ9pDBNmYDGfgNH6G1Vtqd","name":"Num406_18.09.jpg"},{"id":"1svvq5lM5qUtqwiofTrBOWrzkzE9PRZ5w","name":"Num406_18.09.jpg"},{"id":"1HK6-ARzBH_lPpn-UvkvyDGB5ncF14ngF","name":"Num407_18.09.jpg"},{"id":"1Tnl7bHTPcBEGZhPGPsOIpBq9tWDNcPXz","name":"Num408_19.09.jpg"},{"id":"1pekG55OlGh7rAVTQ6UeoRLoPSgOQiMGH","name":"Num409_20.09.jpg"},{"id":"1FLKgKnp_2UBSWeI08xEQ5m5BxuIl9brE","name":"Num410__21.09.jpg"},{"id":"11lufgmVx4gPTI5h_MDC1CwezyP2KTkmU","name":"Num411_22.09.jpg"},{"id":"1iLS1PiuxY-pLf2LBuKhm4xAtlvJ74mTB","name":"Num412_23.09.jpg"},{"id":"1azM5pobXZOHtzqMLFkga7LGiy5ai57cY","name":"Num413_23.09.jpg"},{"id":"1ytMv1QfkxZR3aC7B5v6pKTasImPrHOrj","name":"Num414_24.09.jpg"},{"id":"1_WpeAoNun9twZgkWL_qbkKc1WvcVaqKZ","name":"Num415_25.09.jpg"},{"id":"1sr4DRrSxB7FTM1nNaq08MAPS9W90UgLa","name":"Num416_25.09.jpg"},{"id":"1b_MVmR2QpHEHohtOA5SdBE_spXurNvdV","name":"Num417_26.09.jpg"},{"id":"1jRXgqxpXjIgrmHKgWFcwH1NDNB3PoLr7","name":"Num418_27.09.jpg"},{"id":"1RdG6UooyAhgAiHV_1IR_jwiS8rtwOort","name":"Num419_28.09.jpg"},{"id":"1tM9_6rQf20ZG4-KTIDtaBnj0c9Q2I96Z","name":"Num420_29.09.jpg"},{"id":"184OcX_cJ2PS7yaToY9Z4TsCXuApfIM1G","name":"Num421_30.09.jpg"},{"id":"1HlAZ8deUADpGr-vQsODMxT06533nOWyx","name":"Num422_01.10.jpg"},{"id":"1mb6__fmPSbob2tBH65h2ernejL5HHs3n","name":"Num423_02.10.jpg"},{"id":"1sCkI5MoJnud2jMJPGUFCkfogzL88PPFo","name":"Num424_03.10.jpg"},{"id":"1Z3D9wzsIRfiMcA7ezClfa_SoRc3teCV4","name":"Num425_04.10.jpg"},{"id":"1wJxolKmZ_CHoeM2gdPX6gRTsdxkqcfia","name":"Num426_05.10.jpg"},{"id":"1CIDNI9t1PbfmDtCOe_An9QC1_Vnl5gjc","name":"Num427_06.10.jpg"},{"id":"1JFr871K8NB6ov1ASEuW3SLNVaGRGWgN3","name":"Num428_07.10.jpg"},{"id":"1JPklnGkA6-v_rqupKVunv3VqXKsAFkcu","name":"Num429_08.10.jpg"},{"id":"1WoG2MeGmm7Mjn17Memo7BLAt5TrK4hL5","name":"Num430_09.10.jpg"}] }
         };
 
-        let apSelectedFiles = []; // [{ file, dataUrl, isVideo, name, ext }]
+        let apSelectedFiles = []; // Zona 4A: Feed / Carrusel / Reel [{ file, dataUrl, isVideo, name, ext, width, height }]
+        let apSelectedStoryFiles = []; // Zona 4B: Story Vertical 9:16 [{ file, dataUrl, isVideo, name, ext, width, height, isVertical }]
         let apSelectedDriveUrls = []; // Links directos de Drive del catálogo si el usuario elige usarlos
         let apCarouselPreviewIdx = 0;
 
@@ -8375,6 +8514,242 @@
         if (apWebhookUrl.includes('n8n.nicovaz.tech')) {
             apWebhookUrl = 'https://n8n.totodrilo.cloud/webhook/autopublicador-upload';
             localStorage.setItem('croc_ap_webhook_url', apWebhookUrl);
+        }
+
+        // Registro de Logs y Auditoría de Ejecuciones (n8n + Google Drive + Meta Graph API)
+        const DEFAULT_SEED_AP_LOGS = [
+            {
+                id: 'EXEC-85851',
+                timestamp: '2026-10-29T00:28:02.292Z',
+                dateFormatted: '28/10/2026 21:28:02 hs',
+                store: 'nnn',
+                action: '🚀 Publicar Ahora (Webhook Portal #85851)',
+                level: 'warning',
+                sku: 'L25919',
+                productName: 'Set Cuchillos ($18.000)',
+                feedSchedule: '18:00 hs (Inmediato)',
+                storySchedule: '09:30 hs',
+                igPostId: '18120058873971044',
+                igStoryIds: '',
+                feedFiles: [{ id: '1yB121eFI7Akd8uioq9cjz8eRdGZ_zIgY', name: '28.10_L25919.jpg', role: 'feed' }],
+                storyFiles: [{ id: '1hf-t-5tu1t8K_BnOpPkYr-sR7NZU0uDg', name: '28.10_L25919_09hs.jpg', role: 'story' }],
+                summary: '✅ Post de Feed publicado en Instagram (@nnntienda.ar • ID: 18120058873971044) y ambos archivos subidos a Google Drive. ⚠️ La Story (28.10_L25919_09hs.jpg) se subió a Drive pero no se disparó en Meta porque el nodo 8c tenía executeOnce:true (¡Ya corregido en n8n y separado en Zona 4A + 4B 9:16!).',
+                rawDetails: {
+                    n8n_execution_id: '85851',
+                    ig_post_id: '18120058873971044',
+                    drive_feed_file: { id: '1yB121eFI7Akd8uioq9cjz8eRdGZ_zIgY', name: '28.10_L25919.jpg', folder: 'NNN.Public.2026' },
+                    drive_story_file: { id: '1hf-t-5tu1t8K_BnOpPkYr-sR7NZU0uDg', name: '28.10_L25919_09hs.jpg', folder: 'NNN.Story.2026' },
+                    fix_applied: 'Se desactivó executeOnce en nodo 8c de n8n (GFoaBXFcdpwAIxXS) y se dividió la carga en 4A (Publicación) y 4B (Story 9:16).'
+                }
+            },
+            {
+                id: 'EXEC-85638',
+                timestamp: '2026-10-28T22:00:46.940Z',
+                dateFormatted: '28/10/2026 19:00:46 hs',
+                store: 'nnn',
+                action: '⏰ Cron Automático 18:00 hs (Ejecución #85638)',
+                level: 'success',
+                sku: 'CRG-510',
+                productName: 'Art. CRG-510 (Carrusel 2 fotos + Story)',
+                feedSchedule: '18:00 hs',
+                storySchedule: '20:30 hs',
+                igPostId: '18010039740005258',
+                igStoryIds: '18127624081896291',
+                feedFiles: [
+                    { id: '1vwgRmT2g13FiJWdd66q4VIg4ixudBlZz', name: '28.10_CRG-510.jpg', role: 'feed' },
+                    { id: '1Wgmc8z6GGn7t-1BdqShpGWTSvQliITbY', name: '28.10_CRG-510.jpg', role: 'feed' }
+                ],
+                storyFiles: [
+                    { id: '1MMeE28Pdbus7w91RqRN88s895ln0Skja', name: '28.10_CRG-510_20hs.jpg', role: 'story' }
+                ],
+                summary: '✅ Carrusel de 2 fotos publicado en Feed (ID: 18010039740005258) + Story publicada en Meta (ID: 18127624081896291) y registrados en ContenidoNNN.',
+                rawDetails: {
+                    n8n_execution_id: '85638',
+                    ig_post_id: '18010039740005258',
+                    ig_story_ids: ['18127624081896291'],
+                    failed_stories: []
+                }
+            }
+        ];
+
+        let autopublisherLogs = [];
+        try {
+            const savedLogs = JSON.parse(localStorage.getItem('croc_autopublisher_logs_v1') || '[]');
+            const logMap = new Map();
+            DEFAULT_SEED_AP_LOGS.forEach(l => logMap.set(l.id, l));
+            if (Array.isArray(savedLogs)) {
+                savedLogs.forEach(l => {
+                    if (l && l.id) logMap.set(l.id, l);
+                });
+            }
+            autopublisherLogs = Array.from(logMap.values()).sort((a, b) => String(b.timestamp || '').localeCompare(String(a.timestamp || '')));
+            localStorage.setItem('croc_autopublisher_logs_v1', JSON.stringify(autopublisherLogs));
+        } catch (e) {
+            autopublisherLogs = [...DEFAULT_SEED_AP_LOGS];
+        }
+
+        function addAutopublisherLog(entry) {
+            const now = new Date();
+            const fullEntry = {
+                id: entry.id || `LOG-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+                timestamp: entry.timestamp || now.toISOString(),
+                dateFormatted: entry.dateFormatted || `${now.toLocaleDateString('es-AR')} ${now.toLocaleTimeString('es-AR')} hs`,
+                store: entry.store || currentApStore,
+                action: entry.action || 'Operación Autopublicador',
+                level: entry.level || 'info', // 'success' | 'warning' | 'error' | 'info'
+                sku: entry.sku || '-',
+                productName: entry.productName || '',
+                feedSchedule: entry.feedSchedule || '18:00 hs',
+                storySchedule: entry.storySchedule || '20:30 hs',
+                igPostId: entry.igPostId || '',
+                igStoryIds: entry.igStoryIds || '',
+                feedFiles: entry.feedFiles || [],
+                storyFiles: entry.storyFiles || [],
+                summary: entry.summary || '',
+                rawDetails: entry.rawDetails || {}
+            };
+            autopublisherLogs = [fullEntry, ...autopublisherLogs.filter(x => x.id !== fullEntry.id)].slice(0, 100);
+            localStorage.setItem('croc_autopublisher_logs_v1', JSON.stringify(autopublisherLogs));
+            renderAutopublisherLogs();
+        }
+
+        function clearAutopublisherLogs() {
+            if (!confirm('¿Limpiar el historial local de logs de prueba? (Se conservarán las ejecuciones reales de n8n)')) return;
+            autopublisherLogs = [...DEFAULT_SEED_AP_LOGS];
+            localStorage.setItem('croc_autopublisher_logs_v1', JSON.stringify(autopublisherLogs));
+            renderAutopublisherLogs();
+        }
+
+        function openApLogsSection() {
+            switchApSubTab('logs');
+            const sec = document.getElementById('ap-bottom-tabs-section');
+            if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function toggleApLogRawJson(logId) {
+            const el = document.getElementById(`ap-log-raw-${logId}`);
+            if (el) el.classList.toggle('hidden');
+        }
+
+        function renderAutopublisherLogs() {
+            const storeLogs = autopublisherLogs.filter(l => !l.store || l.store === currentApStore);
+            const countHdr = document.getElementById('ap-header-logs-count');
+            const countTab = document.getElementById('ap-tab-count-logs');
+            if (countHdr) countHdr.innerText = storeLogs.length;
+            if (countTab) countTab.innerText = storeLogs.length;
+
+            const badgeStyles = {
+                success: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+                warning: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+                error: 'bg-rose-500/20 text-rose-300 border-rose-500/30',
+                info: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30'
+            };
+            const badgeLabels = {
+                success: '✅ ÉXITO COMPLETO',
+                warning: '⚠️ PARCIAL / AVISO',
+                error: '❌ ERROR DETECTADO',
+                info: 'ℹ️ INFO / SINCRONIZACIÓN'
+            };
+
+            // 1. Renderizar Mini-Consola en vivo dentro del Creator Studio (últimos 4 logs)
+            const miniBox = document.getElementById('ap-mini-logs-container');
+            if (miniBox) {
+                if (storeLogs.length === 0) {
+                    miniBox.innerHTML = `<div class="text-slate-500 text-center py-3">Sin ejecuciones registradas todavía.</div>`;
+                } else {
+                    miniBox.innerHTML = storeLogs.slice(0, 4).map(l => {
+                        const bStyle = badgeStyles[l.level] || badgeStyles.info;
+                        return `
+                            <div class="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800 flex flex-col gap-1">
+                                <div class="flex items-center justify-between gap-2 flex-wrap">
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="px-2 py-0.5 rounded text-[9px] font-extrabold border ${bStyle}">${badgeLabels[l.level] || 'LOG'}</span>
+                                        <span class="font-bold text-white">${escapeHTML(l.sku)} — ${escapeHTML(l.productName || l.action)}</span>
+                                    </div>
+                                    <span class="text-[10px] font-mono text-slate-400">${escapeHTML(l.dateFormatted)}</span>
+                                </div>
+                                <div class="text-slate-300 text-[11px] leading-snug">${escapeHTML(l.summary)}</div>
+                                <div class="flex items-center gap-3 text-[10px] font-mono text-slate-400 flex-wrap pt-0.5">
+                                    ${l.igPostId ? `<span class="text-emerald-400">📸 IG Post ID: ${escapeHTML(l.igPostId)}</span>` : ''}
+                                    ${l.igStoryIds ? `<span class="text-cyan-400">📱 IG Story ID: ${escapeHTML(l.igStoryIds)}</span>` : '<span class="text-amber-300">📱 Story: Sin ID en Meta</span>'}
+                                    <span>⏰ Feed: ${escapeHTML(l.feedSchedule)} | Story: ${escapeHTML(l.storySchedule)}</span>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            }
+
+            // 2. Renderizar Vista Completa en Sub-Tab 4
+            const fullBox = document.getElementById('ap-full-logs-list');
+            if (fullBox) {
+                if (storeLogs.length === 0) {
+                    fullBox.innerHTML = `<div class="p-8 text-center text-slate-500">No hay logs registrados para esta tienda.</div>`;
+                } else {
+                    fullBox.innerHTML = storeLogs.map(l => {
+                        const bStyle = badgeStyles[l.level] || badgeStyles.info;
+                        const feedLinks = (l.feedFiles || []).map(f => f.id
+                            ? `<a href="https://drive.google.com/file/d/${encodeURIComponent(f.id)}/view" target="_blank" class="px-2 py-0.5 rounded bg-pink-500/15 hover:bg-pink-500/25 text-pink-300 border border-pink-500/30 font-mono text-[10px] inline-flex items-center gap-1"><i class="fa-brands fa-google-drive"></i> ${escapeHTML(f.name || f.id)}</a>`
+                            : `<span class="px-2 py-0.5 rounded bg-slate-900 text-slate-300 font-mono text-[10px]">${escapeHTML(f.name || '')}</span>`
+                        ).join(' ');
+                        const storyLinks = (l.storyFiles || []).map(f => f.id
+                            ? `<a href="https://drive.google.com/file/d/${encodeURIComponent(f.id)}/view" target="_blank" class="px-2 py-0.5 rounded bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 font-mono text-[10px] inline-flex items-center gap-1"><i class="fa-brands fa-google-drive"></i> ${escapeHTML(f.name || f.id)}</a>`
+                            : `<span class="px-2 py-0.5 rounded bg-slate-900 text-slate-300 font-mono text-[10px]">${escapeHTML(f.name || '')}</span>`
+                        ).join(' ');
+
+                        return `
+                            <div class="p-4 rounded-2xl bg-slate-950/90 border border-slate-800 space-y-2.5 shadow-lg">
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-800/80">
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border ${bStyle}">
+                                            ${badgeLabels[l.level] || 'LOG'}
+                                        </span>
+                                        <span class="text-xs font-extrabold text-white">${escapeHTML(l.action)}</span>
+                                        <span class="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-mono text-[11px] font-bold">
+                                            SKU: ${escapeHTML(l.sku)}
+                                        </span>
+                                        <span class="text-xs text-slate-300 font-semibold">${escapeHTML(l.productName)}</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-[11px] font-mono text-slate-400">${escapeHTML(l.dateFormatted)}</span>
+                                        <button type="button" onclick="toggleApLogRawJson('${escapeHTML(l.id)}')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-cyan-300 border border-slate-700 text-[10px] font-mono font-bold">
+                                            { } Ver JSON
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="text-xs text-slate-200 leading-relaxed">${escapeHTML(l.summary)}</div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5 pt-1 text-[11px]">
+                                    <div class="p-2.5 rounded-xl bg-slate-900/70 border border-slate-800/80 space-y-1">
+                                        <div class="font-bold text-pink-300 flex items-center justify-between">
+                                            <span>📸 Publicación (Feed / Carrusel / Reel)</span>
+                                            <span class="font-mono text-[10px] text-slate-400">Horario: ${escapeHTML(l.feedSchedule)}</span>
+                                        </div>
+                                        <div class="font-mono text-xs ${l.igPostId && l.igPostId !== 'no_feed_post' ? 'text-emerald-400 font-bold' : 'text-slate-400'}">
+                                            Meta Post ID: ${escapeHTML(l.igPostId || 'Pendiente / Programado en Drive')}
+                                        </div>
+                                        <div class="flex flex-wrap gap-1 pt-0.5">${feedLinks || '<span class="text-slate-500 text-[10px]">Sin archivos de Feed</span>'}</div>
+                                    </div>
+
+                                    <div class="p-2.5 rounded-xl bg-slate-900/70 border border-slate-800/80 space-y-1">
+                                        <div class="font-bold text-cyan-300 flex items-center justify-between">
+                                            <span>📱 Story (Formato Vertical 9:16)</span>
+                                            <span class="font-mono text-[10px] text-slate-400">Horario: ${escapeHTML(l.storySchedule)}</span>
+                                        </div>
+                                        <div class="font-mono text-xs ${l.igStoryIds ? 'text-emerald-400 font-bold' : 'text-amber-300'}">
+                                            Meta Story ID: ${escapeHTML(l.igStoryIds || 'No publicada en este turno / Programada en Drive')}
+                                        </div>
+                                        <div class="flex flex-wrap gap-1 pt-0.5">${storyLinks || '<span class="text-slate-500 text-[10px]">Sin archivos de Story</span>'}</div>
+                                    </div>
+                                </div>
+
+                                <pre id="ap-log-raw-${escapeHTML(l.id)}" class="hidden mt-2 p-3 rounded-xl bg-slate-900 border border-slate-800 text-[10px] font-mono text-emerald-300 overflow-x-auto max-h-60">${escapeHTML(JSON.stringify(l.rawDetails || {}, null, 2))}</pre>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            }
         }
 
         function mergeCloudAutopublisherQueue(cloudList) {
@@ -8514,12 +8889,12 @@
                 const m = raw.match(/Num0*(\d+)/i);
                 return m ? `Num${m[1]}` : '';
             }
-            // NNN: limpiar extensión, fecha, prefijos y sufijos (_09hs, _20hs, (1), etc.)
+            // NNN: limpiar extensión, fecha, prefijos y sufijos (_09hs, _12hs, _15hs, _18hs, _20hs, _21hs, (1), etc.)
             let clean = raw.replace(/\.[^/.]+$/, '');
             clean = clean.replace(/^(?:\d{1,2}[\/._-]\d{1,2})[\s._-]*/i, '');
-            clean = clean.replace(/^(?:FEED|STORY|09HS|18HS|20HS)[\s._-]*/gi, '');
+            clean = clean.replace(/^(?:FEED|STORY|09HS|12HS|15HS|18HS|20HS|21HS)[\s._-]*/gi, '');
             clean = clean.replace(/^(?:Art\.?|Articulo|Modelo|Num)[\s._-]*/i, '');
-            clean = clean.replace(/[\s._-]*(?:FEED|STORY|09HS|18HS|20HS)+$/gi, '');
+            clean = clean.replace(/[\s._-]*(?:FEED|STORY|09HS|12HS|15HS|18HS|20HS|21HS)+$/gi, '');
             clean = clean.replace(/\s*(?:\(\d+\)|_\d+)$/, '');
             return clean.trim().toUpperCase();
         }
@@ -8838,7 +9213,11 @@
                     isoDate = `2026-${mm}-${dd}`;
                 }
                 if (/09HS/i.test(fn)) timeStr = '09:30';
+                else if (/12HS/i.test(fn)) timeStr = '12:00';
+                else if (/15HS/i.test(fn)) timeStr = '15:00';
+                else if (/18HS/i.test(fn)) timeStr = '18:00';
                 else if (/20HS/i.test(fn)) timeStr = '20:30';
+                else if (/21HS/i.test(fn)) timeStr = '21:00';
             }
 
             return { isoDate, timeStr };
@@ -9103,10 +9482,60 @@
             }
         }
 
-        function buildApOfficialFileName(ext = 'jpg', fileIdx = 0, totalFiles = 1, forceTarget = null) {
+        function onApTargetModeChange() {
+            const target = document.getElementById('ap-input-target')?.value || 'both';
+            const zone4A = document.getElementById('ap-zone-4a-container');
+            const zone4B = document.getElementById('ap-zone-4b-container');
+            const feedTimeEl = document.getElementById('ap-input-feed-time');
+            const storyTimeEl = document.getElementById('ap-input-story-time');
+
+            if (target === 'feed') {
+                if (zone4A) zone4A.classList.remove('opacity-40', 'pointer-events-none');
+                if (zone4B) zone4B.classList.add('opacity-40');
+                if (feedTimeEl) feedTimeEl.disabled = false;
+                if (storyTimeEl) storyTimeEl.disabled = true;
+                setApPreviewMode('feed');
+            } else if (target === 'story') {
+                if (zone4A) zone4A.classList.add('opacity-40');
+                if (zone4B) zone4B.classList.remove('opacity-40', 'pointer-events-none');
+                if (feedTimeEl) feedTimeEl.disabled = true;
+                if (storyTimeEl) storyTimeEl.disabled = false;
+                setApPreviewMode('story');
+            } else {
+                if (zone4A) zone4A.classList.remove('opacity-40', 'pointer-events-none');
+                if (zone4B) zone4B.classList.remove('opacity-40', 'pointer-events-none');
+                if (feedTimeEl) feedTimeEl.disabled = false;
+                if (storyTimeEl) storyTimeEl.disabled = false;
+            }
+            updateApGeneratedFilename();
+        }
+
+        function getApFeedHourTag() {
+            const feedTime = document.getElementById('ap-input-feed-time')?.value || '18:00';
+            const hh = feedTime.split(':')[0] || '18';
+            // Si es el horario estándar 18:00 hs de NNN no requiere sufijo (máxima retrocompatibilidad),
+            // pero si eligió otro horario (09, 12, 15, 20, 21) le agregamos _XXhs para que el Cron horario lo detecte exacto.
+            if (currentApStore === 'nnn' && hh !== '18') {
+                return `_${hh}hs`;
+            }
+            return '';
+        }
+
+        function getApStoryHourTagsList() {
+            const storyTime = document.getElementById('ap-input-story-time')?.value || '09:30';
+            if (storyTime === 'both_09_20') return ['_09hs', '_20hs'];
+            if (storyTime === 'with_feed') {
+                const feedTime = document.getElementById('ap-input-feed-time')?.value || '18:00';
+                const hh = feedTime.split(':')[0] || '18';
+                return [`_${hh}hs`];
+            }
+            const hh = storyTime.split(':')[0] || '09';
+            return [`_${hh}hs`];
+        }
+
+        function buildApOfficialFileName(ext = 'jpg', fileIdx = 0, totalFiles = 1, role = 'feed', customHourTag = null) {
             const rawSku = (document.getElementById('ap-input-sku')?.value || '').trim() || (currentApStore === 'nnn' ? 'CRG-035' : 'Num001');
             const dateVal = document.getElementById('ap-input-date')?.value || new Date().toISOString().slice(0, 10);
-            const target = forceTarget || document.getElementById('ap-input-target')?.value || 'both';
 
             const parts = dateVal.split('-');
             const dd = (parts[2] || '20').padStart(2, '0');
@@ -9114,53 +9543,83 @@
             const cleanExt = String(ext || 'jpg').replace(/^\./, '').toLowerCase();
 
             if (currentApStore === 'nacha') {
-                // Regla NachaHome en '3. Elegir Archivo Pendiente':
-                // parseFileDate busca DD.MM y extractProductNum busca NumXXX
                 const numMatch = rawSku.match(/(\d+)/);
                 const numPadded = numMatch ? `Num${String(parseInt(numMatch[1], 10)).padStart(3, '0')}` : `Num001`;
                 const suffix = totalFiles > 1 ? `_${fileIdx + 1}` : '';
                 return `${numPadded}_${dd}.${mm}${suffix}.${cleanExt}`;
             } else {
-                // Regla NNN en NNN.Public.2026 y NNN.Story.2026:
-                // Formato oficial: DD.MM_SKU.jpg (Feed) y DD.MM_SKU_09hs.jpg / DD.MM_SKU_20hs.jpg (Story)
                 const cleanSku = rawSku.replace(/^Art\.?\s*/i, '').trim();
                 let slotSuffix = '';
-                if (target === 'story' || target === 'story_09') slotSuffix = '_09hs';
-                else if (target === 'story_20') slotSuffix = '_20hs';
+                if (customHourTag !== null) {
+                    slotSuffix = customHourTag;
+                } else if (role === 'story') {
+                    const tags = getApStoryHourTagsList();
+                    slotSuffix = tags[0] || '_09hs';
+                } else {
+                    slotSuffix = getApFeedHourTag();
+                }
 
-                const carSuffix = (totalFiles > 1 && !slotSuffix) ? ` (${fileIdx + 1})` : '';
+                const carSuffix = (totalFiles > 1) ? ` (${fileIdx + 1})` : '';
                 return `${dd}.${mm}_${cleanSku}${slotSuffix}${carSuffix}.${cleanExt}`;
             }
         }
 
         function updateApGeneratedFilename() {
-            const firstExt = apSelectedFiles.length > 0 ? apSelectedFiles[0].ext : 'jpg';
-            const total = apSelectedFiles.length || 1;
-            const officialName = buildApOfficialFileName(firstExt, 0, total);
-            const previewEl = document.getElementById('ap-preview-filename');
-            if (previewEl) {
-                if (total > 1) {
-                    previewEl.innerText = `${officialName} (+${total - 1} archivos en Carrusel)`;
+            const firstFeedExt = apSelectedFiles.length > 0 ? apSelectedFiles[0].ext : 'jpg';
+            const totalFeed = apSelectedFiles.length || 1;
+            const officialFeedName = buildApOfficialFileName(firstFeedExt, 0, totalFeed, 'feed');
+
+            const firstStoryExt = apSelectedStoryFiles.length > 0 ? apSelectedStoryFiles[0].ext : firstFeedExt;
+            const storyTags = getApStoryHourTagsList();
+            const officialStoryName = buildApOfficialFileName(firstStoryExt, 0, apSelectedStoryFiles.length || 1, 'story', storyTags[0]);
+
+            const previewFeedEl = document.getElementById('ap-preview-filename');
+            if (previewFeedEl) {
+                if (apSelectedFiles.length > 1) {
+                    previewFeedEl.innerText = `${officialFeedName} (+${apSelectedFiles.length - 1} en Carrusel)`;
+                } else if (apSelectedFiles.length === 1 && apSelectedFiles[0].isVideo) {
+                    previewFeedEl.innerText = `${officialFeedName} (Reel Video)`;
                 } else {
-                    previewEl.innerText = officialName;
+                    previewFeedEl.innerText = officialFeedName;
+                }
+            }
+
+            const previewStoryEl = document.getElementById('ap-preview-story-filename');
+            if (previewStoryEl) {
+                if (storyTags.length > 1) {
+                    const secondStoryName = buildApOfficialFileName(firstStoryExt, 0, 1, 'story', storyTags[1]);
+                    previewStoryEl.innerText = `${officialStoryName} + ${secondStoryName}`;
+                } else {
+                    previewStoryEl.innerText = officialStoryName;
                 }
             }
 
             const meta = AP_STORES_META[currentApStore];
             const target = document.getElementById('ap-input-target')?.value || 'both';
+            const feedTime = document.getElementById('ap-input-feed-time')?.value || '18:00';
+            const storyTime = document.getElementById('ap-input-story-time')?.value || '09:30';
             const folderLabel = document.getElementById('ap-preview-folder-label');
             if (folderLabel && meta) {
                 let destText = '';
-                if (target === 'both') destText = `${meta.feedFolderName} + ${meta.storyFolderName}`;
-                else if (target === 'feed') destText = meta.feedFolderName;
-                else destText = meta.storyFolderName;
+                if (target === 'both') destText = `${meta.feedFolderName} (${feedTime}hs) + ${meta.storyFolderName} (${storyTime === 'both_09_20' ? '09:30+20:30hs' : (storyTime === 'with_feed' ? feedTime + 'hs' : storyTime + 'hs')})`;
+                else if (target === 'feed') destText = `${meta.feedFolderName} (${feedTime}hs)`;
+                else destText = `${meta.storyFolderName} (${storyTime}hs)`;
                 folderLabel.innerHTML = `Destino Drive: <span class="text-emerald-300 font-semibold">${escapeHTML(destText)}</span>`;
+            }
+
+            const igTime = document.getElementById('ap-ig-preview-time');
+            if (igTime) {
+                igTime.innerText = feedTime;
             }
 
             const skuPlaceholder = document.getElementById('ap-ig-placeholder-sku');
             if (skuPlaceholder) {
-                skuPlaceholder.innerText = `Archivo: ${officialName}`;
+                skuPlaceholder.innerText = `Feed: ${officialFeedName} | Story: ${officialStoryName}`;
             }
+
+            // Re-renderizar grillas para actualizar nombres si cambió horario o fecha
+            if (apSelectedFiles.length > 0) renderApFilesGrid();
+            if (apSelectedStoryFiles.length > 0) renderApStoryFilesGrid();
         }
 
         function generateApSmartCaption(nextVariant = false) {
@@ -9177,7 +9636,6 @@
 
             let caption = '';
             if (currentApStore === 'nacha') {
-                // Estilo cálido, acogedor y hogareño de Nacha Home (fiel al nodo 'Redactar Copy con IA')
                 const intros = [
                     `🏠✨ ¡Renová tu dormitorio y descansá como te merecés con nuestro ${name || sku}!`,
                     `🛏️🌸 Transformá la calidez de tu hogar con la suavidad y calidad premium de ${name || sku}.`,
@@ -9190,7 +9648,6 @@
                 else if (price) caption += `💰 Precio Especial: ${price}\n`;
                 caption += `\n🚚 Envíos rápidos a domicilio en CABA, GBA y todo el país.\n💬 Comentá "PRECIO" o escribinos al DM / WhatsApp para reservar el tuyo antes de que se agote.\n\n#NachaHome #Blanqueria #Sabanas #Confort #DecoracionHogar #Acolchados #Edredon`;
             } else {
-                // Estilo moderno, masculino y directo de NNN / Bross London (fiel al nodo 'Redactar Copy con IA5')
                 const intros = [
                     `🔥 ${name || 'Nuevo Ingreso'} (${sku || 'NNN'}) — Diseño, durabilidad y estilo superior.`,
                     `⚡ Llevá tu día a día al siguiente nivel con ${name || sku}. Calidad garantizada al mejor precio.`,
@@ -9217,7 +9674,9 @@
             });
         }
 
-        /* DRAG & DROP Y PREVIEW DE ARCHIVOS */
+        /* ============================================================== */
+        /* ZONA 4A: DRAG & DROP ARCHIVOS DE PUBLICACIÓN (POST/CARRUSEL/REEL)*/
+        /* ============================================================== */
         function handleApDragOver(e) {
             e.preventDefault();
             e.stopPropagation();
@@ -9247,6 +9706,23 @@
             }
         }
 
+        function autoDetectSkuFromUploadedFile(fileName) {
+            const currentSkuInput = document.getElementById('ap-input-sku');
+            if (currentSkuInput && !currentSkuInput.value.trim()) {
+                const guessed = extractSkuFromPublishedFilename(fileName, currentApStore);
+                if (guessed) {
+                    const catalog = apCatalogByStore[currentApStore] || [];
+                    const match = catalog.find(c => c.sku.toUpperCase() === guessed.toUpperCase() || c.sku.toUpperCase().replace(/[^A-Z0-9]/g, '') === guessed.toUpperCase().replace(/[^A-Z0-9]/g, ''));
+                    if (match) {
+                        document.getElementById('ap-product-select').value = match.sku;
+                        onApProductSelectChange(match.sku);
+                    } else {
+                        currentSkuInput.value = guessed;
+                    }
+                }
+            }
+        }
+
         function processApFilesList(fileList) {
             const filesArr = Array.from(fileList).slice(0, 10);
             filesArr.forEach(file => {
@@ -9254,21 +9730,7 @@
                 const ext = extMatch ? extMatch[1].toLowerCase() : (file.type.includes('video') ? 'mp4' : 'jpg');
                 const isVideo = file.type.startsWith('video/') || ['mp4', 'mov'].includes(ext);
 
-                // Si todavía no había seleccionado un producto, intentar detectar el SKU desde el nombre del archivo subido
-                const currentSkuInput = document.getElementById('ap-input-sku');
-                if (currentSkuInput && !currentSkuInput.value.trim()) {
-                    const guessed = extractSkuFromPublishedFilename(file.name, currentApStore);
-                    if (guessed) {
-                        const catalog = apCatalogByStore[currentApStore] || [];
-                        const match = catalog.find(c => c.sku.toUpperCase() === guessed.toUpperCase() || c.sku.toUpperCase().replace(/[^A-Z0-9]/g, '') === guessed.toUpperCase().replace(/[^A-Z0-9]/g, ''));
-                        if (match) {
-                            document.getElementById('ap-product-select').value = match.sku;
-                            onApProductSelectChange(match.sku);
-                        } else {
-                            currentSkuInput.value = guessed;
-                        }
-                    }
-                }
+                autoDetectSkuFromUploadedFile(file.name);
 
                 const reader = new FileReader();
                 reader.onload = (ev) => {
@@ -9326,24 +9788,341 @@
             if (btnClear) btnClear.classList.remove('hidden');
 
             grid.innerHTML = apSelectedFiles.map((f, idx) => {
-                const officialName = buildApOfficialFileName(f.ext, idx, apSelectedFiles.length);
+                const officialName = buildApOfficialFileName(f.ext, idx, apSelectedFiles.length, 'feed');
+                const badgeType = f.isVideo ? '🎬 REEL' : (apSelectedFiles.length > 1 ? `🎠 CARRUSEL #${idx + 1}` : '📸 POST');
                 return `
-                    <div class="relative group rounded-xl overflow-hidden border border-slate-800 bg-slate-950 p-1.5 flex flex-col justify-between">
+                    <div class="relative group rounded-xl overflow-hidden border border-pink-500/30 bg-slate-950 p-1.5 flex flex-col justify-between">
                         <div class="relative aspect-square rounded-lg overflow-hidden bg-slate-900">
                             ${f.isVideo
-                                ? `<video src="${f.dataUrl}" class="w-full h-full object-cover" muted></video><span class="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-pink-600 text-white text-[9px] font-bold">REEL/VIDEO</span>`
+                                ? `<video src="${f.dataUrl}" class="w-full h-full object-cover" muted></video>`
                                 : `<img src="${f.dataUrl}" class="w-full h-full object-cover">`
                             }
+                            <span class="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-pink-600/90 text-white text-[9px] font-extrabold">${badgeType}</span>
                             <button type="button" onclick="removeApSelectedFile(${idx})" class="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-rose-600/90 hover:bg-rose-500 text-white text-xs flex items-center justify-center shadow">
                                 <i class="fa-solid fa-xmark"></i>
                             </button>
-                            <span class="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded bg-slate-950/80 text-white font-mono text-[9px] font-bold">
-                                #${idx + 1}
-                            </span>
                         </div>
                         <div class="mt-1.5 px-1">
-                            <div class="text-[10px] font-mono text-emerald-400 font-bold truncate" title="${escapeHTML(officialName)}">${escapeHTML(officialName)}</div>
+                            <div class="text-[10px] font-mono text-pink-300 font-bold truncate" title="${escapeHTML(officialName)}">${escapeHTML(officialName)}</div>
                             <div class="text-[9px] text-slate-500">${f.sizeKb} KB</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        /* ============================================================== */
+        /* ZONA 4B: DRAG & DROP ARCHIVOS STORY VERTICAL (9:16 1080x1920)  */
+        /* + CONVERSOR AUTOMÁTICO 9:16 EN CANVAS CON FONDO BLUR + PRECIO  */
+        /* ============================================================== */
+        function handleApStoryDragOver(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const dz = document.getElementById('ap-story-dropzone');
+            if (dz) dz.classList.add('border-amber-400', 'bg-amber-950/20');
+        }
+
+        function handleApStoryDragLeave(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const dz = document.getElementById('ap-story-dropzone');
+            if (dz) dz.classList.remove('border-amber-400', 'bg-amber-950/20');
+        }
+
+        function handleApStoryDrop(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            handleApStoryDragLeave(e);
+            if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                processApStoryFilesList(e.dataTransfer.files);
+            }
+        }
+
+        function handleApStoryFileSelect(e) {
+            if (e.target && e.target.files && e.target.files.length > 0) {
+                processApStoryFilesList(e.target.files);
+            }
+        }
+
+        function processApStoryFilesList(fileList) {
+            const filesArr = Array.from(fileList).slice(0, 5);
+            filesArr.forEach(file => {
+                const extMatch = file.name.match(/\.([^.]+)$/);
+                const ext = extMatch ? extMatch[1].toLowerCase() : (file.type.includes('video') ? 'mp4' : 'jpg');
+                const isVideo = file.type.startsWith('video/') || ['mp4', 'mov'].includes(ext);
+
+                autoDetectSkuFromUploadedFile(file.name);
+
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    const dataUrl = ev.target.result;
+                    if (!isVideo) {
+                        const img = new Image();
+                        img.onload = () => {
+                            const ratio = img.width / (img.height || 1);
+                            const isVertical = ratio <= 0.8;
+                            apSelectedStoryFiles.push({
+                                file,
+                                dataUrl,
+                                isVideo: false,
+                                width: img.width,
+                                height: img.height,
+                                isVertical,
+                                originalName: file.name,
+                                sizeKb: Math.round(file.size / 1024),
+                                ext: 'jpg'
+                            });
+                            renderApStoryFilesGrid();
+                            updateApGeneratedFilename();
+                            updateApInstagramPreview();
+                        };
+                        img.src = dataUrl;
+                    } else {
+                        apSelectedStoryFiles.push({
+                            file,
+                            dataUrl,
+                            isVideo: true,
+                            isVertical: true,
+                            originalName: file.name,
+                            sizeKb: Math.round(file.size / 1024),
+                            ext
+                        });
+                        renderApStoryFilesGrid();
+                        updateApGeneratedFilename();
+                        updateApInstagramPreview();
+                    }
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function removeApSelectedStoryFile(idx) {
+            apSelectedStoryFiles.splice(idx, 1);
+            renderApStoryFilesGrid();
+            updateApGeneratedFilename();
+            updateApInstagramPreview();
+        }
+
+        function clearApSelectedStoryFiles() {
+            apSelectedStoryFiles = [];
+            const input = document.getElementById('ap-story-file-input');
+            if (input) input.value = '';
+            renderApStoryFilesGrid();
+            updateApGeneratedFilename();
+            updateApInstagramPreview();
+        }
+
+        async function createVerticalStoryCanvasDataUrl(sourceDataUrl) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 1080;
+                    canvas.height = 1920;
+                    const ctx = canvas.getContext('2d');
+
+                    // 1. Fondo vertical 9:16 ambientado con blur de la propia foto
+                    ctx.fillStyle = '#090d16';
+                    ctx.fillRect(0, 0, 1080, 1920);
+
+                    ctx.save();
+                    ctx.filter = 'blur(42px) brightness(0.42)';
+                    const bgScale = Math.max(1080 / img.width, 1920 / img.height) * 1.15;
+                    const bgW = img.width * bgScale;
+                    const bgH = img.height * bgScale;
+                    ctx.drawImage(img, (1080 - bgW) / 2, (1920 - bgH) / 2, bgW, bgH);
+                    ctx.restore();
+
+                    // Gradiente superior e inferior para contraste limpio en Instagram Stories
+                    const grad = ctx.createLinearGradient(0, 0, 0, 1920);
+                    grad.addColorStop(0, 'rgba(9,13,22,0.75)');
+                    grad.addColorStop(0.2, 'rgba(9,13,22,0.15)');
+                    grad.addColorStop(0.8, 'rgba(9,13,22,0.2)');
+                    grad.addColorStop(1, 'rgba(9,13,22,0.88)');
+                    ctx.fillStyle = grad;
+                    ctx.fillRect(0, 0, 1080, 1920);
+
+                    // 2. Cabecera de marca en Story
+                    const meta = AP_STORES_META[currentApStore] || AP_STORES_META.nnn;
+                    const sku = (document.getElementById('ap-input-sku')?.value || '').trim();
+                    const productName = (document.getElementById('ap-input-product-name')?.value || '').trim();
+                    const price = (document.getElementById('ap-input-price')?.value || '').trim();
+
+                    ctx.save();
+                    ctx.fillStyle = 'rgba(255,255,255,0.92)';
+                    ctx.font = '800 34px "Plus Jakarta Sans", sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(`@${meta.igHandle.toUpperCase()} • NUEVO INGRESO`, 540, 210);
+                    ctx.restore();
+
+                    // 3. Imagen principal centrada con bordes redondeados y sombra
+                    const maxBoxW = 960;
+                    const maxBoxH = 1120;
+                    const fitScale = Math.min(maxBoxW / img.width, maxBoxH / img.height);
+                    const drawW = Math.round(img.width * fitScale);
+                    const drawH = Math.round(img.height * fitScale);
+                    const drawX = Math.round((1080 - drawW) / 2);
+                    const drawY = Math.round((1920 - drawH) / 2) - 40;
+
+                    ctx.save();
+                    ctx.shadowColor = 'rgba(0,0,0,0.65)';
+                    ctx.shadowBlur = 45;
+                    ctx.shadowOffsetY = 18;
+                    const r = 36;
+                    ctx.beginPath();
+                    ctx.moveTo(drawX + r, drawY);
+                    ctx.lineTo(drawX + drawW - r, drawY);
+                    ctx.quadraticCurveTo(drawX + drawW, drawY, drawX + drawW, drawY + r);
+                    ctx.lineTo(drawX + drawW, drawY + drawH - r);
+                    ctx.quadraticCurveTo(drawX + drawW, drawY + drawH, drawX + drawW - r, drawY + drawH);
+                    ctx.lineTo(drawX + r, drawY + drawH);
+                    ctx.quadraticCurveTo(drawX, drawY + drawH, drawX, drawY + drawH - r);
+                    ctx.lineTo(drawX, drawY + r);
+                    ctx.quadraticCurveTo(drawX, drawY, drawX + r, drawY);
+                    ctx.closePath();
+                    ctx.clip();
+                    ctx.drawImage(img, drawX, drawY, drawW, drawH);
+                    ctx.restore();
+
+                    // 4. Sticker inferior de Producto + Precio (100% compatible con IG Story)
+                    if (productName || sku || price) {
+                        const pillY = Math.min(drawY + drawH + 55, 1560);
+                        ctx.save();
+                        ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
+                        ctx.strokeStyle = 'rgba(245, 158, 11, 0.65)';
+                        ctx.lineWidth = 3;
+                        const pW = 900;
+                        const pH = price ? 190 : 120;
+                        const pX = (1080 - pW) / 2;
+                        const pr = 28;
+                        ctx.beginPath();
+                        ctx.moveTo(pX + pr, pillY);
+                        ctx.lineTo(pX + pW - pr, pillY);
+                        ctx.quadraticCurveTo(pX + pW, pillY, pX + pW, pillY + pr);
+                        ctx.lineTo(pX + pW, pillY + pH - pr);
+                        ctx.quadraticCurveTo(pX + pW, pillY + pH, pX + pW - pr, pillY + pH);
+                        ctx.lineTo(pX + pr, pillY + pH);
+                        ctx.quadraticCurveTo(pX, pillY + pH, pX, pillY + pH - pr);
+                        ctx.lineTo(pX, pillY + pr);
+                        ctx.quadraticCurveTo(pX, pillY, pX + pr, pillY);
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.stroke();
+
+                        ctx.fillStyle = '#ffffff';
+                        ctx.font = '800 36px "Plus Jakarta Sans", sans-serif';
+                        ctx.textAlign = 'center';
+                        const titleLine = (productName || `Art. ${sku}`).slice(0, 38);
+                        ctx.fillText(titleLine, 540, pillY + 62);
+
+                        if (price) {
+                            ctx.fillStyle = '#fbbf24';
+                            ctx.font = '900 54px "Plus Jakarta Sans", sans-serif';
+                            ctx.fillText(`${price} ${sku ? `• ${sku}` : ''}`, 540, pillY + 142);
+                        }
+                        ctx.restore();
+                    }
+
+                    const outDataUrl = canvas.toDataURL('image/jpeg', 0.92);
+                    resolve(outDataUrl);
+                };
+                img.onerror = reject;
+                img.src = sourceDataUrl;
+            });
+        }
+
+        async function generateApVerticalStoryFromFeed() {
+            const firstImage = apSelectedFiles.find(f => !f.isVideo) || apSelectedStoryFiles.find(f => !f.isVideo);
+            if (!firstImage) {
+                alert('Subí primero una foto en la Zona 4A (Publicación) o en la Zona 4B para convertirla a formato Story Vertical 9:16 (1080×1920 px).');
+                return;
+            }
+            try {
+                const verticalDataUrl = await createVerticalStoryCanvasDataUrl(firstImage.dataUrl);
+                const approxKb = Math.round((verticalDataUrl.length * 0.75) / 1024);
+                apSelectedStoryFiles = [{
+                    file: { type: 'image/jpeg', name: 'story_9x16_1080x1920.jpg' },
+                    dataUrl: verticalDataUrl,
+                    isVideo: false,
+                    width: 1080,
+                    height: 1920,
+                    isVertical: true,
+                    autoGenerated: true,
+                    originalName: `Story_9x16_${firstImage.originalName}`,
+                    sizeKb: approxKb,
+                    ext: 'jpg'
+                }];
+                renderApStoryFilesGrid();
+                updateApGeneratedFilename();
+                setApPreviewMode('story');
+            } catch (err) {
+                console.error('Error al generar Story 9:16:', err);
+                alert('No se pudo convertir la imagen a 9:16.');
+            }
+        }
+
+        async function convertApStoryItemToVertical(idx) {
+            const item = apSelectedStoryFiles[idx];
+            if (!item || item.isVideo) return;
+            try {
+                const verticalDataUrl = await createVerticalStoryCanvasDataUrl(item.dataUrl);
+                item.dataUrl = verticalDataUrl;
+                item.width = 1080;
+                item.height = 1920;
+                item.isVertical = true;
+                item.autoGenerated = true;
+                item.sizeKb = Math.round((verticalDataUrl.length * 0.75) / 1024);
+                item.ext = 'jpg';
+                renderApStoryFilesGrid();
+                updateApGeneratedFilename();
+                setApPreviewMode('story');
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function renderApStoryFilesGrid() {
+            const grid = document.getElementById('ap-story-files-preview-grid');
+            const btnClear = document.getElementById('btn-ap-clear-story-files');
+            if (!grid) return;
+
+            if (apSelectedStoryFiles.length === 0) {
+                grid.classList.add('hidden');
+                grid.innerHTML = '';
+                if (btnClear) btnClear.classList.add('hidden');
+                return;
+            }
+
+            grid.classList.remove('hidden');
+            if (btnClear) btnClear.classList.remove('hidden');
+
+            const storyTags = getApStoryHourTagsList();
+            grid.innerHTML = apSelectedStoryFiles.map((f, idx) => {
+                const officialName = buildApOfficialFileName(f.ext, idx, apSelectedStoryFiles.length, 'story', storyTags[0]);
+                const dimBadge = f.width && f.height ? `${f.width}×${f.height}` : '9:16';
+                return `
+                    <div class="relative group rounded-xl overflow-hidden border ${f.isVertical ? 'border-amber-500/40' : 'border-rose-500/60'} bg-slate-950 p-1.5 flex flex-col justify-between">
+                        <div class="relative aspect-[9/16] max-h-44 rounded-lg overflow-hidden bg-slate-900 mx-auto w-full">
+                            ${f.isVideo
+                                ? `<video src="${f.dataUrl}" class="w-full h-full object-cover" muted></video>`
+                                : `<img src="${f.dataUrl}" class="w-full h-full object-cover">`
+                            }
+                            <span class="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded ${f.isVertical ? 'bg-amber-500 text-slate-950' : 'bg-rose-600 text-white'} text-[9px] font-extrabold">
+                                ${f.isVertical ? `📱 9:16 (${dimBadge})` : `⚠️ Cuadrada (${dimBadge})`}
+                            </span>
+                            <button type="button" onclick="removeApSelectedStoryFile(${idx})" class="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-rose-600/90 hover:bg-rose-500 text-white text-xs flex items-center justify-center shadow">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                            ${!f.isVertical && !f.isVideo ? `
+                                <button type="button" onclick="convertApStoryItemToVertical(${idx})" class="absolute inset-x-1.5 bottom-1.5 py-1 rounded bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-[9px] shadow">
+                                    ✨ Convertir a 9:16 (1080×1920)
+                                </button>
+                            ` : ''}
+                        </div>
+                        <div class="mt-1.5 px-1">
+                            <div class="text-[10px] font-mono text-amber-300 font-bold truncate" title="${escapeHTML(officialName)}">${escapeHTML(officialName)}</div>
+                            <div class="text-[9px] text-slate-500">${f.sizeKb} KB ${f.autoGenerated ? '• Render 9:16 OK' : ''}</div>
                         </div>
                     </div>
                 `;
@@ -9394,6 +10173,7 @@
             const storyImg = document.getElementById('ap-ig-story-img');
             const storyPh = document.getElementById('ap-ig-story-placeholder');
 
+            // 1. Preview de Feed / Carrusel / Reel (Zona 4A)
             if (apSelectedFiles.length === 0) {
                 if (emptyEl) emptyEl.classList.remove('hidden');
                 if (imgEl) imgEl.classList.add('hidden');
@@ -9401,54 +10181,69 @@
                 if (badgeEl) badgeEl.classList.add('hidden');
                 if (prevBtn) prevBtn.classList.add('hidden');
                 if (nextBtn) nextBtn.classList.add('hidden');
-                if (storyImg) storyImg.classList.add('hidden');
-                if (storyPh) storyPh.classList.remove('hidden');
-                return;
+            } else {
+                const currentFile = apSelectedFiles[apCarouselPreviewIdx] || apSelectedFiles[0];
+                if (emptyEl) emptyEl.classList.add('hidden');
+
+                if (currentFile.isVideo) {
+                    if (imgEl) imgEl.classList.add('hidden');
+                    if (vidEl) {
+                        vidEl.src = currentFile.dataUrl;
+                        vidEl.classList.remove('hidden');
+                    }
+                } else {
+                    if (vidEl) vidEl.classList.add('hidden');
+                    if (imgEl) {
+                        imgEl.src = currentFile.dataUrl;
+                        imgEl.classList.remove('hidden');
+                    }
+                }
+
+                if (apSelectedFiles.length > 1) {
+                    if (badgeEl) {
+                        badgeEl.innerText = `${apCarouselPreviewIdx + 1} / ${apSelectedFiles.length}`;
+                        badgeEl.classList.remove('hidden');
+                    }
+                    if (prevBtn) prevBtn.classList.remove('hidden');
+                    if (nextBtn) nextBtn.classList.remove('hidden');
+                } else {
+                    if (badgeEl) badgeEl.classList.add('hidden');
+                    if (prevBtn) prevBtn.classList.add('hidden');
+                    if (nextBtn) nextBtn.classList.add('hidden');
+                }
             }
 
-            const currentFile = apSelectedFiles[apCarouselPreviewIdx] || apSelectedFiles[0];
-            if (emptyEl) emptyEl.classList.add('hidden');
-
-            if (currentFile.isVideo) {
-                if (imgEl) imgEl.classList.add('hidden');
-                if (vidEl) {
-                    vidEl.src = currentFile.dataUrl;
-                    vidEl.classList.remove('hidden');
-                }
+            // 2. Preview de Story Vertical 9:16 (prioriza Zona 4B; si está vacía usa Zona 4A)
+            const activeStoryFile = apSelectedStoryFiles[0] || apSelectedFiles[0] || null;
+            if (!activeStoryFile || activeStoryFile.isVideo) {
+                if (storyImg) storyImg.classList.add('hidden');
+                if (storyPh) storyPh.classList.remove('hidden');
             } else {
-                if (vidEl) vidEl.classList.add('hidden');
-                if (imgEl) {
-                    imgEl.src = currentFile.dataUrl;
-                    imgEl.classList.remove('hidden');
-                }
                 if (storyImg) {
-                    storyImg.src = currentFile.dataUrl;
+                    storyImg.src = activeStoryFile.dataUrl;
                     storyImg.classList.remove('hidden');
                 }
                 if (storyPh) storyPh.classList.add('hidden');
             }
-
-            if (apSelectedFiles.length > 1) {
-                if (badgeEl) {
-                    badgeEl.innerText = `${apCarouselPreviewIdx + 1} / ${apSelectedFiles.length}`;
-                    badgeEl.classList.remove('hidden');
-                }
-                if (prevBtn) prevBtn.classList.remove('hidden');
-                if (nextBtn) nextBtn.classList.remove('hidden');
-            } else {
-                if (badgeEl) badgeEl.classList.add('hidden');
-                if (prevBtn) prevBtn.classList.add('hidden');
-                if (nextBtn) nextBtn.classList.add('hidden');
-            }
         }
 
         function downloadApRenamedFiles() {
-            if (apSelectedFiles.length === 0) {
-                alert('Subí primero al menos una foto o video para descargarlo con el nombre oficial.');
+            if (apSelectedFiles.length === 0 && apSelectedStoryFiles.length === 0) {
+                alert('Subí primero al menos una foto o video en la Zona 4A (Publicación) o 4B (Story) para descargarlo con el nombre oficial.');
                 return;
             }
             apSelectedFiles.forEach((f, idx) => {
-                const officialName = buildApOfficialFileName(f.ext, idx, apSelectedFiles.length);
+                const officialName = buildApOfficialFileName(f.ext, idx, apSelectedFiles.length, 'feed');
+                const a = document.createElement('a');
+                a.href = f.dataUrl;
+                a.download = officialName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            });
+            const storyTags = getApStoryHourTagsList();
+            apSelectedStoryFiles.forEach((f, idx) => {
+                const officialName = buildApOfficialFileName(f.ext, idx, apSelectedStoryFiles.length, 'story', storyTags[0]);
                 const a = document.createElement('a');
                 a.href = f.dataUrl;
                 a.download = officialName;
@@ -9466,14 +10261,20 @@
             const features = (document.getElementById('ap-input-features')?.value || '').trim();
             const dateVal = document.getElementById('ap-input-date')?.value || new Date().toISOString().slice(0, 10);
             const target = document.getElementById('ap-input-target')?.value || 'both';
+            const feedTime = document.getElementById('ap-input-feed-time')?.value || '18:00';
+            const storyTime = document.getElementById('ap-input-story-time')?.value || '09:30';
             const caption = (document.getElementById('ap-input-caption')?.value || '').trim();
 
             if (!sku) {
                 alert('Por favor elegí un producto del catálogo o ingresá su SKU / Número.');
                 return;
             }
-            if (apSelectedFiles.length === 0 && apSelectedDriveUrls.length === 0) {
-                alert('Por favor arrastrá al menos una foto o video para publicar.');
+            if ((target === 'feed' || target === 'both') && apSelectedFiles.length === 0 && apSelectedDriveUrls.length === 0) {
+                alert('Por favor subí al menos 1 foto o video en la Zona 4A (Publicación: Post / Carrusel / Reel).');
+                return;
+            }
+            if (target === 'story' && apSelectedStoryFiles.length === 0 && apSelectedFiles.length === 0) {
+                alert('Por favor subí una imagen/video vertical en la Zona 4B (Story 9:16) o tocá "Auto-Generar Story 9:16".');
                 return;
             }
 
@@ -9485,25 +10286,34 @@
             if (btnSched) btnSched.disabled = true;
             if (btnNow) btnNow.disabled = true;
 
+            // Si eligió Pack Completo (both) o Solo Story y no cargó un archivo específico en Zona 4B,
+            // auto-generamos al vuelo una Story Vertical 9:16 (1080x1920) desde la primera foto de Zona 4A para que Meta jamás rechace la Story por tamaño cuadrado!
+            if ((target === 'both' || target === 'story') && apSelectedStoryFiles.length === 0 && apSelectedFiles.length > 0 && !apSelectedFiles[0].isVideo) {
+                if (banner) {
+                    banner.className = "p-3.5 rounded-2xl text-xs font-bold bg-amber-500/15 border border-amber-500/30 text-amber-300 flex items-center gap-2";
+                    banner.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles fa-spin"></i> <span>Generando formato vertical 9:16 (1080×1920 px) automático para la Story...</span>`;
+                    banner.classList.remove('hidden');
+                }
+                await generateApVerticalStoryFromFeed();
+            }
+
             if (banner) {
                 banner.className = "p-3.5 rounded-2xl text-xs font-bold bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 flex items-center gap-2";
-                banner.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> <span>Enviando archivos con nombre oficial (${escapeHTML(buildApOfficialFileName())}) a Google Drive vía n8n...</span>`;
+                banner.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> <span>Enviando archivos separados (Publicación + Story 9:16) a Google Drive y n8n...</span>`;
                 banner.classList.remove('hidden');
             }
 
-            // Construir lista de operaciones de subida a Drive (Feed y/o Story)
             const uploadsPayload = [];
-            apSelectedFiles.forEach((f, idx) => {
-                const base64Clean = f.dataUrl.includes(',') ? f.dataUrl.split(',')[1] : f.dataUrl;
-                const mimeType = f.file.type || (f.isVideo ? 'video/mp4' : 'image/jpeg');
 
-                // Nota importante para Carrusel en NNN:
-                // En Google Drive varios archivos pueden tener el mismo nombre base 'DD-MM SKU.jpg' para que cleanFileName() los agrupe al 100%,
-                // o con sufijo '(1)', '(2)'. Enviamos ambos para máxima compatibilidad.
-                if (target === 'both' || target === 'feed') {
+            // 1. Armar archivos de Zona 4A -> Carpeta Publicación (Feed / Carrusel / Reel)
+            if (target === 'both' || target === 'feed') {
+                apSelectedFiles.forEach((f, idx) => {
+                    const base64Clean = f.dataUrl.includes(',') ? f.dataUrl.split(',')[1] : f.dataUrl;
+                    const mimeType = (f.file && f.file.type) ? f.file.type : (f.isVideo ? 'video/mp4' : 'image/jpeg');
                     const feedFileName = buildApOfficialFileName(f.ext, idx, apSelectedFiles.length, 'feed');
                     uploadsPayload.push({
                         role: 'feed',
+                        scheduleTime: feedTime,
                         folderId: meta.feedFolderId,
                         folderName: meta.feedFolderName,
                         fileName: feedFileName,
@@ -9511,23 +10321,36 @@
                         isVideo: f.isVideo,
                         base64Data: base64Clean
                     });
-                }
+                });
+            }
 
-                // Si eligió Pack Completo (Feed + Story), subimos la primera imagen/video a la carpeta de Stories también
-                if ((target === 'both' && idx === 0) || target === 'story' || target === 'story_09' || target === 'story_20') {
-                    const storyTargetMode = target === 'both' ? 'story' : target;
-                    const storyFileName = buildApOfficialFileName(f.ext, idx, 1, storyTargetMode);
-                    uploadsPayload.push({
-                        role: 'story',
-                        folderId: meta.storyFolderId,
-                        folderName: meta.storyFolderName,
-                        fileName: storyFileName,
-                        mimeType,
-                        isVideo: f.isVideo,
-                        base64Data: base64Clean
+            // 2. Armar archivos de Zona 4B -> Carpeta Story (Formato 9:16)
+            if (target === 'both' || target === 'story') {
+                const storySourceList = apSelectedStoryFiles.length > 0 ? apSelectedStoryFiles : apSelectedFiles.slice(0, 1);
+                const storyTags = getApStoryHourTagsList();
+                storyTags.forEach(hourTag => {
+                    storySourceList.forEach((f, idx) => {
+                        const base64Clean = f.dataUrl.includes(',') ? f.dataUrl.split(',')[1] : f.dataUrl;
+                        const mimeType = (f.file && f.file.type) ? f.file.type : (f.isVideo ? 'video/mp4' : 'image/jpeg');
+                        const storyFileName = buildApOfficialFileName(f.ext, idx, storySourceList.length, 'story', hourTag);
+                        uploadsPayload.push({
+                            role: 'story',
+                            scheduleTime: storyTime,
+                            folderId: meta.storyFolderId,
+                            folderName: meta.storyFolderName,
+                            fileName: storyFileName,
+                            mimeType,
+                            isVideo: f.isVideo,
+                            base64Data: base64Clean
+                        });
                     });
-                }
-            });
+                });
+            }
+
+            const primaryFile = apSelectedFiles[0] || apSelectedStoryFiles[0];
+            const officialMainName = target === 'story'
+                ? buildApOfficialFileName(primaryFile?.ext || 'jpg', 0, 1, 'story')
+                : buildApOfficialFileName(primaryFile?.ext || 'jpg', 0, apSelectedFiles.length || 1, 'feed');
 
             const newQueueItem = {
                 id: `AP-${Date.now()}`,
@@ -9540,10 +10363,12 @@
                 features,
                 date: dateVal,
                 target,
-                officialFileName: buildApOfficialFileName(apSelectedFiles[0]?.ext || 'jpg', 0, apSelectedFiles.length),
-                mediaCount: apSelectedFiles.length || apSelectedDriveUrls.length || 1,
-                isVideo: apSelectedFiles[0]?.isVideo || false,
-                thumbnailDataUrl: (!apSelectedFiles[0]?.isVideo && apSelectedFiles[0]?.dataUrl) ? apSelectedFiles[0].dataUrl.slice(0, 180000) : '',
+                feedTime,
+                storyTime,
+                officialFileName: officialMainName,
+                mediaCount: uploadsPayload.length || 1,
+                isVideo: primaryFile?.isVideo || false,
+                thumbnailDataUrl: (!primaryFile?.isVideo && primaryFile?.dataUrl) ? primaryFile.dataUrl.slice(0, 180000) : '',
                 caption,
                 status: publishNow ? 'Publicación Inmediata Solicitada' : 'Programado en Cola Drive',
                 createdAt: new Date().toISOString()
@@ -9551,8 +10376,8 @@
 
             let webhookOk = false;
             let webhookRespData = null;
+            let webhookHttpError = '';
             try {
-                // Usamos text/plain;charset=UTF-8 (CORS Simple Request) para que el navegador no bloquee con preflight OPTIONS en n8n.totodrilo.cloud
                 const resp = await fetch(apWebhookUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
@@ -9571,6 +10396,8 @@
                         schedule: {
                             date: dateVal,
                             target,
+                            feedTime,
+                            storyTime,
                             officialFileName: newQueueItem.officialFileName
                         },
                         caption,
@@ -9582,7 +10409,7 @@
                     webhookRespData = await resp.json().catch(() => ({}));
                     webhookOk = true;
                     newQueueItem.statusType = publishNow ? 'published' : 'scheduled';
-                    newQueueItem.status = publishNow ? 'Publicado en Instagram OK' : 'En Google Drive (Programado)';
+                    newQueueItem.status = publishNow ? 'Publicado en Instagram OK' : `En Google Drive (${feedTime}hs / ${storyTime}hs)`;
                     if (webhookRespData && webhookRespData.ig_post_id) {
                         newQueueItem.igPostId = webhookRespData.ig_post_id;
                     }
@@ -9599,12 +10426,53 @@
                             }
                         });
                     }
+                } else {
+                    webhookHttpError = `HTTP ${resp.status} ${resp.statusText}`;
                 }
             } catch (err) {
-                console.warn('Webhook n8n pendiente de activar o CORS:', err);
+                webhookHttpError = err.message || String(err);
+                console.warn('Webhook n8n error:', err);
             }
 
-            // Reemplazar en la cola si ya existía el mismo SKU + fecha de pruebas previas para no duplicar tarjetas
+            // Registrar en el Sistema de Logs & Auditoría en Vivo
+            const hasFeedErr = webhookRespData && webhookRespData.feed_error;
+            const hasStoryErr = webhookRespData && webhookRespData.failed_stories;
+            let logLevel = 'success';
+            let logSummary = '';
+            if (!webhookOk) {
+                logLevel = 'error';
+                logSummary = `Error de conexión con Webhook n8n: ${webhookHttpError || 'Sin respuesta'}`;
+            } else if (hasFeedErr || hasStoryErr) {
+                logLevel = 'warning';
+                logSummary = `Ejecutado con avisos: ${hasFeedErr ? 'Feed: ' + webhookRespData.feed_error : ''} ${hasStoryErr ? 'Story: ' + webhookRespData.failed_stories : ''}`.trim();
+            } else if (publishNow) {
+                const postOk = webhookRespData?.ig_post_id ? `Post ID ${webhookRespData.ig_post_id}` : 'Sin Post';
+                const storyOk = webhookRespData?.ig_story_ids ? `Story ID ${webhookRespData.ig_story_ids}` : 'Sin Story';
+                logSummary = `¡Publicado Ahora con éxito en @${meta.igHandle}! (${postOk} | ${storyOk}) y subido a Google Drive (${(webhookRespData?.uploaded_files || []).length} archivos).`;
+            } else {
+                logSummary = `Subido a Google Drive (${(webhookRespData?.uploaded_files || uploadsPayload).length} archivos) y programado para ${dateVal} (Feed ${feedTime} hs / Story ${storyTime} hs).`;
+            }
+
+            addAutopublisherLog({
+                level: logLevel,
+                action: publishNow ? 'upload_and_publish_now' : 'upload_to_drive',
+                store: currentApStore,
+                sku,
+                productName: productName || sku,
+                target,
+                scheduleDate: dateVal,
+                feedTime,
+                storyTime,
+                uploadedFiles: webhookRespData?.uploaded_files || uploadsPayload.map(u => ({ name: u.fileName, role: u.role })),
+                igPostId: webhookRespData?.ig_post_id || '',
+                igStoryIds: webhookRespData?.ig_story_ids || '',
+                feedError: webhookRespData?.feed_error || '',
+                storyError: webhookRespData?.failed_stories || webhookHttpError || '',
+                summary: logSummary,
+                rawResponse: webhookRespData || { error: webhookHttpError }
+            });
+
+            // Actualizar cola y planificador
             autopublisherQueue = autopublisherQueue.filter(x => !(x.store === currentApStore && x.date === dateVal && String(x.sku).toUpperCase() === String(sku).toUpperCase()));
             autopublisherQueue.unshift(newQueueItem);
             localStorage.setItem('croc_autopublisher_queue', JSON.stringify(autopublisherQueue));
@@ -9616,32 +10484,29 @@
             }
 
             if (banner) {
-                if (webhookOk) {
+                if (webhookOk && !hasFeedErr && !hasStoryErr) {
                     banner.className = "p-3.5 rounded-2xl text-xs font-bold bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 flex items-center justify-between gap-2";
                     if (publishNow) {
                         banner.innerHTML = `
-                            <span>🚀 ¡Publicado Ahora en Instagram (@${escapeHTML(meta.igHandle)}), subido a Google Drive y anotado en ContenidoNNN!</span>
-                            <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20">IG Post OK</span>
+                            <span>🚀 ${escapeHTML(logSummary)}</span>
+                            <button type="button" onclick="openApLogsSection()" class="text-[10px] px-2.5 py-1 rounded-lg bg-emerald-500/25 hover:bg-emerald-500/40 text-emerald-200 shrink-0">Ver Log</button>
                         `;
                     } else {
                         banner.innerHTML = `
-                            <span>✅ ¡Subido a Google Drive (${escapeHTML(newQueueItem.officialFileName)}) y programado para el ${escapeHTML(dateVal)}!</span>
-                            <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20">Drive Sync OK</span>
+                            <span>✅ ${escapeHTML(logSummary)}</span>
+                            <button type="button" onclick="openApLogsSection()" class="text-[10px] px-2.5 py-1 rounded-lg bg-emerald-500/25 hover:bg-emerald-500/40 text-emerald-200 shrink-0">Ver Log</button>
                         `;
                     }
                 } else {
                     banner.className = "p-3.5 rounded-2xl text-xs font-bold bg-amber-500/15 border border-amber-500/30 text-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2";
                     banner.innerHTML = `
                         <div>
-                            <div>📌 Guardado en la Cola del Portal (${escapeHTML(newQueueItem.officialFileName)}).</div>
-                            <div class="text-[11px] font-normal text-slate-300 mt-0.5">Falta pegar el nodo Webhook en tu flujo <a href="https://n8n.totodrilo.cloud/workflow/GFoaBXFcdpwAIxXS" target="_blank" class="text-amber-300 underline font-bold">GFoaBXFcdpwAIxXS de n8n.totodrilo.cloud</a>: tocá <b>"Copiar Flujo n8n"</b> y hacé <b>Ctrl+V</b> en n8n.</div>
+                            <div>⚠️ ${escapeHTML(logSummary)}</div>
+                            <div class="text-[11px] font-normal text-slate-300 mt-0.5">Revisá el detalle completo en el <b>Registro de Logs & Auditoría</b>.</div>
                         </div>
                         <div class="flex items-center gap-2">
-                            <button type="button" onclick="copyApN8nWorkflowJson()" class="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-[11px] whitespace-nowrap">
-                                📋 Copiar Flujo n8n (Ctrl+V)
-                            </button>
-                            <button type="button" onclick="downloadApRenamedFiles()" class="px-3 py-1.5 rounded-lg bg-amber-500 text-slate-950 font-extrabold text-[11px] whitespace-nowrap">
-                                Bajar ${escapeHTML(newQueueItem.officialFileName)}
+                            <button type="button" onclick="openApLogsSection()" class="px-3 py-1.5 rounded-lg bg-amber-500 text-slate-950 font-extrabold text-[11px] whitespace-nowrap">
+                                🖥️ Abrir Registro de Logs
                             </button>
                         </div>
                     `;
@@ -9791,16 +10656,17 @@
                 if (!parsedDT.isoDate) return;
                 const sku = extractSkuFromPublishedFilename(f.name, storeKey) || 'S/D';
                 const isPub = (parsedDT.isoDate <= todayIso) && (publishedFileIdSet.has(f.id) || publishedDateSkuSet.has(`${parsedDT.isoDate}_${sku}`));
+                const feedSlotTime = parsedDT.timeStr || (storeKey === 'nnn' ? '18:00' : '12:00');
                 upsertDaySkuEvent({
                     isoDate: parsedDT.isoDate,
-                    timeStr: storeKey === 'nnn' ? '18:00' : '12:00',
+                    timeStr: feedSlotTime,
                     sku,
                     fileId: f.id,
                     fileName: f.name,
                     role: 'feed',
                     isVideo: /\.(mp4|mov)$/i.test(f.name),
                     isPublished: isPub,
-                    statusLabel: isPub ? 'Publicado (FEED 18HS)' : 'En Drive (Programado)'
+                    statusLabel: isPub ? `Publicado (FEED ${feedSlotTime})` : `En Drive (Feed ${feedSlotTime})`
                 });
             });
 
@@ -9861,9 +10727,9 @@
                 const timeMap = {
                     story_09: '09:30',
                     story_20: '20:30',
-                    both: storeKey === 'nnn' ? '18:00' : '12:00',
-                    feed: storeKey === 'nnn' ? '18:00' : '12:00',
-                    story: storeKey === 'nnn' ? '18:00' : '12:00'
+                    both: q.feedTime || (storeKey === 'nnn' ? '18:00' : '12:00'),
+                    feed: q.feedTime || (storeKey === 'nnn' ? '18:00' : '12:00'),
+                    story: (q.storyTime && q.storyTime !== 'both_09_20' && q.storyTime !== 'with_feed') ? q.storyTime : '09:30'
                 };
                 const isPubNow = q.statusType === 'published' || String(q.status || '').includes('Publicado en Instagram');
                 const thumb = q.thumbnailDataUrl || (catDriveUrl ? buildApDriveThumbnailUrl(catDriveUrl, 400) : '');
@@ -9874,7 +10740,7 @@
                     statusType: isPubNow ? 'published' : 'scheduled',
                     statusLabel: q.status || (isPubNow ? 'Publicado en IG OK' : 'Programado en Cola'),
                     isoDate: iso,
-                    timeStr: timeMap[q.target] || (storeKey === 'nnn' ? '18:00' : '12:00'),
+                    timeStr: timeMap[q.target] || q.feedTime || (storeKey === 'nnn' ? '18:00' : '12:00'),
                     sku: q.sku || 'S/D',
                     productName: q.productName || q.sku,
                     price: q.price || (matchedCat ? matchedCat.price : ''),
@@ -10428,7 +11294,7 @@
 
         function switchApSubTab(tab) {
             currentApSubTab = tab;
-            const tabs = ['queue', 'history', 'catalog'];
+            const tabs = ['queue', 'history', 'catalog', 'logs'];
             tabs.forEach(t => {
                 const btn = document.getElementById(`btn-aptab-${t}`);
                 const view = document.getElementById(`ap-subview-${t}`);
@@ -10623,6 +11489,9 @@
                     }).join('');
                 }
             }
+
+            // Renderizar Sub-Tab 4 + Mini Consola de Logs & Auditoría
+            renderAutopublisherLogs();
         }
 
         // Inicializar aplicación
