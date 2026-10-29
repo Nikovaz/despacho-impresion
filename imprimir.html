@@ -1341,15 +1341,15 @@
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                             <div>
                                 <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Código SKU / Num (Para el archivo) *</label>
-                                <input type="text" id="ap-input-sku" oninput="updateApGeneratedFilename(); generateApSmartCaption();" placeholder="Ej: CRG-035 o Num001" class="w-full bg-slate-900 text-emerald-400 font-mono font-bold text-xs rounded-lg px-2.5 py-2 border border-slate-800 focus:outline-none focus:border-emerald-500">
+                                <input type="text" id="ap-input-sku" oninput="onApProductFieldsManualEdit()" placeholder="Ej: TOKIO, 139131, CRG-035" class="w-full bg-slate-900 text-emerald-400 font-mono font-bold text-xs rounded-lg px-2.5 py-2 border border-slate-800 focus:outline-none focus:border-emerald-500">
                             </div>
                             <div>
                                 <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Nombre del Producto *</label>
-                                <input type="text" id="ap-input-product-name" oninput="generateApSmartCaption()" placeholder="Ej: Organizador de Ollas Vertical" class="w-full bg-slate-900 text-white font-semibold text-xs rounded-lg px-2.5 py-2 border border-slate-800 focus:outline-none focus:border-pink-500">
+                                <input type="text" id="ap-input-product-name" oninput="onApProductFieldsManualEdit()" placeholder="Ej: Bóxer Bross Tokio" class="w-full bg-slate-900 text-white font-semibold text-xs rounded-lg px-2.5 py-2 border border-slate-800 focus:outline-none focus:border-pink-500">
                             </div>
                             <div>
                                 <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Precio a Mostrar en el Post *</label>
-                                <input type="text" id="ap-input-price" oninput="generateApSmartCaption()" placeholder="Ej: $31.999" class="w-full bg-slate-900 text-amber-300 font-bold text-xs rounded-lg px-2.5 py-2 border border-slate-800 focus:outline-none focus:border-amber-500">
+                                <input type="text" id="ap-input-price" oninput="onApProductFieldsManualEdit()" placeholder="Ej: $9.500" class="w-full bg-slate-900 text-amber-300 font-bold text-xs rounded-lg px-2.5 py-2 border border-slate-800 focus:outline-none focus:border-amber-500">
                             </div>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1693,8 +1693,10 @@
                         <!-- MODO STORY (9:16) -->
                         <div id="ap-ig-mock-story-view" class="hidden relative aspect-[9/16] bg-slate-900 flex items-center justify-center overflow-hidden">
                             <div class="absolute top-3 inset-x-3 z-10 space-y-2">
-                                <div class="h-1 bg-white/30 rounded-full overflow-hidden">
-                                    <div class="h-full w-2/3 bg-white rounded-full"></div>
+                                <div id="ap-ig-story-bars" class="flex items-center gap-1">
+                                    <div class="h-1 flex-1 bg-white/30 rounded-full overflow-hidden">
+                                        <div class="h-full w-full bg-white rounded-full"></div>
+                                    </div>
                                 </div>
                                 <div class="flex items-center justify-between text-white text-xs">
                                     <div class="flex items-center gap-2">
@@ -1702,7 +1704,12 @@
                                         <span class="font-bold text-[11px] drop-shadow" id="ap-ig-story-user">nnntienda.ar</span>
                                         <span class="text-[10px] text-slate-300" id="ap-ig-story-slot-label">20:30 hs</span>
                                     </div>
-                                    <i class="fa-solid fa-xmark"></i>
+                                    <div class="flex items-center gap-2">
+                                        <span id="ap-ig-story-counter-badge" class="hidden px-2 py-0.5 rounded-full bg-slate-950/85 border border-slate-700 text-[10px] font-bold text-amber-300">
+                                            1 / 1
+                                        </span>
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </div>
                                 </div>
                             </div>
                             <img id="ap-ig-story-img" src="" alt="Story Preview" class="hidden w-full h-full object-cover">
@@ -1711,13 +1718,41 @@
                                 <div class="text-cyan-400 text-2xl"><i class="fa-solid fa-mobile-screen"></i></div>
                                 <div>Subí una imagen en <b>4B. Story 9:16</b> o tocá <b>"✨ Auto-Generar Story 9:16"</b></div>
                             </div>
-                            <div class="absolute bottom-4 inset-x-4 flex items-center gap-2">
+
+                            <!-- Flechas para mover entre todas las Stories (9:16) -->
+                            <button type="button" onclick="stepApPreviewStory(-1)" id="btn-ap-prev-story-slide" class="hidden absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-slate-950/80 hover:bg-pink-600 text-white text-xs flex items-center justify-center border border-slate-700 shadow-lg transition">
+                                <i class="fa-solid fa-chevron-left"></i>
+                            </button>
+                            <button type="button" onclick="stepApPreviewStory(1)" id="btn-ap-next-story-slide" class="hidden absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-slate-950/80 hover:bg-pink-600 text-white text-xs flex items-center justify-center border border-slate-700 shadow-lg transition">
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </button>
+
+                            <div class="absolute bottom-4 inset-x-4 flex items-center gap-2 z-10">
                                 <div class="flex-1 rounded-full border border-white/40 bg-black/40 backdrop-blur px-3 py-1.5 text-[11px] text-white/80">
                                     Enviar mensaje...
                                 </div>
                                 <i class="fa-regular fa-heart text-white text-base"></i>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- TIRA INTERACTIVA DE MINIATURAS PARA VER Y MOVER TODAS LAS IMÁGENES -->
+                    <div id="ap-ig-preview-thumbs-wrap" class="hidden mt-3 pt-3 border-t border-slate-800/80 space-y-1.5">
+                        <div class="flex items-center justify-between text-[11px]">
+                            <span class="font-bold text-slate-300 flex items-center gap-1.5">
+                                <i class="fa-solid fa-layer-group text-pink-400"></i>
+                                <span id="ap-ig-thumbs-label">Imágenes a publicar (tocá cualquiera para verla):</span>
+                            </span>
+                            <div class="flex items-center gap-1">
+                                <button type="button" onclick="stepApActivePreview(-1)" class="px-2 py-0.5 rounded bg-slate-950 hover:bg-slate-800 text-slate-300 border border-slate-800 text-[10px] font-bold">
+                                    &larr; Ant
+                                </button>
+                                <button type="button" onclick="stepApActivePreview(1)" class="px-2 py-0.5 rounded bg-slate-950 hover:bg-slate-800 text-slate-300 border border-slate-800 text-[10px] font-bold">
+                                    Sig &rarr;
+                                </button>
+                            </div>
+                        </div>
+                        <div id="ap-ig-preview-thumbs-strip" class="flex items-center gap-2 overflow-x-auto pb-1"></div>
                     </div>
                 </div>
             </div>
@@ -8924,13 +8959,17 @@
                     });
                 });
 
-                // Fetch BrossPrecios (gid=1258458893) para sumar Mochilas, Paraguas, Medias y Bóxers Bross
+                // Fetch BrossPrecios (gid=1258458893) para sumar Mochilas, Paraguas, Medias y Bóxers Bross (Individuales + Líneas Completas)
                 try {
                     const brossSheetUrl = `https://docs.google.com/spreadsheets/d/${NNN_BAZAR_SPREADSHEET_ID}/gviz/tq?tqx=out:json&gid=1258458893`;
                     const rBross = await fetch(brossSheetUrl);
                     const tBross = await rBross.text();
                     const jBross = JSON.parse(tBross.substring(tBross.indexOf('{'), tBross.lastIndexOf('}') + 1));
                     const rowsBross = jBross.table.rows || [];
+
+                    const individualBoxers = [];
+                    const boxerLinesMap = new Map();
+                    const otherBrossItems = [];
 
                     rowsBross.forEach(r => {
                         const c = r.c ? r.c.map(x => (x && x.v !== null && x.v !== undefined) ? String(x.v).trim() : '') : [];
@@ -8940,20 +8979,42 @@
                         const col3 = c[3] || ''; // Caracteristica
                         const col4 = c[4] || ''; // PRECIO
 
-                        // Caso A: Fila de Bóxer individual con código numérico en col0 (ej: 139103 | BOXER BROSS MILITARY...)
+                        // Caso A: Fila de Bóxer individual con código numérico en col0 (ej: 139131 | BOXER BROSS TOKIO ROJO NEGRO)
                         if (/^\d{5,6}$/.test(col0) && col1) {
                             const skuCode = col0;
                             if (!seenNnnSkus.has(skuCode.toUpperCase())) {
                                 seenNnnSkus.add(skuCode.toUpperCase());
-                                nnnItems.push({
+                                individualBoxers.push({
                                     sku: skuCode,
                                     name: col1,
-                                    category: 'Bross London • Bóxers',
+                                    category: 'Bross London • Bóxers (Por Color Individual)',
                                     price: '$9.500',
-                                    variants: 'Talles S al XXL (Especiales 3XL y 4XL $11.500)',
+                                    variants: 'Talles S al XXL ($9.500) • Especiales 3XL y 4XL ($11.500)',
                                     features: 'Material: Algodón 92% - Lycra 8%. Elástico personalizado Bross London de 40mm.',
                                     driveUrls: []
                                 });
+
+                                // Extraer la Línea / Modelo Padre (ej: TOKIO, MILITARY, CAMUFLADO) para poder elegir "Todos juntos"
+                                const cleanedLine = col1
+                                    .replace(/^(?:BOXER|BÓXER|BROSS|LONDON|ART\.?|MODELO|ESTAMPADO|ESTAMPADOS|PACK)[\s._-]*/gi, '')
+                                    .replace(/^(?:BOXER|BÓXER|BROSS|LONDON|ART\.?|MODELO|ESTAMPADO|ESTAMPADOS|PACK)[\s._-]*/gi, '')
+                                    .trim();
+                                const parts = cleanedLine.split(/[\s\/_-]+/);
+                                const lineKey = (parts[0] || '').toUpperCase().replace(/[^A-Z0-9ÑÁÉÍÓÚ]/g, '');
+                                const colorRest = cleanedLine.slice((parts[0] || '').length).replace(/^[\s\/_-]+/, '').trim();
+
+                                if (lineKey && lineKey.length >= 3) {
+                                    if (!boxerLinesMap.has(lineKey)) {
+                                        boxerLinesMap.set(lineKey, {
+                                            lineKey,
+                                            colors: [],
+                                            codes: []
+                                        });
+                                    }
+                                    const entry = boxerLinesMap.get(lineKey);
+                                    if (colorRest && !entry.colors.includes(colorRest)) entry.colors.push(colorRest);
+                                    entry.codes.push(skuCode);
+                                }
                             }
                         }
                         // Caso B: Accesorios, Medias, Paraguas, Mochilas o Categorías Bross en col2
@@ -8962,20 +9023,48 @@
                             if (rawSku && !seenNnnSkus.has(rawSku.toUpperCase())) {
                                 seenNnnSkus.add(rawSku.toUpperCase());
                                 const numP = parseFloat(col4.replace(/[^0-9]/g, ''));
-                                const priceFormatted = !isNaN(numP) && numP > 0 ? `$${numP.toLocaleString('es-AR')}` : '$19.000';
-                                const shortTitle = col3 ? col3.split(':')[0].split('.')[0].slice(0, 55) : col2;
-                                nnnItems.push({
+                                const priceFormatted = !isNaN(numP) && numP > 0 ? `$${numP.toLocaleString('es-AR')}` : '$9.500';
+                                let cleanName = col2;
+                                if (/^(estampados|lisos|rayados)$/i.test(rawSku)) {
+                                    cleanName = `Bóxers Bross London ${rawSku}`;
+                                } else if (col3 && !/^material/i.test(col3.trim())) {
+                                    const shortTitle = col3.split(':')[0].split('.')[0].slice(0, 50).trim();
+                                    if (shortTitle.length > 3) cleanName = `${col2} - ${shortTitle}`;
+                                }
+                                otherBrossItems.push({
                                     sku: rawSku,
-                                    name: shortTitle && shortTitle.length > 3 ? `${col2} - ${shortTitle}` : col2,
+                                    name: cleanName,
                                     category: 'Bross London • Indumentaria & Accesorios',
                                     price: priceFormatted,
-                                    variants: col1 || 'Único / Surtido',
+                                    variants: col1 || 'Talles S al XXL',
                                     features: col3 || 'Calidad original Bross London.',
                                     driveUrls: []
                                 });
                             }
                         }
                     });
+
+                    // Agregar primero las Líneas / Colecciones Completas de Bóxers (ej: TOKIO — Bóxer Bross Tokio Todos los colores)
+                    boxerLinesMap.forEach((lineInfo, lineKey) => {
+                        if (!seenNnnSkus.has(lineKey)) {
+                            seenNnnSkus.add(lineKey);
+                            const prettyLine = lineKey.charAt(0) + lineKey.slice(1).toLowerCase();
+                            const colorsLabel = lineInfo.colors.length > 0 ? lineInfo.colors.join(', ') : 'Todos los colores';
+                            nnnItems.push({
+                                sku: lineKey,
+                                name: `Bóxer Bross ${prettyLine}`,
+                                optionLabel: `🔥 ${lineKey} — Bóxer Bross ${prettyLine} (Línea Completa / ${lineInfo.codes.length} colores) ($9.500)`,
+                                category: 'Bross London • Bóxers (Líneas Completas / Todos Juntos)',
+                                price: '$9.500',
+                                variants: `Colores: ${colorsLabel} • Talles S al XXL ($9.500) y 3XL-4XL ($11.500)`,
+                                features: 'Material: Algodón 92% - Lycra 8%. Elástico personalizado Bross London de 40mm.',
+                                driveUrls: []
+                            });
+                        }
+                    });
+
+                    individualBoxers.forEach(b => nnnItems.push(b));
+                    otherBrossItems.forEach(o => nnnItems.push(o));
                 } catch (eBross) {
                     console.warn('Aviso al cargar BrossPrecios para Autopublicador:', eBross);
                 }
@@ -9394,12 +9483,12 @@
                     return false;
                 }
                 if (!q) return true;
-                const hay = `${item.sku} ${item.name} ${item.category} ${item.features}`.toLowerCase();
+                const hay = `${item.sku} ${item.name} ${item.category} ${item.variants || ''} ${item.features}`.toLowerCase();
                 return hay.includes(q);
             });
 
             const byCat = {};
-            filtered.forEach((item, index) => {
+            filtered.forEach((item) => {
                 const cat = item.category || 'General';
                 if (!byCat[cat]) byCat[cat] = [];
                 byCat[cat].push(item);
@@ -9411,17 +9500,23 @@
                 byCat[cat].forEach(item => {
                     const isPub = isApProductAlreadyPublished(item, currentApStore);
                     const statusIcon = isPub ? '✅' : '⏳';
-                    html += `<option value="${escapeHTML(item.sku)}">${statusIcon} ${escapeHTML(item.sku)} — ${escapeHTML(item.name)} (${escapeHTML(item.price)})</option>`;
+                    const labelText = item.optionLabel || `${item.sku} — ${item.name} (${item.price})`;
+                    html += `<option value="${escapeHTML(item.sku)}">${statusIcon} ${escapeHTML(labelText)}</option>`;
                 });
                 html += `</optgroup>`;
             });
 
+            const prevVal = sel.value;
             sel.innerHTML = html;
 
-            // Si el usuario buscó texto y hay coincidencia exacta o única, seleccionarla automáticamente
-            if (q && filtered.length === 1) {
-                sel.value = filtered[0].sku;
-                onApProductSelectChange(filtered[0].sku);
+            // Si el usuario buscó texto (ej: "tokio"), autoseleccionar el primer resultado (que es la Línea Completa TOKIO o el modelo buscado)
+            // para que el SKU y Nombre se actualicen de inmediato sin quedar trabados en el producto anterior
+            if (q && filtered.length > 0) {
+                const exactOrFirst = filtered.find(x => x.sku.toLowerCase() === q) || filtered[0];
+                sel.value = exactOrFirst.sku;
+                onApProductSelectChange(exactOrFirst.sku);
+            } else if (prevVal && filtered.some(x => x.sku === prevVal)) {
+                sel.value = prevVal;
             }
         }
 
@@ -9446,7 +9541,6 @@
                 if (apSelectedDriveUrls.length > 0) {
                     driveBox.classList.remove('hidden');
                     driveList.innerHTML = apSelectedDriveUrls.map((u, idx) => {
-                        const isVid = u.toLowerCase().includes('video') || idx === apSelectedDriveUrls.length - 1;
                         return `
                             <a href="${escapeHTML(u)}" target="_blank" class="px-2.5 py-1 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 text-[10px] font-bold flex items-center gap-1">
                                 <i class="fa-solid fa-arrow-up-right-from-square"></i> Ver Archivo Drive #${idx + 1}
@@ -9461,6 +9555,13 @@
 
             updateApGeneratedFilename();
             generateApSmartCaption(false);
+            syncApStoryDefaultOverlaysWithProduct();
+        }
+
+        function onApProductFieldsManualEdit() {
+            updateApGeneratedFilename();
+            generateApSmartCaption(false);
+            syncApStoryDefaultOverlaysWithProduct();
         }
 
         function pickNextFreeApDate() {
@@ -9772,6 +9873,61 @@
             updateApInstagramPreview();
         }
 
+        let apStoryPreviewIdx = 0;
+        const apStoryReRenderTimers = {};
+
+        function getDefaultApStoryOverlayTexts() {
+            const meta = AP_STORES_META[currentApStore] || AP_STORES_META.nnn;
+            const sku = (document.getElementById('ap-input-sku')?.value || '').trim();
+            const productName = (document.getElementById('ap-input-product-name')?.value || '').trim();
+            const price = (document.getElementById('ap-input-price')?.value || '').trim();
+            return {
+                overlayTop: `@${meta.igHandle.toUpperCase()} • NUEVO INGRESO`,
+                overlayTitle: productName || (sku ? `Art. ${sku}` : 'Nuevo Ingreso'),
+                overlayPrice: [price, sku].filter(Boolean).join(' • ')
+            };
+        }
+
+        async function syncApStoryDefaultOverlaysWithProduct() {
+            if (!apSelectedStoryFiles || apSelectedStoryFiles.length === 0) return;
+            const defaults = getDefaultApStoryOverlayTexts();
+            let changedAny = false;
+            for (let i = 0; i < apSelectedStoryFiles.length; i++) {
+                const item = apSelectedStoryFiles[i];
+                if (!item || item.isVideo || item.customEdited) continue;
+                item.overlayTop = defaults.overlayTop;
+                item.overlayTitle = defaults.overlayTitle;
+                item.overlayPrice = defaults.overlayPrice;
+                if (item.autoGenerated && item.rawSourceDataUrl) {
+                    item.dataUrl = await createVerticalStoryCanvasDataUrl(item.rawSourceDataUrl, {
+                        topText: item.overlayTop,
+                        titleText: item.overlayTitle,
+                        priceText: item.overlayPrice,
+                        showOverlay: item.showOverlay !== false
+                    });
+                    item.sizeKb = Math.round((item.dataUrl.length * 0.75) / 1024);
+                    changedAny = true;
+                }
+            }
+            if (changedAny) {
+                renderApStoryFilesGrid();
+                updateApInstagramPreview();
+            }
+        }
+
+        function selectApFeedSlide(idx) {
+            if (idx < 0 || idx >= apSelectedFiles.length) return;
+            apCarouselPreviewIdx = idx;
+            setApPreviewMode('feed');
+        }
+
+        function selectApStorySlide(idx) {
+            const list = apSelectedStoryFiles.length > 0 ? apSelectedStoryFiles : apSelectedFiles;
+            if (idx < 0 || idx >= list.length) return;
+            apStoryPreviewIdx = idx;
+            setApPreviewMode('story');
+        }
+
         function renderApFilesGrid() {
             const grid = document.getElementById('ap-files-preview-grid');
             const btnClear = document.getElementById('btn-ap-clear-files');
@@ -9790,17 +9946,21 @@
             grid.innerHTML = apSelectedFiles.map((f, idx) => {
                 const officialName = buildApOfficialFileName(f.ext, idx, apSelectedFiles.length, 'feed');
                 const badgeType = f.isVideo ? '🎬 REEL' : (apSelectedFiles.length > 1 ? `🎠 CARRUSEL #${idx + 1}` : '📸 POST');
+                const isSelected = apPreviewMode === 'feed' && apCarouselPreviewIdx === idx;
                 return `
-                    <div class="relative group rounded-xl overflow-hidden border border-pink-500/30 bg-slate-950 p-1.5 flex flex-col justify-between">
+                    <div onclick="selectApFeedSlide(${idx})" class="cursor-pointer relative group rounded-xl overflow-hidden border ${isSelected ? 'border-pink-400 ring-2 ring-pink-500/40' : 'border-pink-500/30'} bg-slate-950 p-1.5 flex flex-col justify-between transition">
                         <div class="relative aspect-square rounded-lg overflow-hidden bg-slate-900">
                             ${f.isVideo
                                 ? `<video src="${f.dataUrl}" class="w-full h-full object-cover" muted></video>`
                                 : `<img src="${f.dataUrl}" class="w-full h-full object-cover">`
                             }
                             <span class="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-pink-600/90 text-white text-[9px] font-extrabold">${badgeType}</span>
-                            <button type="button" onclick="removeApSelectedFile(${idx})" class="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-rose-600/90 hover:bg-rose-500 text-white text-xs flex items-center justify-center shadow">
+                            <button type="button" onclick="event.stopPropagation(); removeApSelectedFile(${idx})" class="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-rose-600/90 hover:bg-rose-500 text-white text-xs flex items-center justify-center shadow">
                                 <i class="fa-solid fa-xmark"></i>
                             </button>
+                            <span class="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded bg-slate-950/80 text-pink-200 text-[9px] font-bold">
+                                👁️ Ver en Celu
+                            </span>
                         </div>
                         <div class="mt-1.5 px-1">
                             <div class="text-[10px] font-mono text-pink-300 font-bold truncate" title="${escapeHTML(officialName)}">${escapeHTML(officialName)}</div>
@@ -9813,7 +9973,7 @@
 
         /* ============================================================== */
         /* ZONA 4B: DRAG & DROP ARCHIVOS STORY VERTICAL (9:16 1080x1920)  */
-        /* + CONVERSOR AUTOMÁTICO 9:16 EN CANVAS CON FONDO BLUR + PRECIO  */
+        /* + CONVERSOR AUTOMÁTICO 9:16 EN CANVAS CON TEXTO EDITABLE       */
         /* ============================================================== */
         function handleApStoryDragOver(e) {
             e.preventDefault();
@@ -9845,7 +10005,7 @@
         }
 
         function processApStoryFilesList(fileList) {
-            const filesArr = Array.from(fileList).slice(0, 5);
+            const filesArr = Array.from(fileList).slice(0, 10);
             filesArr.forEach(file => {
                 const extMatch = file.name.match(/\.([^.]+)$/);
                 const ext = extMatch ? extMatch[1].toLowerCase() : (file.type.includes('video') ? 'mp4' : 'jpg');
@@ -9856,6 +10016,7 @@
                 const reader = new FileReader();
                 reader.onload = (ev) => {
                     const dataUrl = ev.target.result;
+                    const defaults = getDefaultApStoryOverlayTexts();
                     if (!isVideo) {
                         const img = new Image();
                         img.onload = () => {
@@ -9863,33 +10024,44 @@
                             const isVertical = ratio <= 0.8;
                             apSelectedStoryFiles.push({
                                 file,
+                                rawSourceDataUrl: dataUrl,
                                 dataUrl,
                                 isVideo: false,
                                 width: img.width,
                                 height: img.height,
                                 isVertical,
+                                autoGenerated: false,
+                                showOverlay: true,
+                                customEdited: false,
+                                overlayTop: defaults.overlayTop,
+                                overlayTitle: defaults.overlayTitle,
+                                overlayPrice: defaults.overlayPrice,
                                 originalName: file.name,
                                 sizeKb: Math.round(file.size / 1024),
                                 ext: 'jpg'
                             });
+                            apStoryPreviewIdx = apSelectedStoryFiles.length - 1;
                             renderApStoryFilesGrid();
                             updateApGeneratedFilename();
-                            updateApInstagramPreview();
+                            setApPreviewMode('story');
                         };
                         img.src = dataUrl;
                     } else {
                         apSelectedStoryFiles.push({
                             file,
+                            rawSourceDataUrl: dataUrl,
                             dataUrl,
                             isVideo: true,
                             isVertical: true,
+                            showOverlay: false,
                             originalName: file.name,
                             sizeKb: Math.round(file.size / 1024),
                             ext
                         });
+                        apStoryPreviewIdx = apSelectedStoryFiles.length - 1;
                         renderApStoryFilesGrid();
                         updateApGeneratedFilename();
-                        updateApInstagramPreview();
+                        setApPreviewMode('story');
                     }
                 };
                 reader.readAsDataURL(file);
@@ -9898,6 +10070,9 @@
 
         function removeApSelectedStoryFile(idx) {
             apSelectedStoryFiles.splice(idx, 1);
+            if (apStoryPreviewIdx >= apSelectedStoryFiles.length) {
+                apStoryPreviewIdx = Math.max(0, apSelectedStoryFiles.length - 1);
+            }
             renderApStoryFilesGrid();
             updateApGeneratedFilename();
             updateApInstagramPreview();
@@ -9905,6 +10080,7 @@
 
         function clearApSelectedStoryFiles() {
             apSelectedStoryFiles = [];
+            apStoryPreviewIdx = 0;
             const input = document.getElementById('ap-story-file-input');
             if (input) input.value = '';
             renderApStoryFilesGrid();
@@ -9912,7 +10088,7 @@
             updateApInstagramPreview();
         }
 
-        async function createVerticalStoryCanvasDataUrl(sourceDataUrl) {
+        async function createVerticalStoryCanvasDataUrl(sourceDataUrl, customOpts = {}) {
             return new Promise((resolve, reject) => {
                 const img = new Image();
                 img.crossOrigin = 'anonymous';
@@ -9943,27 +10119,30 @@
                     ctx.fillStyle = grad;
                     ctx.fillRect(0, 0, 1080, 1920);
 
-                    // 2. Cabecera de marca en Story
-                    const meta = AP_STORES_META[currentApStore] || AP_STORES_META.nnn;
-                    const sku = (document.getElementById('ap-input-sku')?.value || '').trim();
-                    const productName = (document.getElementById('ap-input-product-name')?.value || '').trim();
-                    const price = (document.getElementById('ap-input-price')?.value || '').trim();
+                    const defaults = getDefaultApStoryOverlayTexts();
+                    const showOverlay = customOpts.showOverlay !== undefined ? Boolean(customOpts.showOverlay) : true;
+                    const topText = customOpts.topText !== undefined ? String(customOpts.topText).trim() : defaults.overlayTop;
+                    const titleText = customOpts.titleText !== undefined ? String(customOpts.titleText).trim() : defaults.overlayTitle;
+                    const priceText = customOpts.priceText !== undefined ? String(customOpts.priceText).trim() : defaults.overlayPrice;
 
-                    ctx.save();
-                    ctx.fillStyle = 'rgba(255,255,255,0.92)';
-                    ctx.font = '800 34px "Plus Jakarta Sans", sans-serif';
-                    ctx.textAlign = 'center';
-                    ctx.fillText(`@${meta.igHandle.toUpperCase()} • NUEVO INGRESO`, 540, 210);
-                    ctx.restore();
+                    // 2. Cabecera de marca en Story (editable)
+                    if (showOverlay && topText) {
+                        ctx.save();
+                        ctx.fillStyle = 'rgba(255,255,255,0.92)';
+                        ctx.font = '800 34px "Plus Jakarta Sans", sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.fillText(topText.slice(0, 48), 540, 210);
+                        ctx.restore();
+                    }
 
                     // 3. Imagen principal centrada con bordes redondeados y sombra
                     const maxBoxW = 960;
-                    const maxBoxH = 1120;
+                    const maxBoxH = (showOverlay && (titleText || priceText)) ? 1120 : 1380;
                     const fitScale = Math.min(maxBoxW / img.width, maxBoxH / img.height);
                     const drawW = Math.round(img.width * fitScale);
                     const drawH = Math.round(img.height * fitScale);
                     const drawX = Math.round((1080 - drawW) / 2);
-                    const drawY = Math.round((1920 - drawH) / 2) - 40;
+                    const drawY = Math.round((1920 - drawH) / 2) - ((showOverlay && (titleText || priceText)) ? 40 : 0);
 
                     ctx.save();
                     ctx.shadowColor = 'rgba(0,0,0,0.65)';
@@ -9985,15 +10164,15 @@
                     ctx.drawImage(img, drawX, drawY, drawW, drawH);
                     ctx.restore();
 
-                    // 4. Sticker inferior de Producto + Precio (100% compatible con IG Story)
-                    if (productName || sku || price) {
+                    // 4. Sticker inferior editable (Título + Precio/Subtítulo)
+                    if (showOverlay && (titleText || priceText)) {
                         const pillY = Math.min(drawY + drawH + 55, 1560);
                         ctx.save();
                         ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
                         ctx.strokeStyle = 'rgba(245, 158, 11, 0.65)';
                         ctx.lineWidth = 3;
-                        const pW = 900;
-                        const pH = price ? 190 : 120;
+                        const pW = 920;
+                        const pH = (titleText && priceText) ? 190 : 120;
                         const pX = (1080 - pW) / 2;
                         const pr = 28;
                         ctx.beginPath();
@@ -10010,16 +10189,23 @@
                         ctx.fill();
                         ctx.stroke();
 
-                        ctx.fillStyle = '#ffffff';
-                        ctx.font = '800 36px "Plus Jakarta Sans", sans-serif';
                         ctx.textAlign = 'center';
-                        const titleLine = (productName || `Art. ${sku}`).slice(0, 38);
-                        ctx.fillText(titleLine, 540, pillY + 62);
+                        if (titleText && priceText) {
+                            ctx.fillStyle = '#ffffff';
+                            ctx.font = '800 36px "Plus Jakarta Sans", sans-serif';
+                            ctx.fillText(titleText.slice(0, 42), 540, pillY + 62);
 
-                        if (price) {
                             ctx.fillStyle = '#fbbf24';
-                            ctx.font = '900 54px "Plus Jakarta Sans", sans-serif';
-                            ctx.fillText(`${price} ${sku ? `• ${sku}` : ''}`, 540, pillY + 142);
+                            ctx.font = '900 52px "Plus Jakarta Sans", sans-serif';
+                            ctx.fillText(priceText.slice(0, 36), 540, pillY + 142);
+                        } else if (titleText) {
+                            ctx.fillStyle = '#ffffff';
+                            ctx.font = '800 40px "Plus Jakarta Sans", sans-serif';
+                            ctx.fillText(titleText.slice(0, 42), 540, pillY + 74);
+                        } else if (priceText) {
+                            ctx.fillStyle = '#fbbf24';
+                            ctx.font = '900 52px "Plus Jakarta Sans", sans-serif';
+                            ctx.fillText(priceText.slice(0, 36), 540, pillY + 78);
                         }
                         ctx.restore();
                     }
@@ -10033,26 +10219,55 @@
         }
 
         async function generateApVerticalStoryFromFeed() {
-            const firstImage = apSelectedFiles.find(f => !f.isVideo) || apSelectedStoryFiles.find(f => !f.isVideo);
-            if (!firstImage) {
-                alert('Subí primero una foto en la Zona 4A (Publicación) o en la Zona 4B para convertirla a formato Story Vertical 9:16 (1080×1920 px).');
+            const feedImages = apSelectedFiles.filter(f => !f.isVideo);
+            const storyImages = apSelectedStoryFiles.filter(f => !f.isVideo);
+
+            if (feedImages.length === 0 && storyImages.length === 0) {
+                alert('Subí primero una o varias fotos en la Zona 4A (Publicación) o en la Zona 4B para convertirlas al formato Story Vertical 9:16 (1080×1920 px).');
                 return;
             }
+
             try {
-                const verticalDataUrl = await createVerticalStoryCanvasDataUrl(firstImage.dataUrl);
-                const approxKb = Math.round((verticalDataUrl.length * 0.75) / 1024);
-                apSelectedStoryFiles = [{
-                    file: { type: 'image/jpeg', name: 'story_9x16_1080x1920.jpg' },
-                    dataUrl: verticalDataUrl,
-                    isVideo: false,
-                    width: 1080,
-                    height: 1920,
-                    isVertical: true,
-                    autoGenerated: true,
-                    originalName: `Story_9x16_${firstImage.originalName}`,
-                    sizeKb: approxKb,
-                    ext: 'jpg'
-                }];
+                const defaults = getDefaultApStoryOverlayTexts();
+                if (feedImages.length > 0) {
+                    const convertedList = [];
+                    for (let i = 0; i < feedImages.length; i++) {
+                        const srcImg = feedImages[i];
+                        const rawSrc = srcImg.rawSourceDataUrl || srcImg.dataUrl;
+                        const verticalDataUrl = await createVerticalStoryCanvasDataUrl(rawSrc, {
+                            topText: defaults.overlayTop,
+                            titleText: defaults.overlayTitle,
+                            priceText: defaults.overlayPrice,
+                            showOverlay: true
+                        });
+                        const approxKb = Math.round((verticalDataUrl.length * 0.75) / 1024);
+                        convertedList.push({
+                            file: { type: 'image/jpeg', name: `story_9x16_${i + 1}.jpg` },
+                            rawSourceDataUrl: rawSrc,
+                            dataUrl: verticalDataUrl,
+                            isVideo: false,
+                            width: 1080,
+                            height: 1920,
+                            isVertical: true,
+                            autoGenerated: true,
+                            showOverlay: true,
+                            customEdited: false,
+                            overlayTop: defaults.overlayTop,
+                            overlayTitle: defaults.overlayTitle,
+                            overlayPrice: defaults.overlayPrice,
+                            originalName: `Story_9x16_${srcImg.originalName}`,
+                            sizeKb: approxKb,
+                            ext: 'jpg'
+                        });
+                    }
+                    apSelectedStoryFiles = convertedList;
+                } else {
+                    // Si no había fotos en 4A pero sí en 4B, convertir TODAS las de 4B a 9:16 (1080x1920)
+                    for (let i = 0; i < apSelectedStoryFiles.length; i++) {
+                        await convertApStoryItemToVertical(i, false);
+                    }
+                }
+                apStoryPreviewIdx = 0;
                 renderApStoryFilesGrid();
                 updateApGeneratedFilename();
                 setApPreviewMode('story');
@@ -10062,11 +10277,23 @@
             }
         }
 
-        async function convertApStoryItemToVertical(idx) {
+        async function convertApStoryItemToVertical(idx, shouldReRenderUI = true) {
             const item = apSelectedStoryFiles[idx];
             if (!item || item.isVideo) return;
             try {
-                const verticalDataUrl = await createVerticalStoryCanvasDataUrl(item.dataUrl);
+                const defaults = getDefaultApStoryOverlayTexts();
+                if (!item.rawSourceDataUrl) item.rawSourceDataUrl = item.dataUrl;
+                if (item.overlayTop === undefined) item.overlayTop = defaults.overlayTop;
+                if (item.overlayTitle === undefined) item.overlayTitle = defaults.overlayTitle;
+                if (item.overlayPrice === undefined) item.overlayPrice = defaults.overlayPrice;
+                if (item.showOverlay === undefined) item.showOverlay = true;
+
+                const verticalDataUrl = await createVerticalStoryCanvasDataUrl(item.rawSourceDataUrl, {
+                    topText: item.overlayTop,
+                    titleText: item.overlayTitle,
+                    priceText: item.overlayPrice,
+                    showOverlay: item.showOverlay
+                });
                 item.dataUrl = verticalDataUrl;
                 item.width = 1080;
                 item.height = 1920;
@@ -10074,12 +10301,76 @@
                 item.autoGenerated = true;
                 item.sizeKb = Math.round((verticalDataUrl.length * 0.75) / 1024);
                 item.ext = 'jpg';
-                renderApStoryFilesGrid();
-                updateApGeneratedFilename();
-                setApPreviewMode('story');
+                if (shouldReRenderUI) {
+                    apStoryPreviewIdx = idx;
+                    renderApStoryFilesGrid();
+                    updateApGeneratedFilename();
+                    setApPreviewMode('story');
+                }
             } catch (e) {
                 console.error(e);
             }
+        }
+
+        function updateApStoryItemText(idx, field, val) {
+            const item = apSelectedStoryFiles[idx];
+            if (!item || item.isVideo) return;
+            item[field] = val;
+            item.customEdited = true;
+            if (!item.rawSourceDataUrl) item.rawSourceDataUrl = item.dataUrl;
+
+            if (apStoryReRenderTimers[idx]) clearTimeout(apStoryReRenderTimers[idx]);
+            apStoryReRenderTimers[idx] = setTimeout(async () => {
+                try {
+                    const verticalDataUrl = await createVerticalStoryCanvasDataUrl(item.rawSourceDataUrl, {
+                        topText: item.overlayTop,
+                        titleText: item.overlayTitle,
+                        priceText: item.overlayPrice,
+                        showOverlay: item.showOverlay !== false
+                    });
+                    item.dataUrl = verticalDataUrl;
+                    item.width = 1080;
+                    item.height = 1920;
+                    item.isVertical = true;
+                    item.autoGenerated = true;
+                    item.sizeKb = Math.round((verticalDataUrl.length * 0.75) / 1024);
+
+                    // Actualizar la imagen de la tarjeta en el DOM sin perder el foco del input
+                    const cardImg = document.getElementById(`ap-story-card-img-${idx}`);
+                    if (cardImg) cardImg.src = verticalDataUrl;
+
+                    apStoryPreviewIdx = idx;
+                    if (apPreviewMode !== 'story') setApPreviewMode('story');
+                    else updateApInstagramPreview();
+                } catch (err) {
+                    console.error('Error actualizando texto de Story:', err);
+                }
+            }, 120);
+        }
+
+        async function toggleApStoryItemOverlay(idx, checked) {
+            const item = apSelectedStoryFiles[idx];
+            if (!item || item.isVideo) return;
+            item.showOverlay = Boolean(checked);
+            item.customEdited = true;
+            await convertApStoryItemToVertical(idx, true);
+        }
+
+        async function applyApStoryOverlayToAll(sourceIdx) {
+            const src = apSelectedStoryFiles[sourceIdx];
+            if (!src) return;
+            for (let i = 0; i < apSelectedStoryFiles.length; i++) {
+                const it = apSelectedStoryFiles[i];
+                if (!it || it.isVideo) continue;
+                it.overlayTop = src.overlayTop;
+                it.overlayTitle = src.overlayTitle;
+                it.overlayPrice = src.overlayPrice;
+                it.showOverlay = src.showOverlay;
+                it.customEdited = true;
+                await convertApStoryItemToVertical(i, false);
+            }
+            renderApStoryFilesGrid();
+            updateApInstagramPreview();
         }
 
         function renderApStoryFilesGrid() {
@@ -10098,29 +10389,70 @@
             if (btnClear) btnClear.classList.remove('hidden');
 
             const storyTags = getApStoryHourTagsList();
+            const defaults = getDefaultApStoryOverlayTexts();
+
             grid.innerHTML = apSelectedStoryFiles.map((f, idx) => {
                 const officialName = buildApOfficialFileName(f.ext, idx, apSelectedStoryFiles.length, 'story', storyTags[0]);
                 const dimBadge = f.width && f.height ? `${f.width}×${f.height}` : '9:16';
+                const isSelected = apPreviewMode === 'story' && apStoryPreviewIdx === idx;
+                const topVal = f.overlayTop !== undefined ? f.overlayTop : defaults.overlayTop;
+                const titleVal = f.overlayTitle !== undefined ? f.overlayTitle : defaults.overlayTitle;
+                const priceVal = f.overlayPrice !== undefined ? f.overlayPrice : defaults.overlayPrice;
+                const showOv = f.showOverlay !== false;
+
                 return `
-                    <div class="relative group rounded-xl overflow-hidden border ${f.isVertical ? 'border-amber-500/40' : 'border-rose-500/60'} bg-slate-950 p-1.5 flex flex-col justify-between">
-                        <div class="relative aspect-[9/16] max-h-44 rounded-lg overflow-hidden bg-slate-900 mx-auto w-full">
+                    <div class="relative group rounded-xl overflow-hidden border ${isSelected ? 'border-cyan-400 ring-2 ring-cyan-500/40' : (f.isVertical ? 'border-amber-500/40' : 'border-rose-500/60')} bg-slate-950 p-2 flex flex-col justify-between gap-2 transition">
+                        <div onclick="selectApStorySlide(${idx})" class="cursor-pointer relative aspect-[9/16] max-h-48 rounded-lg overflow-hidden bg-slate-900 mx-auto w-full">
                             ${f.isVideo
                                 ? `<video src="${f.dataUrl}" class="w-full h-full object-cover" muted></video>`
-                                : `<img src="${f.dataUrl}" class="w-full h-full object-cover">`
+                                : `<img id="ap-story-card-img-${idx}" src="${f.dataUrl}" class="w-full h-full object-cover">`
                             }
                             <span class="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded ${f.isVertical ? 'bg-amber-500 text-slate-950' : 'bg-rose-600 text-white'} text-[9px] font-extrabold">
-                                ${f.isVertical ? `📱 9:16 (${dimBadge})` : `⚠️ Cuadrada (${dimBadge})`}
+                                #${idx + 1} • ${f.isVertical ? `9:16 (${dimBadge})` : `Cuadrada (${dimBadge})`}
                             </span>
-                            <button type="button" onclick="removeApSelectedStoryFile(${idx})" class="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-rose-600/90 hover:bg-rose-500 text-white text-xs flex items-center justify-center shadow">
+                            <button type="button" onclick="event.stopPropagation(); removeApSelectedStoryFile(${idx})" class="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-rose-600/90 hover:bg-rose-500 text-white text-xs flex items-center justify-center shadow">
                                 <i class="fa-solid fa-xmark"></i>
                             </button>
                             ${!f.isVertical && !f.isVideo ? `
-                                <button type="button" onclick="convertApStoryItemToVertical(${idx})" class="absolute inset-x-1.5 bottom-1.5 py-1 rounded bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-[9px] shadow">
+                                <button type="button" onclick="event.stopPropagation(); convertApStoryItemToVertical(${idx}, true)" class="absolute inset-x-1.5 bottom-1.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-[10px] shadow-lg">
                                     ✨ Convertir a 9:16 (1080×1920)
                                 </button>
-                            ` : ''}
+                            ` : `
+                                <span class="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded bg-slate-950/85 text-cyan-300 text-[9px] font-bold">
+                                    👁️ Ver #${idx + 1} en Celu
+                                </span>
+                            `}
                         </div>
-                        <div class="mt-1.5 px-1">
+
+                        ${!f.isVideo ? `
+                            <div class="p-2 rounded-lg bg-slate-900/95 border border-slate-800 space-y-1.5">
+                                <div class="flex items-center justify-between gap-1">
+                                    <label class="flex items-center gap-1 text-[10px] font-extrabold text-amber-300 cursor-pointer">
+                                        <input type="checkbox" ${showOv ? 'checked' : ''} onchange="toggleApStoryItemOverlay(${idx}, this.checked)" class="rounded bg-slate-950 border-slate-700 text-amber-500">
+                                        <span>✏️ Texto en Imagen #${idx + 1}</span>
+                                    </label>
+                                    ${apSelectedStoryFiles.length > 1 ? `
+                                        <button type="button" onclick="applyApStoryOverlayToAll(${idx})" class="text-[9px] px-1.5 py-0.5 rounded bg-cyan-500/15 hover:bg-cyan-500/30 text-cyan-300 font-bold" title="Copiar este texto a todas las imágenes de Story">
+                                            Aplicar a todas
+                                        </button>
+                                    ` : ''}
+                                </div>
+                                <input type="text" value="${escapeHTML(titleVal)}" oninput="updateApStoryItemText(${idx}, 'overlayTitle', this.value)"
+                                       placeholder="Título (ej: Bóxer Bross Tokio)"
+                                       class="w-full bg-slate-950 text-white text-[10px] font-bold rounded px-2 py-1 border border-slate-800 focus:outline-none focus:border-amber-400"
+                                       title="Título principal del sticker en esta imagen">
+                                <input type="text" value="${escapeHTML(priceVal)}" oninput="updateApStoryItemText(${idx}, 'overlayPrice', this.value)"
+                                       placeholder="Precio / Detalle (ej: $9.500 • S al XXL)"
+                                       class="w-full bg-slate-950 text-amber-300 text-[10px] font-bold rounded px-2 py-1 border border-slate-800 focus:outline-none focus:border-amber-400"
+                                       title="Segunda línea dorada (Precio / SKU / Talles)">
+                                <input type="text" value="${escapeHTML(topVal)}" oninput="updateApStoryItemText(${idx}, 'overlayTop', this.value)"
+                                       placeholder="Encabezado superior (opcional)"
+                                       class="w-full bg-slate-950 text-slate-300 text-[9px] rounded px-2 py-1 border border-slate-800 focus:outline-none focus:border-cyan-400"
+                                       title="Texto superior de la Story (dejalo vacío para ocultarlo)">
+                            </div>
+                        ` : ''}
+
+                        <div class="px-1">
                             <div class="text-[10px] font-mono text-amber-300 font-bold truncate" title="${escapeHTML(officialName)}">${escapeHTML(officialName)}</div>
                             <div class="text-[9px] text-slate-500">${f.sizeKb} KB ${f.autoGenerated ? '• Render 9:16 OK' : ''}</div>
                         </div>
@@ -10151,9 +10483,25 @@
         }
 
         function stepApPreviewCarousel(delta) {
-            if (apSelectedFiles.length <= 1) return;
-            apCarouselPreviewIdx = (apCarouselPreviewIdx + delta + apSelectedFiles.length) % apSelectedFiles.length;
+            const feedList = apSelectedFiles.length > 0 ? apSelectedFiles : apSelectedStoryFiles;
+            if (feedList.length <= 1) return;
+            apCarouselPreviewIdx = (apCarouselPreviewIdx + delta + feedList.length) % feedList.length;
             updateApInstagramPreview();
+        }
+
+        function stepApPreviewStory(delta) {
+            const storyList = apSelectedStoryFiles.length > 0 ? apSelectedStoryFiles : apSelectedFiles;
+            if (storyList.length <= 1) return;
+            apStoryPreviewIdx = (apStoryPreviewIdx + delta + storyList.length) % storyList.length;
+            updateApInstagramPreview();
+        }
+
+        function stepApActivePreview(delta) {
+            if (apPreviewMode === 'story') {
+                stepApPreviewStory(delta);
+            } else {
+                stepApPreviewCarousel(delta);
+            }
         }
 
         function updateApInstagramPreview() {
@@ -10171,10 +10519,16 @@
             const nextBtn = document.getElementById('btn-ap-next-slide');
 
             const storyImg = document.getElementById('ap-ig-story-img');
+            const storyVid = document.getElementById('ap-ig-story-video');
             const storyPh = document.getElementById('ap-ig-story-placeholder');
+            const storyBars = document.getElementById('ap-ig-story-bars');
+            const storyCounter = document.getElementById('ap-ig-story-counter-badge');
+            const prevStoryBtn = document.getElementById('btn-ap-prev-story-slide');
+            const nextStoryBtn = document.getElementById('btn-ig-next-story-slide') || document.getElementById('btn-ap-next-story-slide');
 
-            // 1. Preview de Feed / Carrusel / Reel (Zona 4A)
-            if (apSelectedFiles.length === 0) {
+            // 1. Preview de Feed / Carrusel / Reel (usa 4A, o si 4A está vacía usa los originales cuadrados de 4B)
+            const feedSourceList = apSelectedFiles.length > 0 ? apSelectedFiles : apSelectedStoryFiles;
+            if (feedSourceList.length === 0) {
                 if (emptyEl) emptyEl.classList.remove('hidden');
                 if (imgEl) imgEl.classList.add('hidden');
                 if (vidEl) vidEl.classList.add('hidden');
@@ -10182,26 +10536,28 @@
                 if (prevBtn) prevBtn.classList.add('hidden');
                 if (nextBtn) nextBtn.classList.add('hidden');
             } else {
-                const currentFile = apSelectedFiles[apCarouselPreviewIdx] || apSelectedFiles[0];
+                if (apCarouselPreviewIdx >= feedSourceList.length) apCarouselPreviewIdx = 0;
+                const currentFile = feedSourceList[apCarouselPreviewIdx] || feedSourceList[0];
+                const feedPreviewSrc = (apSelectedFiles.length === 0 && currentFile.rawSourceDataUrl) ? currentFile.rawSourceDataUrl : currentFile.dataUrl;
                 if (emptyEl) emptyEl.classList.add('hidden');
 
                 if (currentFile.isVideo) {
                     if (imgEl) imgEl.classList.add('hidden');
                     if (vidEl) {
-                        vidEl.src = currentFile.dataUrl;
+                        vidEl.src = feedPreviewSrc;
                         vidEl.classList.remove('hidden');
                     }
                 } else {
                     if (vidEl) vidEl.classList.add('hidden');
                     if (imgEl) {
-                        imgEl.src = currentFile.dataUrl;
+                        imgEl.src = feedPreviewSrc;
                         imgEl.classList.remove('hidden');
                     }
                 }
 
-                if (apSelectedFiles.length > 1) {
+                if (feedSourceList.length > 1) {
                     if (badgeEl) {
-                        badgeEl.innerText = `${apCarouselPreviewIdx + 1} / ${apSelectedFiles.length}`;
+                        badgeEl.innerText = `${apCarouselPreviewIdx + 1} / ${feedSourceList.length}`;
                         badgeEl.classList.remove('hidden');
                     }
                     if (prevBtn) prevBtn.classList.remove('hidden');
@@ -10213,17 +10569,90 @@
                 }
             }
 
-            // 2. Preview de Story Vertical 9:16 (prioriza Zona 4B; si está vacía usa Zona 4A)
-            const activeStoryFile = apSelectedStoryFiles[0] || apSelectedFiles[0] || null;
-            if (!activeStoryFile || activeStoryFile.isVideo) {
+            // 2. Preview de Story Vertical 9:16 (recorre TODAS las imágenes de 4B o 4A con flechas y barras superiores)
+            const storySourceList = apSelectedStoryFiles.length > 0 ? apSelectedStoryFiles : apSelectedFiles;
+            if (storySourceList.length === 0) {
                 if (storyImg) storyImg.classList.add('hidden');
+                if (storyVid) storyVid.classList.add('hidden');
                 if (storyPh) storyPh.classList.remove('hidden');
+                if (storyCounter) storyCounter.classList.add('hidden');
+                if (prevStoryBtn) prevStoryBtn.classList.add('hidden');
+                if (nextStoryBtn) nextStoryBtn.classList.add('hidden');
             } else {
-                if (storyImg) {
-                    storyImg.src = activeStoryFile.dataUrl;
-                    storyImg.classList.remove('hidden');
-                }
+                if (apStoryPreviewIdx >= storySourceList.length) apStoryPreviewIdx = 0;
+                const activeStoryFile = storySourceList[apStoryPreviewIdx] || storySourceList[0];
                 if (storyPh) storyPh.classList.add('hidden');
+
+                if (activeStoryFile.isVideo) {
+                    if (storyImg) storyImg.classList.add('hidden');
+                    if (storyVid) {
+                        storyVid.src = activeStoryFile.dataUrl;
+                        storyVid.classList.remove('hidden');
+                    }
+                } else {
+                    if (storyVid) storyVid.classList.add('hidden');
+                    if (storyImg) {
+                        storyImg.src = activeStoryFile.dataUrl;
+                        storyImg.classList.remove('hidden');
+                    }
+                }
+
+                // Barras superiores estilo Instagram Stories (1 segmento por cada Story)
+                if (storyBars) {
+                    storyBars.innerHTML = storySourceList.map((_, sIdx) => `
+                        <div onclick="selectApStorySlide(${sIdx})" class="cursor-pointer h-1 flex-1 bg-white/30 rounded-full overflow-hidden">
+                            <div class="h-full ${sIdx <= apStoryPreviewIdx ? 'w-full bg-white' : 'w-0'} rounded-full transition-all"></div>
+                        </div>
+                    `).join('');
+                }
+
+                if (storySourceList.length > 1) {
+                    if (storyCounter) {
+                        storyCounter.innerText = `${apStoryPreviewIdx + 1} / ${storySourceList.length}`;
+                        storyCounter.classList.remove('hidden');
+                    }
+                    if (prevStoryBtn) prevStoryBtn.classList.remove('hidden');
+                    if (nextStoryBtn) nextStoryBtn.classList.remove('hidden');
+                } else {
+                    if (storyCounter) storyCounter.classList.add('hidden');
+                    if (prevStoryBtn) prevStoryBtn.classList.add('hidden');
+                    if (nextStoryBtn) nextStoryBtn.classList.add('hidden');
+                }
+            }
+
+            // 3. Tira de miniaturas interactiva debajo del teléfono para saltar a cualquier imagen en 1 clic
+            const thumbsWrap = document.getElementById('ap-ig-preview-thumbs-wrap');
+            const thumbsStrip = document.getElementById('ap-ig-preview-thumbs-strip');
+            const thumbsLabel = document.getElementById('ap-ig-thumbs-label');
+            const activeList = apPreviewMode === 'story' ? storySourceList : feedSourceList;
+            const activeIdx = apPreviewMode === 'story' ? apStoryPreviewIdx : apCarouselPreviewIdx;
+
+            if (thumbsWrap && thumbsStrip) {
+                if (activeList.length === 0) {
+                    thumbsWrap.classList.add('hidden');
+                    thumbsStrip.innerHTML = '';
+                } else {
+                    thumbsWrap.classList.remove('hidden');
+                    if (thumbsLabel) {
+                        thumbsLabel.innerText = apPreviewMode === 'story'
+                            ? `Stories 9:16 (${activeIdx + 1} de ${activeList.length}) — Tocá para cambiar:`
+                            : `Carrusel / Feed (${activeIdx + 1} de ${activeList.length}) — Tocá para cambiar:`;
+                    }
+                    thumbsStrip.innerHTML = activeList.map((f, idx) => {
+                        const isCur = idx === activeIdx;
+                        const fn = apPreviewMode === 'story' ? `selectApStorySlide(${idx})` : `selectApFeedSlide(${idx})`;
+                        const thumbSrc = (apPreviewMode === 'feed' && apSelectedFiles.length === 0 && f.rawSourceDataUrl) ? f.rawSourceDataUrl : f.dataUrl;
+                        return `
+                            <button type="button" onclick="${fn}" class="relative shrink-0 w-14 h-14 rounded-xl overflow-hidden border-2 transition ${isCur ? 'border-pink-500 scale-105 shadow-lg' : 'border-slate-800 opacity-60 hover:opacity-100'}">
+                                ${f.isVideo
+                                    ? `<video src="${thumbSrc}" class="w-full h-full object-cover" muted></video>`
+                                    : `<img src="${thumbSrc}" class="w-full h-full object-cover">`
+                                }
+                                <span class="absolute bottom-0.5 right-0.5 px-1 rounded bg-slate-950/90 text-white font-mono text-[9px] font-bold">#${idx + 1}</span>
+                            </button>
+                        `;
+                    }).join('');
+                }
             }
         }
 
@@ -10269,12 +10698,8 @@
                 alert('Por favor elegí un producto del catálogo o ingresá su SKU / Número.');
                 return;
             }
-            if ((target === 'feed' || target === 'both') && apSelectedFiles.length === 0 && apSelectedDriveUrls.length === 0) {
-                alert('Por favor subí al menos 1 foto o video en la Zona 4A (Publicación: Post / Carrusel / Reel).');
-                return;
-            }
-            if (target === 'story' && apSelectedStoryFiles.length === 0 && apSelectedFiles.length === 0) {
-                alert('Por favor subí una imagen/video vertical en la Zona 4B (Story 9:16) o tocá "Auto-Generar Story 9:16".');
+            if (apSelectedFiles.length === 0 && apSelectedStoryFiles.length === 0 && apSelectedDriveUrls.length === 0) {
+                alert('Por favor subí al menos 1 foto o video en la Zona 4A (Publicación) o en la Zona 4B (Story 9:16).');
                 return;
             }
 
@@ -10286,12 +10711,12 @@
             if (btnSched) btnSched.disabled = true;
             if (btnNow) btnNow.disabled = true;
 
-            // Si eligió Pack Completo (both) o Solo Story y no cargó un archivo específico en Zona 4B,
-            // auto-generamos al vuelo una Story Vertical 9:16 (1080x1920) desde la primera foto de Zona 4A para que Meta jamás rechace la Story por tamaño cuadrado!
+            // Si eligió Pack Completo (both) o Solo Story y no cargó archivos en Zona 4B pero sí en 4A,
+            // auto-generamos las Stories Verticales 9:16 (1080x1920) desde las fotos de 4A
             if ((target === 'both' || target === 'story') && apSelectedStoryFiles.length === 0 && apSelectedFiles.length > 0 && !apSelectedFiles[0].isVideo) {
                 if (banner) {
                     banner.className = "p-3.5 rounded-2xl text-xs font-bold bg-amber-500/15 border border-amber-500/30 text-amber-300 flex items-center gap-2";
-                    banner.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles fa-spin"></i> <span>Generando formato vertical 9:16 (1080×1920 px) automático para la Story...</span>`;
+                    banner.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles fa-spin"></i> <span>Generando formato vertical 9:16 (1080×1920 px) automático para las Stories...</span>`;
                     banner.classList.remove('hidden');
                 }
                 await generateApVerticalStoryFromFeed();
@@ -10299,18 +10724,23 @@
 
             if (banner) {
                 banner.className = "p-3.5 rounded-2xl text-xs font-bold bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 flex items-center gap-2";
-                banner.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> <span>Enviando archivos separados (Publicación + Story 9:16) a Google Drive y n8n...</span>`;
+                banner.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> <span>Enviando archivos (Publicación + Story 9:16) a Google Drive y n8n...</span>`;
                 banner.classList.remove('hidden');
             }
 
             const uploadsPayload = [];
 
             // 1. Armar archivos de Zona 4A -> Carpeta Publicación (Feed / Carrusel / Reel)
+            // Si el usuario subió las fotos directamente en 4B y dejó 4A vacía teniendo "Pack Completo (both)", usamos las fotos originales cuadradas (rawSourceDataUrl) para el Carrusel de Feed
+            const effectiveFeedFiles = apSelectedFiles.length > 0
+                ? apSelectedFiles
+                : (target === 'both' ? apSelectedStoryFiles.map(sf => ({ ...sf, dataUrl: sf.rawSourceDataUrl || sf.dataUrl })) : []);
+
             if (target === 'both' || target === 'feed') {
-                apSelectedFiles.forEach((f, idx) => {
+                effectiveFeedFiles.forEach((f, idx) => {
                     const base64Clean = f.dataUrl.includes(',') ? f.dataUrl.split(',')[1] : f.dataUrl;
                     const mimeType = (f.file && f.file.type) ? f.file.type : (f.isVideo ? 'video/mp4' : 'image/jpeg');
-                    const feedFileName = buildApOfficialFileName(f.ext, idx, apSelectedFiles.length, 'feed');
+                    const feedFileName = buildApOfficialFileName(f.ext, idx, effectiveFeedFiles.length, 'feed');
                     uploadsPayload.push({
                         role: 'feed',
                         scheduleTime: feedTime,
@@ -10326,7 +10756,7 @@
 
             // 2. Armar archivos de Zona 4B -> Carpeta Story (Formato 9:16)
             if (target === 'both' || target === 'story') {
-                const storySourceList = apSelectedStoryFiles.length > 0 ? apSelectedStoryFiles : apSelectedFiles.slice(0, 1);
+                const storySourceList = apSelectedStoryFiles.length > 0 ? apSelectedStoryFiles : apSelectedFiles;
                 const storyTags = getApStoryHourTagsList();
                 storyTags.forEach(hourTag => {
                     storySourceList.forEach((f, idx) => {

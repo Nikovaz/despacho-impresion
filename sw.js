@@ -1,5 +1,5 @@
 // Service Worker para CrocScale App
-const CACHE_NAME = 'crocscale-v5-autopublisher-pro';
+const CACHE_NAME = 'crocscale-v6-story-editor-pro';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
