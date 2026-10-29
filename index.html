@@ -1107,15 +1107,18 @@
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div class="md:col-span-2">
-                    <label class="block text-[11px] font-bold text-slate-300 mb-1">URL del Webhook Receptor en n8n (Subida a Drive & Disparo):</label>
-                    <div class="flex gap-2">
-                        <input type="url" id="ap-input-webhook-url" placeholder="https://n8n.nicovaz.tech/webhook/autopublicador-upload" class="flex-1 bg-slate-950 text-white text-xs font-mono rounded-xl px-3 py-2 border border-slate-800 focus:outline-none focus:border-amber-500">
+                    <label class="block text-[11px] font-bold text-slate-300 mb-1">URL del Webhook Receptor en n8n (Subida a Drive & Publicar Ahora):</label>
+                    <div class="flex flex-wrap sm:flex-nowrap gap-2">
+                        <input type="url" id="ap-input-webhook-url" placeholder="https://n8n.totodrilo.cloud/webhook/autopublicador-upload" class="flex-1 bg-slate-950 text-white text-xs font-mono rounded-xl px-3 py-2 border border-slate-800 focus:outline-none focus:border-amber-500">
                         <button onclick="saveApWebhookConfig()" class="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold rounded-xl transition shadow">
                             Guardar URL
                         </button>
+                        <button onclick="copyApN8nWorkflowJson()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold rounded-xl transition shadow flex items-center gap-1.5" title="Copia el flujo completo de NNN al portapapeles para hacer Ctrl+V directo en tu lienzo de n8n.totodrilo.cloud">
+                            <i class="fa-regular fa-copy"></i> <span>Copiar Flujo n8n (Ctrl+V)</span>
+                        </button>
                     </div>
-                    <p class="text-[10px] text-slate-500 mt-1">
-                        💡 Importá en tu n8n el archivo <span class="font-mono text-slate-300">Autopublicador_Webhook_Portal_PROD.json</span> para activar este endpoint en 1 clic.
+                    <p class="text-[10px] text-slate-400 mt-1.5">
+                        💡 Tocá <b>"Copiar Flujo n8n (Ctrl+V)"</b>, abrí tu workflow <a href="https://n8n.totodrilo.cloud/workflow/GFoaBXFcdpwAIxXS" target="_blank" class="text-amber-300 underline hover:text-amber-200">GFoaBXFcdpwAIxXS en n8n.totodrilo.cloud</a>, seleccioná los nodos de NNN y pegá con <b>Ctrl+V</b> (luego guardá con Publish/Save).
                     </p>
                 </div>
 
@@ -8368,7 +8371,11 @@
         let apCarouselPreviewIdx = 0;
 
         let autopublisherQueue = JSON.parse(localStorage.getItem('croc_autopublisher_queue') || '[]');
-        let apWebhookUrl = localStorage.getItem('croc_ap_webhook_url') || 'https://n8n.nicovaz.tech/webhook/autopublicador-upload';
+        let apWebhookUrl = localStorage.getItem('croc_ap_webhook_url') || 'https://n8n.totodrilo.cloud/webhook/autopublicador-upload';
+        if (apWebhookUrl.includes('n8n.nicovaz.tech')) {
+            apWebhookUrl = 'https://n8n.totodrilo.cloud/webhook/autopublicador-upload';
+            localStorage.setItem('croc_ap_webhook_url', apWebhookUrl);
+        }
 
         function mergeCloudAutopublisherQueue(cloudList) {
             if (!Array.isArray(cloudList)) return;
@@ -8424,6 +8431,18 @@
             apWebhookUrl = val;
             localStorage.setItem('croc_ap_webhook_url', apWebhookUrl);
             alert('✅ URL de Webhook guardada correctamente:\n' + apWebhookUrl);
+        }
+
+        async function copyApN8nWorkflowJson() {
+            try {
+                const res = await fetch('./Autopublicador_Webhook_Portal_PROD.json?v=' + Date.now());
+                if (!res.ok) throw new Error('No se pudo leer Autopublicador_Webhook_Portal_PROD.json');
+                const txt = await res.text();
+                await navigator.clipboard.writeText(txt);
+                alert('✅ ¡Flujo completo de NNN copiado al portapapeles!\n\nPasos en tu n8n (https://n8n.totodrilo.cloud/workflow/GFoaBXFcdpwAIxXS):\n1. Seleccioná los nodos viejos de NNN y borralos (o creá un flujo nuevo)\n2. Presioná Ctrl + V en el lienzo de n8n\n3. Hacé clic en Save / Publish arriba a la derecha.');
+            } catch (e) {
+                alert('Error al copiar flujo: ' + e.message);
+            }
         }
 
         function switchAutopublisherStore(storeKey) {
@@ -9102,15 +9121,15 @@
                 const suffix = totalFiles > 1 ? `_${fileIdx + 1}` : '';
                 return `${numPadded}_${dd}.${mm}${suffix}.${cleanExt}`;
             } else {
-                // Regla NNN en '3. Elegir Foto Nueva2' y '3. Elegir Story del Slot':
-                // Fecha DD-MM adelante + Tag opcional (09HS/20HS) + SKU exacto
+                // Regla NNN en NNN.Public.2026 y NNN.Story.2026:
+                // Formato oficial: DD.MM_SKU.jpg (Feed) y DD.MM_SKU_09hs.jpg / DD.MM_SKU_20hs.jpg (Story)
                 const cleanSku = rawSku.replace(/^Art\.?\s*/i, '').trim();
-                let slotPrefix = '';
-                if (target === 'story_09') slotPrefix = '09HS ';
-                else if (target === 'story_20') slotPrefix = '20HS ';
+                let slotSuffix = '';
+                if (target === 'story' || target === 'story_09') slotSuffix = '_09hs';
+                else if (target === 'story_20') slotSuffix = '_20hs';
 
-                const suffix = totalFiles > 1 ? ` (${fileIdx + 1})` : '';
-                return `${dd}-${mm} ${slotPrefix}${cleanSku}${suffix}.${cleanExt}`;
+                const carSuffix = (totalFiles > 1 && !slotSuffix) ? ` (${fileIdx + 1})` : '';
+                return `${dd}.${mm}_${cleanSku}${slotSuffix}${carSuffix}.${cleanExt}`;
             }
         }
 
@@ -9531,10 +9550,12 @@
             };
 
             let webhookOk = false;
+            let webhookRespData = null;
             try {
+                // Usamos text/plain;charset=UTF-8 (CORS Simple Request) para que el navegador no bloquee con preflight OPTIONS en n8n.totodrilo.cloud
                 const resp = await fetch(apWebhookUrl, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
                     body: JSON.stringify({
                         action: publishNow ? 'upload_and_publish_now' : 'upload_to_drive',
                         publishNow,
@@ -9558,38 +9579,72 @@
                     })
                 });
                 if (resp.ok) {
+                    webhookRespData = await resp.json().catch(() => ({}));
                     webhookOk = true;
-                    newQueueItem.status = publishNow ? 'Publicado en Instagram OK' : 'En Google Drive (Listo para publicar)';
+                    newQueueItem.statusType = publishNow ? 'published' : 'scheduled';
+                    newQueueItem.status = publishNow ? 'Publicado en Instagram OK' : 'En Google Drive (Programado)';
+                    if (webhookRespData && webhookRespData.ig_post_id) {
+                        newQueueItem.igPostId = webhookRespData.ig_post_id;
+                    }
+                    if (webhookRespData && webhookRespData.ig_story_ids) {
+                        newQueueItem.igStoryIds = webhookRespData.ig_story_ids;
+                    }
+                    if (webhookRespData && Array.isArray(webhookRespData.uploaded_files) && webhookRespData.uploaded_files.length > 0) {
+                        newQueueItem.uploadedFiles = webhookRespData.uploaded_files;
+                        webhookRespData.uploaded_files.forEach(uf => {
+                            if (!uf || !uf.id) return;
+                            const list = uf.role === 'story' ? apDriveFilesByStore[currentApStore].story : apDriveFilesByStore[currentApStore].feed;
+                            if (!list.some(x => x.id === uf.id)) {
+                                list.push({ id: uf.id, name: uf.name });
+                            }
+                        });
+                    }
                 }
             } catch (err) {
                 console.warn('Webhook n8n pendiente de activar o CORS:', err);
             }
 
-            // Guardar siempre en la cola sincronizada en la nube (Supabase + LocalStorage)
+            // Reemplazar en la cola si ya existía el mismo SKU + fecha de pruebas previas para no duplicar tarjetas
+            autopublisherQueue = autopublisherQueue.filter(x => !(x.store === currentApStore && x.date === dateVal && String(x.sku).toUpperCase() === String(sku).toUpperCase()));
             autopublisherQueue.unshift(newQueueItem);
             localStorage.setItem('croc_autopublisher_queue', JSON.stringify(autopublisherQueue));
             pushCloudAppState();
             renderAutopublisherDashboard();
 
+            if (webhookOk && publishNow) {
+                setTimeout(() => fetchApStoreHistory(currentApStore).then(() => renderAutopublisherDashboard()), 2000);
+            }
+
             if (banner) {
                 if (webhookOk) {
                     banner.className = "p-3.5 rounded-2xl text-xs font-bold bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 flex items-center justify-between gap-2";
-                    banner.innerHTML = `
-                        <span>✅ ¡Subido a Google Drive (${escapeHTML(newQueueItem.officialFileName)}) y programado para el ${escapeHTML(dateVal)}!</span>
-                        <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20">Sync Nube OK</span>
-                    `;
+                    if (publishNow) {
+                        banner.innerHTML = `
+                            <span>🚀 ¡Publicado Ahora en Instagram (@${escapeHTML(meta.igHandle)}), subido a Google Drive y anotado en ContenidoNNN!</span>
+                            <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20">IG Post OK</span>
+                        `;
+                    } else {
+                        banner.innerHTML = `
+                            <span>✅ ¡Subido a Google Drive (${escapeHTML(newQueueItem.officialFileName)}) y programado para el ${escapeHTML(dateVal)}!</span>
+                            <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20">Drive Sync OK</span>
+                        `;
+                    }
                 } else {
                     banner.className = "p-3.5 rounded-2xl text-xs font-bold bg-amber-500/15 border border-amber-500/30 text-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2";
                     banner.innerHTML = `
                         <div>
                             <div>📌 Guardado en la Cola del Portal (${escapeHTML(newQueueItem.officialFileName)}).</div>
-                            <div class="text-[11px] font-normal text-slate-300 mt-0.5">El Webhook de n8n no respondió aún: se descargó automáticamente el archivo con el nombre exacto para arrastrar a Drive o importá <span class="font-mono text-amber-300">Autopublicador_Webhook_Portal_PROD.json</span> en n8n.</div>
+                            <div class="text-[11px] font-normal text-slate-300 mt-0.5">Falta pegar el nodo Webhook en tu flujo <a href="https://n8n.totodrilo.cloud/workflow/GFoaBXFcdpwAIxXS" target="_blank" class="text-amber-300 underline font-bold">GFoaBXFcdpwAIxXS de n8n.totodrilo.cloud</a>: tocá <b>"Copiar Flujo n8n"</b> y hacé <b>Ctrl+V</b> en n8n.</div>
                         </div>
-                        <button type="button" onclick="downloadApRenamedFiles()" class="px-3 py-1.5 rounded-lg bg-amber-500 text-slate-950 font-extrabold text-[11px] whitespace-nowrap">
-                            Descargar ${escapeHTML(newQueueItem.officialFileName)}
-                        </button>
+                        <div class="flex items-center gap-2">
+                            <button type="button" onclick="copyApN8nWorkflowJson()" class="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-[11px] whitespace-nowrap">
+                                📋 Copiar Flujo n8n (Ctrl+V)
+                            </button>
+                            <button type="button" onclick="downloadApRenamedFiles()" class="px-3 py-1.5 rounded-lg bg-amber-500 text-slate-950 font-extrabold text-[11px] whitespace-nowrap">
+                                Bajar ${escapeHTML(newQueueItem.officialFileName)}
+                            </button>
+                        </div>
                     `;
-                    downloadApRenamedFiles();
                 }
             }
 
@@ -9791,10 +9846,18 @@
                 });
             });
 
-            // 3. Sumar publicaciones PROGRAMADAS desde el creador del portal (autopublisherQueue)
+            // 3. Sumar publicaciones desde el creador del portal (autopublisherQueue), deduplicadas por Fecha + SKU
             queue.forEach(q => {
+                const iso = q.date || todayIso;
+                const skuClean = (q.sku || 'S/D').trim().toUpperCase();
+                const groupKey = `EVT_${storeKey}_${iso}_${skuClean}`;
+                if (eventsMap.has(groupKey) && eventsMap.get(groupKey).statusType === 'published') {
+                    return; // Ya figura como publicado desde Sheets/Drive
+                }
+
                 const matchedCat = findApCatalogItemBySku(q.sku, storeKey);
-                const catDriveUrl = (q.catalogDriveUrls && q.catalogDriveUrls[0]) || (matchedCat && matchedCat.driveUrls && matchedCat.driveUrls[0]) || '';
+                const uploadedFileId = (q.uploadedFiles && q.uploadedFiles[0] && q.uploadedFiles[0].id) ? q.uploadedFiles[0].id : '';
+                const catDriveUrl = uploadedFileId || (q.catalogDriveUrls && q.catalogDriveUrls[0]) || (matchedCat && matchedCat.driveUrls && matchedCat.driveUrls[0]) || '';
                 const timeMap = {
                     story_09: '09:30',
                     story_20: '20:30',
@@ -9802,14 +9865,15 @@
                     feed: storeKey === 'nnn' ? '18:00' : '12:00',
                     story: storeKey === 'nnn' ? '18:00' : '12:00'
                 };
+                const isPubNow = q.statusType === 'published' || String(q.status || '').includes('Publicado en Instagram');
                 const thumb = q.thumbnailDataUrl || (catDriveUrl ? buildApDriveThumbnailUrl(catDriveUrl, 400) : '');
-                eventsMap.set(q.id, {
-                    id: q.id,
+                eventsMap.set(groupKey, {
+                    id: groupKey,
                     queueId: q.id,
                     store: storeKey,
-                    statusType: 'scheduled',
-                    statusLabel: q.status || 'Programado en Cola',
-                    isoDate: q.date || todayIso,
+                    statusType: isPubNow ? 'published' : 'scheduled',
+                    statusLabel: q.status || (isPubNow ? 'Publicado en IG OK' : 'Programado en Cola'),
+                    isoDate: iso,
                     timeStr: timeMap[q.target] || (storeKey === 'nnn' ? '18:00' : '12:00'),
                     sku: q.sku || 'S/D',
                     productName: q.productName || q.sku,
@@ -9817,10 +9881,10 @@
                     features: q.features || '',
                     slotType: q.target || 'both',
                     isVideo: Boolean(q.isVideo),
-                    igPostId: 'Pendiente de publicar',
-                    igStoryIds: q.target === 'both' || String(q.target).startsWith('story') ? 'Programada' : '-',
+                    igPostId: q.igPostId || (isPubNow ? 'Publicado OK' : 'Pendiente de publicar'),
+                    igStoryIds: q.igStoryIds || (q.target === 'both' || String(q.target).startsWith('story') ? 'Programada' : '-'),
                     fileIds: catDriveUrl ? [catDriveUrl] : [],
-                    fileNames: [q.officialFileName || `${q.date} ${q.sku}.jpg`],
+                    fileNames: [q.officialFileName || `${iso} ${q.sku}.jpg`],
                     mediaCountExplicit: q.mediaCount || 1,
                     thumbnailUrl: thumb,
                     caption: q.caption || ''

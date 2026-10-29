@@ -1,5 +1,5 @@
 ﻿// Service Worker para CrocScale App
-const CACHE_NAME = 'crocscale-v3-planner';
+const CACHE_NAME = 'crocscale-v4-n8n-webhook';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -40,4 +40,5 @@ self.addEventListener('fetch', event => {
     fetch(event.request).catch(() => caches.match(event.request))
   );
 });
+
 

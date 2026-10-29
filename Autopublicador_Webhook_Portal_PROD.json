@@ -1,0 +1,980 @@
+{
+  "name": "NNN Autopublicador IA (Cron 18hs + Portal Web CrocScale)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 18 * * *"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1264,
+        2096
+      ],
+      "id": "207323b9-dcae-45df-8a6d-525c4bd236c9",
+      "name": "Schedule Trigger (18:00 hs Feed)1"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "propertyName": "estado_ia",
+        "key": "BOT_STATUS_NNN_IG",
+        "options": {}
+      },
+      "id": "872b5acf-e646-45c1-ac4b-80aa30a9cd16",
+      "name": "Consultar si IA esta prendida3",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        -992,
+        2096
+      ],
+      "credentials": {
+        "redis": {
+          "id": "g18Rp5JLDMbWqCcr",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.estado_ia }}",
+              "rightValue": "OFF",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "e1edadfa-bc40-425d-b59b-fa05e05a8121",
+      "name": "IA Prendida?3",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -800,
+        2096
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "returnAll": true,
+        "filter": {
+          "driveId": {
+            "__rl": true,
+            "value": "My Drive",
+            "mode": "list",
+            "cachedResultName": "My Drive",
+            "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+          },
+          "folderId": {
+            "__rl": true,
+            "value": "1Tqu0lGDDETlIwtpAA5w7zsjkgLtU8SVv",
+            "mode": "list",
+            "cachedResultName": "NNN.Public.2026",
+            "cachedResultUrl": "https://drive.google.com/drive/folders/1Tqu0lGDDETlIwtpAA5w7zsjkgLtU8SVv"
+          }
+        },
+        "options": {}
+      },
+      "name": "1a. Buscar Fotos Feed2",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -608,
+        1920
+      ],
+      "id": "42e8b441-c7cc-4b44-a25a-9e40ac83ed95",
+      "executeOnce": true,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "3HuY6vo5wwgyvfmD",
+          "name": "Google Drive NNN"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "returnAll": true,
+        "filter": {
+          "folderId": {
+            "__rl": true,
+            "value": "1WDQSvu9qvL7MadLJDuJwhrgf2XdRXd1T",
+            "mode": "list",
+            "cachedResultName": "NNN.Story.2026",
+            "cachedResultUrl": "https://drive.google.com/drive/folders/1WDQSvu9qvL7MadLJDuJwhrgf2XdRXd1T"
+          }
+        },
+        "options": {}
+      },
+      "name": "1b. Buscar Fotos Story2",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -416,
+        1920
+      ],
+      "id": "c4767b3c-a8b4-4c51-87a8-9d678752ec66",
+      "executeOnce": true,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "3HuY6vo5wwgyvfmD",
+          "name": "Google Drive NNN"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "13OZcCBHrVufQSB4HcZu1Vgnu6uYAGLFpWrwW-x347aw",
+          "mode": "list",
+          "cachedResultName": "NachaHome",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/13OZcCBHrVufQSB4HcZu1Vgnu6uYAGLFpWrwW-x347aw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1194881315,
+          "mode": "list",
+          "cachedResultName": "ContenidoNNN",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/13OZcCBHrVufQSB4HcZu1Vgnu6uYAGLFpWrwW-x347aw/edit#gid=1194881315"
+        },
+        "options": {}
+      },
+      "name": "2. Leer Sheets (Publicadas)3",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        -224,
+        1920
+      ],
+      "id": "a343bddd-ed43-4efc-8f04-45296f40bc20",
+      "executeOnce": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "hMRjCOIdJsrsXsOU",
+          "name": "Google Sheets NNN"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1dlWKIScKbKtwNcU0ETTbR06VerGG-OPpAgYQCwRzyMA",
+          "mode": "list",
+          "cachedResultName": "Stock_Bross_JeanC",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1dlWKIScKbKtwNcU0ETTbR06VerGG-OPpAgYQCwRzyMA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1258458893,
+          "mode": "list",
+          "cachedResultName": "BrossPrecios",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1dlWKIScKbKtwNcU0ETTbR06VerGG-OPpAgYQCwRzyMA/edit#gid=1258458893"
+        },
+        "options": {}
+      },
+      "name": "2b. Leer Catálogo (Sheets)5",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        -32,
+        1920
+      ],
+      "id": "49c569f9-0e72-483e-baf4-358f4316aa23",
+      "executeOnce": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "hMRjCOIdJsrsXsOU",
+          "name": "Google Sheets NNN"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// ==========================================\n// 1. OBTENER FECHA Y HORA ACTUAL (ARGENTINA UTC-3)\n// ==========================================\nconst timezoneOffset = -3 * 60;\nconst now = new Date();\nconst localDate = new Date(now.getTime() + (now.getTimezoneOffset() + timezoneOffset) * 60000);\nconst todayDay = localDate.getDate();\nconst todayMonth = localDate.getMonth() + 1;\nconst todayScore = todayMonth * 100 + todayDay;\n\nfunction cleanFileName(filename) {\n  if (!filename) return '';\n  let clean = filename.replace(/\\.[^/.]+$/, '');\n  clean = clean.replace(/^(?:\\d{1,2}[\\/._-]\\d{1,2})[\\s._-]*/i, '');\n  clean = clean.replace(/^(?:FEED|STORY|09HS|18HS|20HS)[\\s._-]*/gi, '');\n  clean = clean.replace(/^(?:Art\\.?|Articulo|Modelo|Num)[\\s._-]*/i, '');\n  clean = clean.replace(/[\\s._-]*(?:FEED|STORY|09HS|18HS|20HS)+$/gi, '');\n  clean = clean.replace(/\\s*(?:\\(\\d+\\)|_\\d+)$/, '');\n  return clean.trim();\n}\n\nfunction getFileDate(filename) {\n  if (!filename) return null;\n  const match = filename.match(/^([0-9]{1,2})[\\/\\-_\\.]([0-9]{1,2})(?:[.\\s_-]+|(?=[A-Za-z0-9]))/);\n  if (match) {\n    const p1 = parseInt(match[1], 10);\n    const p2 = parseInt(match[2], 10);\n    if (p1 >= 1 && p1 <= 31 && p2 >= 1 && p2 <= 12) {\n      return { day: p1, month: p2 };\n    }\n  }\n  return null;\n}\n\nfunction formatPrice(rawPrice) {\n  if (!rawPrice && rawPrice !== 0) return '';\n  const cleanStr = String(rawPrice).replace(/\\s+/g, '');\n  const num = Number(cleanStr.replace(/[^0-9]/g, ''));\n  if (!isNaN(num) && num > 0) {\n    return '$' + num.toLocaleString('es-AR');\n  }\n  const str = String(rawPrice).trim();\n  return str.startsWith('$') ? str : '$' + str;\n}\n\nfunction extractFileInfo(item) {\n  if (!item) return null;\n  const j = item.json || item;\n  const id = j.id || (item.json && item.json.id) || j.fileId || j.file_id;\n  const name = j.name || (item.json && item.json.name) || j.fileName || j.file_name;\n  if (!id || !name) return null;\n  return { id: String(id).trim(), name: String(name).trim() };\n}\n\n// ==========================================\n// 2. OBTENER ITEMS DE NODOS PREVIOS\n// ==========================================\nfunction getItemsFromNodes(possibleBases) {\n  const suffixes = ['', '1', '2', '3', '4', '5', '6', '7', '8', '9'];\n  for (const base of possibleBases) {\n    for (const suffix of suffixes) {\n      try {\n        const fullName = base + suffix;\n        const items = $(fullName).all();\n        if (items && items.length > 0) return items;\n      } catch(e) {}\n    }\n  }\n  return [];\n}\n\nconst rawFeedFiles = getItemsFromNodes(['1a. Buscar Fotos Feed', 'Buscar Fotos Feed']);\nconst rawStoryFiles = getItemsFromNodes(['1b. Buscar Fotos Story', 'Buscar Fotos Story']);\nconst rawPublished = getItemsFromNodes(['2. Leer Sheets (Publicadas)', 'Leer Sheets (Publicadas)']);\nconst rawCatalogSheets = getItemsFromNodes(['2b. Leer Catálogo (Sheets)', 'Leer Catálogo (Sheets)']);\nconst rawCatalogBazar = getItemsFromNodes(['Leer catalogo Bazar', 'catalogo Bazar', 'stock_bazar_nnn']);\n\nconst combinedCatalog = [...rawCatalogSheets, ...rawCatalogBazar];\n\n// ==========================================\n// 3. NORMALIZAR PUBLICACIONES PREVIAS\n// ==========================================\nconst publishedSet = new Set();\nrawPublished.forEach(row => {\n  const r = row.json || row;\n  const pubName = r['Publicadado en instagram ?'] || r.file_name || r.fileName || r.Name || r.name;\n  const pubId = r.file_id || r.fileId || r.FileID || r.id;\n  if (pubName && String(pubName).trim().length > 0 && String(pubName).trim().toLowerCase() !== 'no' && String(pubName).trim().toLowerCase() !== 'false') {\n    String(pubName).split(',').forEach(part => {\n      const p = part.trim().toLowerCase();\n      if (p) publishedSet.add(p);\n    });\n  }\n  if (pubId && String(pubId).trim().length > 0) {\n    publishedSet.add(String(pubId).trim());\n  }\n});\n\n// ==========================================\n// 4. PROCESAR FOTOS DE FEED (RETENIENDO TODAS PARA CARRUSEL)\n// ==========================================\nconst feedFiles = [];\nrawFeedFiles.forEach(item => {\n  const info = extractFileInfo(item);\n  if (!info) return;\n  \n  const nameClean = cleanFileName(info.name);\n  const dateInfo = getFileDate(info.name);\n  const isPub = publishedSet.has(info.name.toLowerCase()) || publishedSet.has(info.id);\n  \n  feedFiles.push({\n    id: info.id,\n    name: info.name,\n    nameClean,\n    dateInfo,\n    isPublished: isPub\n  });\n});\n\nif (feedFiles.length === 0) {\n  return [{\n    json: {\n      has_post: false,\n      message: 'No se encontraron fotos en la carpeta de Feed de Google Drive.'\n    }\n  }];\n}\n\n// ==========================================\n// 5. AGRUPAR FOTOS POR FECHA + ARTÍCULO / SKU BASE (CARRUSEL)\n// ==========================================\nconst grouped = {};\nfeedFiles.forEach(file => {\n  const dateKey = file.dateInfo ? `${file.dateInfo.day}_${file.dateInfo.month}_` : 'NODATE_';\n  const key = dateKey + (file.nameClean || file.name).toUpperCase();\n  if (!grouped[key]) {\n    grouped[key] = {\n      cleanName: file.nameClean || file.name,\n      dateInfo: file.dateInfo,\n      files: [],\n      hasUnpublished: false\n    };\n  }\n  grouped[key].files.push(file);\n  if (!file.isPublished) {\n    grouped[key].hasUnpublished = true;\n  }\n});\n\nconst groups = Object.values(grouped);\n\n// ==========================================\n// 6. SELECCIÓN SEGURA DEL LOTE DE HOY (SIN ROBAR FECHAS FUTURAS)\n// ==========================================\n// Prioridad 1: Foto programada para HOY que aún no se publicó\nlet candidateGroup = groups.find(g => \n  g.hasUnpublished && g.dateInfo && g.dateInfo.day === todayDay && g.dateInfo.month === todayMonth\n);\n\n// Prioridad 2: Fotos de días PASADOS que hayan quedado sin publicar (nunca fechas futuras > hoy)\nif (!candidateGroup) {\n  const unpostedPastDated = groups.filter(g => {\n    if (!g.hasUnpublished || !g.dateInfo) return false;\n    const score = g.dateInfo.month * 100 + g.dateInfo.day;\n    return score <= todayScore;\n  });\n  if (unpostedPastDated.length > 0) {\n    unpostedPastDated.sort((a, b) => {\n      const scoreA = a.dateInfo.month * 100 + a.dateInfo.day;\n      const scoreB = b.dateInfo.month * 100 + b.dateInfo.day;\n      return scoreB - scoreA;\n    });\n    candidateGroup = unpostedPastDated[0];\n  }\n}\n\n// Prioridad 3: Fotos sin fecha en el nombre que aún no se publicaron\nif (!candidateGroup) {\n  candidateGroup = groups.find(g => g.hasUnpublished && !g.dateInfo);\n}\n\nif (!candidateGroup) {\n  return [{\n    json: {\n      has_post: false,\n      message: `No hay publicaciones pendientes para hoy (${todayDay}/${todayMonth}). Las fotos restantes en Drive corresponden a fechas futuras programadas.`\n    }\n  }];\n}\n\nconst selectedFeedFiles = candidateGroup.files.filter(f => !f.isPublished);\nconst filesToPost = selectedFeedFiles.length > 0 ? selectedFeedFiles : candidateGroup.files;\nconst firstImage = filesToPost[0];\n\n// ==========================================\n// 7. BUSCAR STORY CORRESPONDIENTE\n// ==========================================\nlet storyMatch = null;\nrawStoryFiles.forEach(item => {\n  const info = extractFileInfo(item);\n  if (!info) return;\n  const sNameClean = cleanFileName(info.name);\n  const sDate = getFileDate(info.name);\n  \n  if (sNameClean.toLowerCase() === candidateGroup.cleanName.toLowerCase()) {\n    if (!storyMatch || /09hs|18hs|20hs/i.test(info.name)) {\n      storyMatch = info;\n    }\n  } else if (candidateGroup.dateInfo && sDate && sDate.day === candidateGroup.dateInfo.day && sDate.month === candidateGroup.dateInfo.month) {\n    if (!storyMatch) storyMatch = info;\n  }\n});\n\n// ==========================================\n// 8. BUSCAR DATOS EXACTOS EN AMBOS CATÁLOGOS (SKU / ARTÍCULO)\n// ==========================================\nconst skuMatch = firstImage.name.match(/([A-Za-z]{1,4}[-_]?[0-9]{3,5}(?:[-_][0-9]{1,3})?|[0-9]{4,6}(?:[-_][0-9]{1,3})?)/);\nconst targetSku = skuMatch ? skuMatch[1].toUpperCase().replace(/[^A-Z0-9]/g, '') : candidateGroup.cleanName.toUpperCase().replace(/[^A-Z0-9]/g, '');\n\nlet foundCatalog = null;\n\nfor (const row of combinedCatalog) {\n  const r = row.json || row;\n  \n  const skuField = String(r.SKU || r['Artículo'] || r.Articulo || r.Art || r.Codigo || r.Modelo || '').trim().toUpperCase();\n  const cleanSkuField = skuField.replace(/[^A-Z0-9]/g, '');\n\n  if (targetSku && cleanSkuField && (targetSku === cleanSkuField || targetSku.includes(cleanSkuField) || cleanSkuField.includes(targetSku))) {\n    foundCatalog = r;\n    break;\n  }\n\n  const rowValues = Object.values(r).join(' ').toUpperCase();\n  if (candidateGroup.cleanName && rowValues.includes(candidateGroup.cleanName.toUpperCase())) {\n    foundCatalog = r;\n    break;\n  }\n}\n\nlet producto = 'Bross London / NNN';\nlet articulo = candidateGroup.cleanName;\nlet modeloNombre = candidateGroup.cleanName;\nlet precioFinal = '';\nlet caracteristicas = '';\nlet variantes = 'Surtidas / Único';\n\nif (foundCatalog) {\n  const rawPrice = foundCatalog.Precio !== undefined ? foundCatalog.Precio :\n                   foundCatalog.PRECIO !== undefined ? foundCatalog.PRECIO :\n                   foundCatalog['Precio publico'] !== undefined ? foundCatalog['Precio publico'] :\n                   foundCatalog['Precio Mayorista'] !== undefined ? foundCatalog['Precio Mayorista'] : '';\n\n  precioFinal = formatPrice(rawPrice);\n  producto = foundCatalog.Producto || foundCatalog.Nombre || producto;\n  articulo = foundCatalog.SKU || foundCatalog['Artículo'] || foundCatalog.Articulo || foundCatalog.Art || articulo;\n  caracteristicas = foundCatalog.Descripcion || foundCatalog.Descripción || foundCatalog.Caracteristica || foundCatalog.Características || foundCatalog.Detalle || '';\n  variantes = foundCatalog.Medida || foundCatalog.Talles || foundCatalog.Variantes || variantes;\n  modeloNombre = producto ? `${producto} (${articulo})` : articulo;\n}\n\n// ==========================================\n// 9. PAYLOAD DEFINITIVO CON SOPORTE PARA CARRUSEL\n// ==========================================\nreturn [{\n  json: {\n    from_webhook: false,\n    has_post: true,\n    is_feed_post: true,\n    id: firstImage.id,\n    name: firstImage.name,\n    file_id: firstImage.id,\n    file_name: firstImage.name,\n    feed_files: filesToPost,\n    story_files: storyMatch ? [storyMatch] : [],\n    tipo_publicacion: filesToPost.length > 1 ? 'carrusel' : 'post',\n    media_count: filesToPost.length,\n    image_ids: filesToPost.map(f => f.id),\n    image_names: filesToPost.map(f => f.name),\n    story_id: storyMatch ? storyMatch.id : null,\n    story_name: storyMatch ? storyMatch.name : null,\n    producto: producto,\n    articulo: articulo,\n    modelo: modeloNombre,\n    precio: precioFinal || '$59.000',\n    caracteristicas: caracteristicas,\n    variantes: variantes,\n    fecha_detectada: candidateGroup.dateInfo ? `${candidateGroup.dateInfo.day}/${candidateGroup.dateInfo.month}` : 'Sin fecha',\n    date_target: `${todayDay}/${todayMonth}`\n  }\n}];"
+      },
+      "name": "3. Elegir Foto Nueva2",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        432,
+        1936
+      ],
+      "id": "77f2c591-1e67-46d5-9cfc-f2ac07e6cc41",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "c_post",
+              "leftValue": "={{ $json.has_post }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Hay Foto para Publicar?2",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        608,
+        1936
+      ],
+      "id": "53820005-5c69-4a68-a5eb-8603ffba796b"
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "options": {
+          "temperature": 0.7
+        }
+      },
+      "name": "OpenAI Chat Model (Post)5",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        864,
+        2208
+      ],
+      "id": "f80c1aad-76ae-47fa-92e2-f971332a9314",
+      "credentials": {
+        "openAiApi": {
+          "id": "TGlBscz4t1q4FX8l",
+          "name": "OpenAi"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Sos el redactor de contenidos oficial de NNN / Bross London.\nTu objetivo es crear un copy magnético para una publicación en Instagram (Feed/Carrusel) presentando el producto:\n\n- Producto: {{ $json.producto }}\n- Modelo / Artículo: {{ $json.modelo }}\n- Precio: {{ $json.precio }}\n- Características / Detalles: {{ $json.caracteristicas }}\n- Variantes / Medida: {{ $json.variantes }}\n- Tipo de Publicación: {{ $json.tipo_publicacion }}\n\nPAUTAS:\n1. Tono moderno, premium, masculino y directo de la marca Bross.\n2. Adaptá el mensaje al producto específico (si es lunchera/accesorio destaca funcionalidad, durabilidad y estilo; si es indumentaria/boxers destaca comodidad y calce; si son medias destaca diseño y calidad).\n3. Resaltá las características reales del producto y el precio exacto ({{ $json.precio }}).\n4. Incluí llamado a la acción claro para comprar por mayor o menor vía WhatsApp (link en la bio).\n5. Máximo 2 a 3 párrafos cortos y hashtags clave relevantes al producto (#BrossLondon #NNN #ModaMasculina #Accesorios #Mayorista).\n\nEscribí únicamente el texto del post listo para copiar y pegar, sin introducciones."
+      },
+      "name": "Redactar Copy con IA5",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.4,
+      "position": [
+        816,
+        1936
+      ],
+      "id": "f944577a-ec32-4446-9380-48628ec3e8c6"
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('3. Elegir Foto Nueva2').item.json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "name": "4. Descargar Foto Elegida2",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1168,
+        1936
+      ],
+      "id": "f31e4eed-3676-4411-b311-438884553bc7",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "3HuY6vo5wwgyvfmD",
+          "name": "Google Drive NNN"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));\n\nasync function waitForContainer(containerId, token, helpers) {\n  let status = 'IN_PROGRESS';\n  let attempts = 0;\n  while ((status === 'IN_PROGRESS' || status === 'PENDING') && attempts < 30) {\n    await sleep(2000);\n    let res;\n    try {\n      res = await helpers.httpRequest({\n        method: 'GET',\n        url: `https://graph.facebook.com/v19.0/${containerId}`,\n        qs: { fields: 'status_code', access_token: token }\n      });\n    } catch (e) {\n      const errData = e.response && e.response.data ? e.response.data : e;\n      throw new Error(`Error consultando estado del contenedor ${containerId}: ` + JSON.stringify(errData));\n    }\n    status = res.status_code;\n    attempts++;\n  }\n  if (status !== 'FINISHED') {\n    throw new Error(`El contenedor ${containerId} no terminó de procesarse. Estado final: ${status}`);\n  }\n}\n\nconst token = 'EAAITZCnQlvIABRnU3NBVjULr0z46vdpDSlpPkgfaAZANQGRP0ocmfn0jjucOSj3HEFZAcIcYKjlfj7IXQUGMJixZCh0zZBm4oRj5sCyYg3aEENahoubKy8zeb7ZB4Hm506QyQy4Dihs3WbK7MWf5MwYmFkZC3yowkZAtpkswZCScTPJxZCmdIxWxwayiUTaqadJghU6YQZC';\nconst igUserId = '17841475845281408';\n\n// Soportar tanto entrada desde el Portal Web (from_webhook: true) como el Cron de las 18:00 hs\nconst inputData = $input.first().json || {};\nfunction getChosenInfo() {\n  if (inputData && inputData.from_webhook) {\n    return inputData;\n  }\n  const suffixes = ['', '1', '2', '3', '4', '5', '6'];\n  for (const s of suffixes) {\n    try {\n      const info = $(`3. Elegir Foto Nueva${s}`).item.json;\n      if (info && (info.feed_files || info.id)) return info;\n    } catch(e) {}\n  }\n  return inputData;\n}\n\nconst chosenInfo = getChosenInfo();\nlet files = chosenInfo.feed_files || [];\nif (files.length === 0 && chosenInfo.id && chosenInfo.is_feed_post !== false) {\n  files = [{ id: chosenInfo.id, name: chosenInfo.name }];\n}\n\nif (files.length === 0) {\n  return [{ json: { \n    ig_post_id: 'no_feed_post', \n    files: [],\n    story_files: chosenInfo.story_files || [],\n    from_webhook: Boolean(chosenInfo.from_webhook),\n    uploaded_files: chosenInfo.uploaded_files || [],\n    file_name: 'no_feed_post'\n  }}];\n}\n\n// Si vino recién subido desde el Portal Web, dar 2 seg a Google Drive para propagación de permisos del archivo\nif (chosenInfo.from_webhook) {\n  await sleep(2000);\n}\n\n// 1. Priorizar Copy personalizado enviado desde el Portal Web; 2. sino usar Copy de OpenAI\nlet caption = chosenInfo.custom_caption ? String(chosenInfo.custom_caption).trim() : '';\nif (!caption) {\n  const copySuffixes = ['', '1', '2', '3', '4', '5', '6'];\n  for (const s of copySuffixes) {\n    try {\n      const aiItem = $(`Redactar Copy con IA${s}`).item.json;\n      caption = aiItem.text || aiItem.output || aiItem.response || '';\n      if (caption) break;\n    } catch(e) {}\n  }\n}\n\nif (!caption) {\n  caption = `🔥 ${chosenInfo.producto || 'Novedades'} ${chosenInfo.articulo || ''} 🔥\\n\\n${chosenInfo.caracteristicas || ''}\\n\\n💰 Precio: ${chosenInfo.precio || ''}\\n\\n📦 Envíos a todo el país.\\n👉 Comprá al link de la bio.`;\n}\n\nlet igPostId = '';\n\nif (files.length === 1) {\n  const fileId = files[0].id;\n  const fileName = files[0].name.toLowerCase();\n  const fileUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;\n  \n  const isVideo = fileName.endsWith('.mp4') || fileName.endsWith('.mov');\n\n  let createRes;\n  try {\n    if (isVideo) {\n      createRes = await this.helpers.httpRequest({\n        method: 'POST',\n        url: `https://graph.facebook.com/v19.0/${igUserId}/media`,\n        qs: { \n          video_url: fileUrl, \n          media_type: 'REELS', \n          caption: caption, \n          share_to_feed: true, \n          access_token: token \n        }\n      });\n    } else {\n      createRes = await this.helpers.httpRequest({\n        method: 'POST',\n        url: `https://graph.facebook.com/v19.0/${igUserId}/media`,\n        qs: { image_url: fileUrl, caption: caption, access_token: token }\n      });\n    }\n  } catch (error) {\n    const errData = error.response && error.response.data ? error.response.data : error;\n    const tipoStr = isVideo ? 'Reel' : 'Imagen';\n    throw new Error(`Meta API Error al crear contenedor de ${tipoStr}: ` + JSON.stringify(errData));\n  }\n\n  await waitForContainer(createRes.id, token, this.helpers);\n\n  let publishRes;\n  try {\n    publishRes = await this.helpers.httpRequest({\n      method: 'POST',\n      url: `https://graph.facebook.com/v19.0/${igUserId}/media_publish`,\n      qs: { creation_id: createRes.id, access_token: token }\n    });\n  } catch (error) { \n    const errData = error.response && error.response.data ? error.response.data : error;\n    throw new Error('Meta API Error al publicar post/reel: ' + JSON.stringify(errData));\n  }\n\n  igPostId = publishRes.id;\n\n} else {\n  const childContainerIds = [];\n\n  for (const file of files.slice(0, 10)) {\n    const imageUrl = `https://drive.google.com/uc?export=download&id=${file.id}`;\n    let itemRes;\n    try {\n      itemRes = await this.helpers.httpRequest({\n        method: 'POST',\n        url: `https://graph.facebook.com/v19.0/${igUserId}/media`,\n        qs: { image_url: imageUrl, is_carousel_item: true, access_token: token }\n      });\n    } catch (error) {\n      const errData = error.response && error.response.data ? error.response.data : error;\n      throw new Error(`Meta API Error al crear item de carrusel para ${file.name}: ` + JSON.stringify(errData));\n    }\n    childContainerIds.push(itemRes.id);\n  }\n\n  for (const containerId of childContainerIds) {\n    await waitForContainer(containerId, token, this.helpers);\n  }\n\n  let carouselRes;\n  try {\n    carouselRes = await this.helpers.httpRequest({\n      method: 'POST',\n      url: `https://graph.facebook.com/v19.0/${igUserId}/media`,\n      qs: { \n        media_type: 'CAROUSEL',\n        children: childContainerIds.join(','), \n        caption: caption, \n        access_token: token \n      }\n    });\n  } catch (error) {\n    const errData = error.response && error.response.data ? error.response.data : error;\n    throw new Error('Meta API Error al crear contenedor carrusel: ' + JSON.stringify(errData));\n  }\n\n  await waitForContainer(carouselRes.id, token, this.helpers);\n\n  let publishRes;\n  try {\n    publishRes = await this.helpers.httpRequest({\n      method: 'POST',\n      url: `https://graph.facebook.com/v19.0/${igUserId}/media_publish`,\n      qs: { creation_id: carouselRes.id, access_token: token }\n    });\n  } catch (error) {\n    const errData = error.response && error.response.data ? error.response.data : error;\n    throw new Error('Meta API Error al publicar carrusel: ' + JSON.stringify(errData));\n  }\n\n  igPostId = publishRes.id;\n}\n\nreturn [{ json: { \n  ig_post_id: igPostId,\n  files: files,\n  story_files: chosenInfo.story_files || [],\n  from_webhook: Boolean(chosenInfo.from_webhook),\n  uploaded_files: chosenInfo.uploaded_files || [],\n  file_id: files[0].id,\n  fileId: files[0].id,\n  FileID: files[0].id,\n  file_name: files.map(f => f.name).join(', '),\n  fileName: files.map(f => f.name).join(', ')\n}}];"
+      },
+      "name": "5. Publicar Feed (Post)5",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1408,
+        1936
+      ],
+      "id": "9d2b4c9f-a349-4a0a-85c0-68adf9a61f34"
+    },
+    {
+      "parameters": {
+        "jsCode": "const token = 'EAAITZCnQlvIABRnU3NBVjULr0z46vdpDSlpPkgfaAZANQGRP0ocmfn0jjucOSj3HEFZAcIcYKjlfj7IXQUGMJixZCh0zZBm4oRj5sCyYg3aEENahoubKy8zeb7ZB4Hm506QyQy4Dihs3WbK7MWf5MwYmFkZC3yowkZAtpkswZCScTPJxZCmdIxWxwayiUTaqadJghU6YQZC';\nconst igUserId = '17841475845281408';\n\nconst inputData = $input.first().json || {};\nfunction getChosenInfo() {\n  if (inputData && inputData.from_webhook) {\n    return inputData;\n  }\n  const suffixes = ['', '1', '2', '3', '4', '5', '6'];\n  for (const s of suffixes) {\n    try {\n      const info = $(`3. Elegir Foto Nueva${s}`).item.json;\n      if (info && (info.story_files || info.story_id)) return info;\n    } catch(e) {}\n  }\n  return inputData;\n}\n\nconst chosenInfo = getChosenInfo();\nlet storyFiles = chosenInfo.story_files || [];\nif (storyFiles.length === 0 && chosenInfo.story_id) {\n  storyFiles = [{ id: chosenInfo.story_id, name: chosenInfo.story_name || 'Story' }];\n}\n\nconst igPostId = inputData.ig_post_id;\n\nconst storyIds = [];\nconst successfulStoryIds = [];\nconst failedStories = [];\nconst sleep = ms => new Promise(resolve => setTimeout(resolve, ms));\n\nasync function waitForContainer(containerId, token, helpers) {\n  let status = 'IN_PROGRESS';\n  let attempts = 0;\n  while ((status === 'IN_PROGRESS' || status === 'PENDING') && attempts < 30) {\n    await sleep(2000);\n    let res;\n    try {\n      res = await helpers.httpRequest({\n        method: 'GET',\n        url: `https://graph.facebook.com/v19.0/${containerId}`,\n        qs: { fields: 'status_code', access_token: token }\n      });\n    } catch (e) {\n      const errData = e.response && e.response.data ? e.response.data : e;\n      throw new Error(`Error consultando estado del contenedor de story ${containerId}: ` + JSON.stringify(errData));\n    }\n    status = res.status_code;\n    attempts++;\n  }\n  if (status !== 'FINISHED') {\n    throw new Error(`El contenedor de story ${containerId} no terminó de procesarse. Estado final: ${status}`);\n  }\n}\n\nfor (const file of storyFiles.slice(0, 10)) {\n  const fileUrl = `https://drive.google.com/uc?export=download&id=${file.id}`;\n  const isVideo = /\\.(mp4|mov)$/i.test(file.name || '');\n  \n  try {\n    const qsParams = isVideo\n      ? { video_url: fileUrl, media_type: 'STORIES', access_token: token }\n      : { image_url: fileUrl, media_type: 'STORIES', access_token: token };\n\n    const createRes = await this.helpers.httpRequest({\n      method: 'POST',\n      url: `https://graph.facebook.com/v19.0/${igUserId}/media`,\n      qs: qsParams\n    });\n\n    await waitForContainer(createRes.id, token, this.helpers);\n\n    const publishRes = await this.helpers.httpRequest({\n      method: 'POST',\n      url: `https://graph.facebook.com/v19.0/${igUserId}/media_publish`,\n      qs: { creation_id: createRes.id, access_token: token }\n    });\n\n    storyIds.push(publishRes.id);\n    successfulStoryIds.push(file.id);\n  } catch (error) {\n    const errData = error.response && error.response.data ? error.response.data : error;\n    failedStories.push({\n      name: file.name,\n      id: file.id,\n      error: error.message || JSON.stringify(errData)\n    });\n  }\n}\n\nconst feedFiles = inputData.files || [];\nconst allPublished = [];\nconst nowIso = new Date().toISOString();\n\nfor (const f of feedFiles) {\n  allPublished.push({\n    ig_story_ids: storyIds.join(', '),\n    ig_post_id: igPostId,\n    file_id: f.id,\n    fileId: f.id,\n    FileID: f.id,\n    file_name: f.name,\n    fileName: f.name,\n    timestamp: nowIso,\n    from_webhook: Boolean(inputData.from_webhook)\n  });\n}\n\nfor (const f of storyFiles) {\n  if (successfulStoryIds.includes(f.id)) {\n    if (!feedFiles.some(feedF => feedF.id === f.id)) {\n      allPublished.push({\n        ig_story_ids: storyIds.join(', '),\n        ig_post_id: igPostId,\n        file_id: f.id,\n        fileId: f.id,\n        FileID: f.id,\n        file_name: f.name,\n        fileName: f.name,\n        timestamp: nowIso,\n        from_webhook: Boolean(inputData.from_webhook)\n      });\n    }\n  }\n}\n\nif (allPublished.length === 0) {\n  return [{ json: { \n    ig_post_id: igPostId,\n    ig_story_ids: storyIds.join(', '),\n    from_webhook: Boolean(inputData.from_webhook),\n    status: 'no_publications_saved', \n    failed_stories: failedStories \n  }}];\n}\n\nconst result = allPublished.map((item, index) => {\n  if (index === 0) {\n    return { json: { ...item, failed_stories: failedStories } };\n  }\n  return { json: item };\n});\n\nreturn result;"
+      },
+      "name": "6. Publicar Story5",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1584,
+        1936
+      ],
+      "id": "655c7e76-6e45-4255-938c-60238f4d28c9"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "13OZcCBHrVufQSB4HcZu1Vgnu6uYAGLFpWrwW-x347aw",
+          "mode": "list",
+          "cachedResultName": "NachaHome",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/13OZcCBHrVufQSB4HcZu1Vgnu6uYAGLFpWrwW-x347aw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1194881315,
+          "mode": "list",
+          "cachedResultName": "ContenidoNNN",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/13OZcCBHrVufQSB4HcZu1Vgnu6uYAGLFpWrwW-x347aw/edit#gid=1194881315"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {
+            "Publicadado en instagram ?": "={{ $json.file_name }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Modelo",
+              "displayName": "Modelo",
+              "type": "string"
+            },
+            {
+              "id": "Art",
+              "displayName": "Art",
+              "type": "string"
+            },
+            {
+              "id": "Publicadado en instagram ?",
+              "displayName": "Publicadado en instagram ?",
+              "type": "string"
+            },
+            {
+              "id": "ig_story_id",
+              "displayName": "ig_story_id",
+              "type": "string"
+            },
+            {
+              "id": "ig_post_id",
+              "displayName": "ig_post_id",
+              "type": "string"
+            },
+            {
+              "id": "file_id",
+              "displayName": "file_id",
+              "type": "string"
+            },
+            {
+              "id": "file_name",
+              "displayName": "file_name",
+              "type": "string"
+            },
+            {
+              "id": "ig_story_ids",
+              "displayName": "ig_story_ids",
+              "type": "string"
+            },
+            {
+              "id": "fileId",
+              "displayName": "fileId",
+              "type": "string"
+            },
+            {
+              "id": "FileID",
+              "displayName": "FileID",
+              "type": "string"
+            },
+            {
+              "id": "fileName",
+              "displayName": "fileName",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "7. Guardar en Sheets5",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        1760,
+        1936
+      ],
+      "id": "ebe4bd4a-0fc9-4ca8-bd64-f30051732ccb",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "hMRjCOIdJsrsXsOU",
+          "name": "Google Sheets NNN"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -512,
+        2320
+      ],
+      "id": "e0b4ca1f-3df5-46cb-b2c2-3eb314e3b89e",
+      "name": "No Operation, do nothing3"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        608,
+        2240
+      ],
+      "id": "fb38d789-6e36-4bb3-a2f9-6f46a3335e51",
+      "name": "No Post Hoy, do nothing2"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "iaf1feUEB4CfADYj",
+          "mode": "list",
+          "cachedResultName": "stock_bazar_nnn",
+          "cachedResultUrl": "/projects/6oZmAsyQxxzsVzs1/datatables/iaf1feUEB4CfADYj"
+        },
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        208,
+        1936
+      ],
+      "id": "8301fc48-daa1-4ca3-8c68-f0a61cae9742",
+      "name": "Leer catalogo Bazar1",
+      "executeOnce": true
+    },
+    {
+      "parameters": {},
+      "id": "10c97cb9-fa87-468b-a727-1a1fcc07a5b3",
+      "name": "When clicking Execute Workflow",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1232,
+        2416
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "autopublicador-upload",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "a1b2c3d4-0001-4000-8000-000000000001",
+      "name": "Webhook Portal Autopublicador",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -608,
+        1520
+      ],
+      "webhookId": "crocscale-autopublicador-upload"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ==========================================\n// RECIBIR ARCHIVOS DESDE PORTAL WEB (app.crocscale.com)\n// Soporta application/json y text/plain (CORS Simple Request)\n// ==========================================\nconst raw = $input.first().json || {};\nlet body = raw.body !== undefined ? raw.body : raw;\nif (typeof body === 'string') {\n  try {\n    body = JSON.parse(body);\n  } catch (e) {\n    body = {};\n  }\n}\n\nconst uploads = Array.isArray(body.uploads) ? body.uploads : [];\nconst store = body.store || 'nnn';\nconst schedule = body.schedule || {};\nconst product = body.product || {};\nconst publishNow = Boolean(body.publishNow);\nconst caption = body.caption || '';\n\nconst defaultFeedFolder = '1Tqu0lGDDETlIwtpAA5w7zsjkgLtU8SVv'; // NNN.Public.2026\nconst defaultStoryFolder = '1WDQSvu9qvL7MadLJDuJwhrgf2XdRXd1T'; // NNN.Story.2026\n\nconst outItems = [];\nfor (let i = 0; i < uploads.length; i++) {\n  const u = uploads[i];\n  if (!u || !u.base64Data) continue;\n\n  const cleanB64 = String(u.base64Data).includes(',')\n    ? String(u.base64Data).split(',')[1]\n    : String(u.base64Data);\n\n  const buffer = Buffer.from(cleanB64, 'base64');\n  const fileName = u.fileName || `post_${Date.now()}_${i}.jpg`;\n  const mimeType = u.mimeType || (fileName.toLowerCase().endsWith('.mp4') ? 'video/mp4' : 'image/jpeg');\n\n  const binaryData = await this.helpers.prepareBinaryData(buffer, fileName, mimeType);\n  const role = u.role || 'feed';\n  const folderId = u.folderId || (role === 'story' ? defaultStoryFolder : defaultFeedFolder);\n\n  outItems.push({\n    json: {\n      uploadIdx: i,\n      store,\n      role,\n      folderId,\n      fileName,\n      mimeType,\n      isVideo: Boolean(u.isVideo) || /\\.(mp4|mov)$/i.test(fileName),\n      publishNow,\n      caption,\n      sku: product.sku || '',\n      productName: product.name || '',\n      price: product.price || '',\n      variants: product.variants || '',\n      features: product.features || '',\n      scheduledDate: schedule.date || '',\n      target: schedule.target || 'both'\n    },\n    binary: {\n      data: binaryData\n    }\n  });\n}\n\nif (outItems.length === 0) {\n  throw new Error('No se recibieron archivos válidos en uploads[] desde el portal.');\n}\n\nreturn outItems;"
+      },
+      "id": "a1b2c3d4-0002-4000-8000-000000000002",
+      "name": "8a. Preparar Archivos del Portal",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -352,
+        1520
+      ]
+    },
+    {
+      "parameters": {
+        "name": "={{ $json.fileName }}",
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list",
+          "cachedResultName": "My Drive",
+          "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "={{ $json.folderId }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0003-4000-8000-000000000003",
+      "name": "8b. Subir Archivo a Drive NNN",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -96,
+        1520
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "3HuY6vo5wwgyvfmD",
+          "name": "Google Drive NNN"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// ==========================================\n// CONSOLIDAR ARCHIVOS SUBIDOS A GOOGLE DRIVE\n// Y PREPARAR ESTRUCTURA SI EL USUARIO ELIGIÓ 'PUBLICAR AHORA'\n// ==========================================\nconst uploadedItems = $input.all();\nconst prepItems = $('8a. Preparar Archivos del Portal').all();\n\nconst firstPrep = (prepItems[0] && prepItems[0].json) ? prepItems[0].json : {};\nconst publishNow = Boolean(firstPrep.publishNow);\n\nconst feedFiles = [];\nconst storyFiles = [];\nconst allUploaded = [];\n\nfor (let i = 0; i < uploadedItems.length; i++) {\n  const up = uploadedItems[i].json || {};\n  const meta = (prepItems[i] && prepItems[i].json) ? prepItems[i].json : firstPrep;\n  const fileId = up.id;\n  const fileName = up.name || meta.fileName || 'post.jpg';\n  const role = meta.role || 'feed';\n\n  if (fileId) {\n    const fileObj = {\n      id: String(fileId).trim(),\n      name: String(fileName).trim(),\n      role,\n      folderId: meta.folderId || ''\n    };\n    allUploaded.push(fileObj);\n    if (role === 'story') {\n      storyFiles.push({ id: fileObj.id, name: fileObj.name });\n    } else {\n      feedFiles.push({ id: fileObj.id, name: fileObj.name });\n    }\n  }\n}\n\nconst firstFeed = feedFiles[0] || storyFiles[0] || { id: '', name: '' };\nconst firstStory = storyFiles[0] || null;\n\nreturn [{\n  json: {\n    from_webhook: true,\n    publish_now: publishNow,\n    has_post: true,\n    is_feed_post: feedFiles.length > 0,\n    id: firstFeed.id,\n    name: firstFeed.name,\n    file_id: firstFeed.id,\n    file_name: firstFeed.name,\n    feed_files: feedFiles,\n    story_files: storyFiles,\n    uploaded_files: allUploaded,\n    tipo_publicacion: feedFiles.length > 1 ? 'carrusel' : 'post',\n    media_count: feedFiles.length || storyFiles.length || 1,\n    image_ids: feedFiles.map(f => f.id),\n    image_names: feedFiles.map(f => f.name),\n    story_id: firstStory ? firstStory.id : null,\n    story_name: firstStory ? firstStory.name : null,\n    producto: firstPrep.productName || 'Bross London / NNN',\n    articulo: firstPrep.sku || '',\n    modelo: firstPrep.productName ? `${firstPrep.productName} (${firstPrep.sku})` : (firstPrep.sku || ''),\n    precio: firstPrep.price || '$59.000',\n    caracteristicas: firstPrep.features || '',\n    variantes: firstPrep.variants || 'Surtidas / Único',\n    custom_caption: firstPrep.caption || '',\n    scheduled_date: firstPrep.scheduledDate || '',\n    target: firstPrep.target || 'both'\n  }\n}];"
+      },
+      "id": "a1b2c3d4-0004-4000-8000-000000000004",
+      "name": "8c. Consolidar Subida Drive",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        160,
+        1520
+      ],
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "c_pub_now",
+              "leftValue": "={{ $json.publish_now }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0005-4000-8000-000000000005",
+      "name": "8d. ¿Publicar Ahora en IG?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        432,
+        1520
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, mode: 'scheduled', message: 'Archivos subidos a Google Drive correctamente', uploaded_files: $json.uploaded_files || [], scheduled_date: $json.scheduled_date || '' }) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "id": "a1b2c3d4-0006-4000-8000-000000000006",
+      "name": "9b. Responder Portal (Programado en Drive)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        736,
+        1424
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "c_from_wh",
+              "leftValue": "={{ $('8c. Consolidar Subida Drive').isExecuted }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0007-4000-8000-000000000007",
+      "name": "8e. ¿Vino del Portal Web?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1968,
+        1936
+      ],
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, mode: 'published_now', message: 'Publicado en Instagram y guardado en Google Drive y Sheets', ig_post_id: $('6. Publicar Story5').first().json.ig_post_id || '', ig_story_ids: $('6. Publicar Story5').first().json.ig_story_ids || '', uploaded_files: $('8c. Consolidar Subida Drive').first().json.uploaded_files || [] }) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "id": "a1b2c3d4-0008-4000-8000-000000000008",
+      "name": "9a. Responder Portal (Publicado Ahora OK)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2192,
+        1872
+      ],
+      "executeOnce": true
+    }
+  ],
+  "connections": {
+    "Schedule Trigger (18:00 hs Feed)1": {
+      "main": [
+        [
+          {
+            "node": "Consultar si IA esta prendida3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar si IA esta prendida3": {
+      "main": [
+        [
+          {
+            "node": "IA Prendida?3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IA Prendida?3": {
+      "main": [
+        [
+          {
+            "node": "1a. Buscar Fotos Feed2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "1a. Buscar Fotos Feed2": {
+      "main": [
+        [
+          {
+            "node": "1b. Buscar Fotos Story2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "1b. Buscar Fotos Story2": {
+      "main": [
+        [
+          {
+            "node": "2. Leer Sheets (Publicadas)3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2. Leer Sheets (Publicadas)3": {
+      "main": [
+        [
+          {
+            "node": "2b. Leer Catálogo (Sheets)5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2b. Leer Catálogo (Sheets)5": {
+      "main": [
+        [
+          {
+            "node": "Leer catalogo Bazar1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer catalogo Bazar1": {
+      "main": [
+        [
+          {
+            "node": "3. Elegir Foto Nueva2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3. Elegir Foto Nueva2": {
+      "main": [
+        [
+          {
+            "node": "Hay Foto para Publicar?2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hay Foto para Publicar?2": {
+      "main": [
+        [
+          {
+            "node": "Redactar Copy con IA5",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Post Hoy, do nothing2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model (Post)5": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Redactar Copy con IA5",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redactar Copy con IA5": {
+      "main": [
+        [
+          {
+            "node": "4. Descargar Foto Elegida2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "4. Descargar Foto Elegida2": {
+      "main": [
+        [
+          {
+            "node": "5. Publicar Feed (Post)5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "5. Publicar Feed (Post)5": {
+      "main": [
+        [
+          {
+            "node": "6. Publicar Story5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "6. Publicar Story5": {
+      "main": [
+        [
+          {
+            "node": "7. Guardar en Sheets5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "7. Guardar en Sheets5": {
+      "main": [
+        [
+          {
+            "node": "8e. ¿Vino del Portal Web?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "8e. ¿Vino del Portal Web?": {
+      "main": [
+        [
+          {
+            "node": "9a. Responder Portal (Publicado Ahora OK)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "When clicking Execute Workflow": {
+      "main": [
+        [
+          {
+            "node": "Consultar si IA esta prendida3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Portal Autopublicador": {
+      "main": [
+        [
+          {
+            "node": "8a. Preparar Archivos del Portal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "8a. Preparar Archivos del Portal": {
+      "main": [
+        [
+          {
+            "node": "8b. Subir Archivo a Drive NNN",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "8b. Subir Archivo a Drive NNN": {
+      "main": [
+        [
+          {
+            "node": "8c. Consolidar Subida Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "8c. Consolidar Subida Drive": {
+      "main": [
+        [
+          {
+            "node": "8d. ¿Publicar Ahora en IG?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "8d. ¿Publicar Ahora en IG?": {
+      "main": [
+        [
+          {
+            "node": "5. Publicar Feed (Post)5",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "9b. Responder Portal (Programado en Drive)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "19a9905f59da33a056a3b1698218b4ec28df50c11cd5806e774ab9b2fe385986"
+  }
+}
