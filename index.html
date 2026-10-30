@@ -2514,6 +2514,11 @@
                 localStorage.setItem('croc_autopublisher_date_overrides_v1', JSON.stringify(apDateOverrides));
                 hasChanges = true;
             }
+            if (cloudState.apPublishedEvents && typeof cloudState.apPublishedEvents === 'object' && typeof apPublishedEvents !== 'undefined') {
+                apPublishedEvents = { ...(apPublishedEvents || {}), ...cloudState.apPublishedEvents };
+                localStorage.setItem('croc_autopublisher_published_v1', JSON.stringify(apPublishedEvents));
+                hasChanges = true;
+            }
             if (Array.isArray(cloudState.autopublisherQueue) && typeof mergeCloudAutopublisherQueue === 'function') {
                 mergeCloudAutopublisherQueue(cloudState.autopublisherQueue);
                 hasChanges = true;
@@ -2563,6 +2568,7 @@
                     autopublisherQueue: (typeof autopublisherQueue !== 'undefined' ? autopublisherQueue : []),
                     deletedApItems: (typeof deletedApItems !== 'undefined' ? deletedApItems : []),
                     apDateOverrides: (typeof apDateOverrides !== 'undefined' ? apDateOverrides : {}),
+                    apPublishedEvents: (typeof apPublishedEvents !== 'undefined' ? apPublishedEvents : {}),
                     updatedAt: new Date().toISOString(),
                     updatedBy: currentUser?.username || 'usuario'
                 };
@@ -8612,6 +8618,58 @@
             pushCloudAppState();
         }
 
+        let apPublishedEvents = {};
+        try {
+            apPublishedEvents = JSON.parse(localStorage.getItem('croc_autopublisher_published_v1') || '{}');
+            if (!apPublishedEvents || typeof apPublishedEvents !== 'object' || Array.isArray(apPublishedEvents)) apPublishedEvents = {};
+        } catch(e) {
+            apPublishedEvents = {};
+        }
+
+        function isApItemExplicitlyPublished({ eventId, sku, fileId } = {}) {
+            if (!apPublishedEvents) return null;
+            if (eventId && apPublishedEvents[eventId]) return apPublishedEvents[eventId];
+            if (fileId && apPublishedEvents[`FID_${fileId}`]) return apPublishedEvents[`FID_${fileId}`];
+            if (sku && apPublishedEvents[`SKU_${String(sku).toUpperCase()}`]) return apPublishedEvents[`SKU_${String(sku).toUpperCase()}`];
+            return null;
+        }
+
+        function setApItemPublished({ eventId, sku, fileId, igPostId, igStoryIds } = {}) {
+            const data = {
+                igPostId: igPostId || 'OK',
+                igStoryIds: igStoryIds || '',
+                timestamp: new Date().toISOString()
+            };
+            if (eventId) apPublishedEvents[eventId] = data;
+            if (fileId) apPublishedEvents[`FID_${fileId}`] = data;
+            if (sku) apPublishedEvents[`SKU_${String(sku).toUpperCase()}`] = data;
+            localStorage.setItem('croc_autopublisher_published_v1', JSON.stringify(apPublishedEvents));
+            pushCloudAppState();
+        }
+
+        function buildApCleanCaption({ name, sku, price, features }) {
+            const cleanSku = String(sku || '').trim();
+            let cleanName = String(name || cleanSku || 'Novedades').trim();
+            if (cleanSku && !cleanName.toUpperCase().includes(cleanSku.toUpperCase())) {
+                cleanName = `${cleanName} (${cleanSku})`;
+            }
+            let cleanPrice = String(price || '').trim();
+            if (cleanPrice && !cleanPrice.startsWith('$')) {
+                cleanPrice = '$' + cleanPrice;
+            }
+            const lines = [];
+            lines.push(`🔥 ${cleanName} 🔥\n`);
+            if (cleanPrice) {
+                lines.push(`💰 Precio: ${cleanPrice}`);
+            }
+            if (features) {
+                lines.push(`✨ ${features}`);
+            }
+            lines.push(`\n📦 Envíos a todo el país.`);
+            lines.push(`👉 Comprá al link de la bio o por mensaje directo.`);
+            return lines.join('\n');
+        }
+
         let apWebhookUrl = localStorage.getItem('croc_ap_webhook_url') || 'https://n8n.totodrilo.cloud/webhook/autopublicador-upload';
         if (apWebhookUrl.includes('n8n.nicovaz.tech')) {
             apWebhookUrl = 'https://n8n.totodrilo.cloud/webhook/autopublicador-upload';
@@ -11251,10 +11309,18 @@
             // Set de fileIds e isoDate+SKU que ya figuran como publicados en Google Sheets
             const publishedFileIdSet = new Set();
             const publishedDateSkuSet = new Set();
+            const historyByFileId = new Map();
+            const historyBySku = new Map();
             history.forEach(h => {
-                if (h.fileId) publishedFileIdSet.add(h.fileId);
-                if (h.isoDate && h.sku && h.isoDate <= todayIso) {
-                    publishedDateSkuSet.add(`${h.isoDate}_${h.sku}`);
+                if (h.fileId) {
+                    publishedFileIdSet.add(h.fileId);
+                    historyByFileId.set(h.fileId, h);
+                }
+                if (h.sku) {
+                    historyBySku.set(String(h.sku).toUpperCase(), h);
+                }
+                if (h.isoDate && h.sku) {
+                    publishedDateSkuSet.add(`${h.isoDate}_${String(h.sku).toUpperCase()}`);
                 }
             });
 
@@ -11291,18 +11357,18 @@
                         hasFeed: item.role === 'feed',
                         hasStory: item.role === 'story',
                         isVideo: Boolean(item.isVideo),
-                        igPostId: item.igPostId || (item.isPublished ? '-' : 'En carpeta Drive (Pendiente)'),
+                        igPostId: item.igPostId || (item.isPublished ? 'Publicado OK' : 'En carpeta Drive (Pendiente)'),
                         igStoryIds: item.igStoryIds || (item.role === 'story' ? 'En carpeta Drive' : '-'),
                         fileIds: firstFileId ? [firstFileId] : [],
                         fileNames: item.fileName ? [item.fileName] : [],
                         thumbnailUrl: firstFileId ? buildApDriveThumbnailUrl(firstFileId, 400) : '',
                         caption: matchedCat
-                            ? `${matchedCat.name} (${matchedCat.sku})\n💰 Precio: ${matchedCat.price}\n${matchedCat.features || ''}`
-                            : `Archivo en Google Drive: ${item.fileName}`
+                            ? buildApCleanCaption({ name: matchedCat.name, sku: item.sku, price: matchedCat.price, features: matchedCat.features })
+                            : buildApCleanCaption({ name: item.productName || item.sku, sku: item.sku, price: item.price, features: item.features })
                     });
                 } else {
                     const existing = eventsMap.get(groupKey);
-                    if (item.isPublished && existing.isoDate <= todayIso) {
+                    if (item.isPublished) {
                         existing.statusType = 'published';
                         existing.statusLabel = item.statusLabel || 'Publicado en IG';
                     }
@@ -11338,7 +11404,16 @@
                 if (!parsedDT.isoDate) return;
                 const sku = extractSkuFromPublishedFilename(f.name, storeKey) || 'S/D';
                 if (isApItemDeleted({ store: storeKey, isoDate: parsedDT.isoDate, sku, fileId: f.id, fileName: f.name })) return;
-                const isPub = (parsedDT.isoDate <= todayIso) && (publishedFileIdSet.has(f.id) || publishedDateSkuSet.has(`${parsedDT.isoDate}_${sku}`));
+
+                const skuUpper = String(sku).toUpperCase();
+                const explicitPub = isApItemExplicitlyPublished({ fileId: f.id, sku: skuUpper });
+                const historyMatch = historyByFileId.get(f.id) || historyBySku.get(skuUpper);
+                const hasHistoryPost = Boolean(historyMatch && historyMatch.igPostId && historyMatch.igPostId !== '-' && historyMatch.igPostId !== 'no_feed_post');
+
+                const isPub = Boolean(explicitPub || hasHistoryPost || publishedFileIdSet.has(f.id) || (parsedDT.isoDate <= todayIso && publishedDateSkuSet.has(`${parsedDT.isoDate}_${skuUpper}`)));
+                const matchedIgPostId = explicitPub?.igPostId || historyMatch?.igPostId || (isPub ? 'Publicado OK' : '-');
+                const matchedIgStoryIds = explicitPub?.igStoryIds || historyMatch?.igStoryIds || '-';
+
                 const feedSlotTime = parsedDT.timeStr || (storeKey === 'nnn' ? '18:00' : '12:00');
                 upsertDaySkuEvent({
                     isoDate: parsedDT.isoDate,
@@ -11349,6 +11424,8 @@
                     role: 'feed',
                     isVideo: /\.(mp4|mov)$/i.test(f.name),
                     isPublished: isPub,
+                    igPostId: matchedIgPostId,
+                    igStoryIds: matchedIgStoryIds,
                     statusLabel: isPub ? `Publicado (FEED ${feedSlotTime})` : `En Drive (Feed ${feedSlotTime})`
                 });
             });
@@ -11358,7 +11435,16 @@
                 if (!parsedDT.isoDate) return;
                 const sku = extractSkuFromPublishedFilename(f.name, storeKey) || 'S/D';
                 if (isApItemDeleted({ store: storeKey, isoDate: parsedDT.isoDate, sku, fileId: f.id, fileName: f.name })) return;
-                const isPub = (parsedDT.isoDate <= todayIso) && (publishedFileIdSet.has(f.id) || publishedDateSkuSet.has(`${parsedDT.isoDate}_${sku}`));
+
+                const skuUpper = String(sku).toUpperCase();
+                const explicitPub = isApItemExplicitlyPublished({ fileId: f.id, sku: skuUpper });
+                const historyMatch = historyByFileId.get(f.id) || historyBySku.get(skuUpper);
+                const hasHistoryPost = Boolean(historyMatch && historyMatch.igPostId && historyMatch.igPostId !== '-' && historyMatch.igPostId !== 'no_feed_post');
+
+                const isPub = Boolean(explicitPub || hasHistoryPost || publishedFileIdSet.has(f.id) || (parsedDT.isoDate <= todayIso && publishedDateSkuSet.has(`${parsedDT.isoDate}_${skuUpper}`)));
+                const matchedIgPostId = explicitPub?.igPostId || historyMatch?.igPostId || '-';
+                const matchedIgStoryIds = explicitPub?.igStoryIds || historyMatch?.igStoryIds || (isPub ? 'Publicada' : '-');
+
                 upsertDaySkuEvent({
                     isoDate: parsedDT.isoDate,
                     timeStr: parsedDT.timeStr || '09:30',
@@ -11368,6 +11454,8 @@
                     role: 'story',
                     isVideo: /\.(mp4|mov)$/i.test(f.name),
                     isPublished: isPub,
+                    igPostId: matchedIgPostId,
+                    igStoryIds: matchedIgStoryIds,
                     statusLabel: isPub ? `Publicado (STORY ${parsedDT.timeStr})` : `En Drive (Story ${parsedDT.timeStr})`
                 });
             });
@@ -11378,7 +11466,8 @@
                 const iso = h.isoDate || '2026-07-24';
                 const skuVal = h.sku || 'S/D';
                 if (isApItemDeleted({ store: storeKey, isoDate: iso, sku: skuVal, fileId: h.fileId, fileName: h.fileName })) return;
-                const isFutureInSheet = iso > todayIso;
+                const hasPostId = Boolean(h.igPostId && h.igPostId !== '-' && h.igPostId !== 'no_feed_post');
+                const isPub = hasPostId || (iso <= todayIso);
                 const isStoryFile = /09HS|20HS|STORY/i.test(h.fileName) || h.slotType === 'story';
                 upsertDaySkuEvent({
                     isoDate: iso,
@@ -11393,8 +11482,8 @@
                     isVideo: h.isVideo,
                     igPostId: h.igPostId,
                     igStoryIds: h.igStoryIds,
-                    isPublished: !isFutureInSheet,
-                    statusLabel: isFutureInSheet ? 'En Drive (Programado a Futuro)' : (h.status || 'Publicado en IG')
+                    isPublished: isPub,
+                    statusLabel: isPub ? (h.status || 'Publicado en IG') : 'En Drive (Programado a Futuro)'
                 });
             });
 
@@ -11667,6 +11756,15 @@
 
             const webhookTargetUrl = 'https://n8n.totodrilo.cloud/webhook/autopublicador-upload';
 
+            const cleanCaption = (ev.caption && !ev.caption.startsWith('Archivo en Google Drive'))
+                ? ev.caption
+                : buildApCleanCaption({
+                    name: prodName,
+                    sku: sku,
+                    price: ev.price,
+                    features: ev.features
+                  });
+
             try {
                 const payload = {
                     action: 'publish_existing_now',
@@ -11676,7 +11774,7 @@
                     sku: sku,
                     productName: prodName,
                     price: ev.price || '',
-                    caption: ev.caption || '',
+                    caption: cleanCaption,
                     isoDate: ev.isoDate || new Date().toISOString().slice(0, 10),
                     fileIds: Array.isArray(ev.fileIds) ? ev.fileIds : [],
                     fileNames: Array.isArray(ev.fileNames) ? ev.fileNames : [],
@@ -11695,9 +11793,17 @@
 
                 const data = await resp.json().catch(() => ({}));
 
-                // Marcar como publicado
+                // Marcar como publicado de forma persistente
+                setApItemPublished({
+                    eventId: ev.id,
+                    sku: sku,
+                    fileId: (ev.fileIds && ev.fileIds[0]) || '',
+                    igPostId: data.ig_post_id || 'OK',
+                    igStoryIds: data.ig_story_ids || ''
+                });
+
                 ev.statusType = 'published';
-                ev.statusLabel = 'Publicado en IG OK';
+                ev.statusLabel = 'Publicado en Instagram OK';
                 if (data.ig_post_id) ev.igPostId = data.ig_post_id;
                 if (data.ig_story_ids) ev.igStoryIds = data.ig_story_ids;
 
@@ -12168,8 +12274,22 @@
             document.getElementById('ap-modal-price').innerText = ev.price || '';
             document.getElementById('ap-modal-filename').innerText = (ev.fileNames || []).join(', ');
             document.getElementById('ap-modal-slot').innerText = `${ev.timeStr} hs (${ev.slotType.toUpperCase()})`;
-            document.getElementById('ap-modal-ig-post-id').innerText = ev.igPostId || '-';
-            document.getElementById('ap-modal-ig-story-id').innerText = ev.igStoryIds || '-';
+            const igPostEl = document.getElementById('ap-modal-ig-post-id');
+            if (igPostEl) {
+                if (ev.igPostId && ev.igPostId !== '-' && ev.igPostId !== 'no_feed_post') {
+                    igPostEl.innerHTML = `<span class="text-emerald-400 font-bold">${escapeHTML(ev.igPostId)}</span>`;
+                } else {
+                    igPostEl.innerText = isPub ? 'Publicado OK' : 'En carpeta Drive (Pendiente)';
+                }
+            }
+            const igStoryEl = document.getElementById('ap-modal-ig-story-id');
+            if (igStoryEl) {
+                if (ev.igStoryIds && ev.igStoryIds !== '-') {
+                    igStoryEl.innerHTML = `<span class="text-pink-400 font-bold">${escapeHTML(ev.igStoryIds)}</span>`;
+                } else {
+                    igStoryEl.innerText = isPub ? 'Publicada OK' : '-';
+                }
+            }
             document.getElementById('ap-modal-caption').innerText = ev.caption || 'Sin descripción adicional.';
 
             const delBtn = document.getElementById('ap-modal-delete-queue-btn');
