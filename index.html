@@ -11722,7 +11722,9 @@
         // ==========================================================
         async function triggerApPublishNow(eventId) {
             if (!eventId) return;
-            const allEvents = getApPlannerEvents(currentApStore);
+            const allEvents = (apPlannerEventsCache && apPlannerEventsCache.length > 0)
+                ? apPlannerEventsCache
+                : getApPlannerEvents(currentApStore);
             const ev = allEvents.find(e => e.id === eventId);
             if (!ev) {
                 showToast('No se encontró la publicación a publicar', 'warning');
@@ -11733,12 +11735,23 @@
             const sku = ev.sku || 'S/D';
             const prodName = ev.productName || sku;
 
+            const alreadyPublished = ev.statusType === 'published'
+                || (typeof isApItemExplicitlyPublished === 'function' && isApItemExplicitlyPublished(ev.id, sku, ev.fileIds && ev.fileIds[0]))
+                || Boolean(ev.igPostId && ev.igPostId !== '-' && ev.igPostId !== 'no_feed_post');
+
+            if (alreadyPublished) {
+                showToast(`ℹ️ "${prodName}" ya se encuentra publicado en Instagram (ID: ${ev.igPostId || 'OK'}).`, 'info');
+                return;
+            }
+
             if (!confirm(`¿Publicar AHORA "${prodName}" (${sku}) en Instagram (@${meta.igHandle})?\n\nSe enviará inmediatamente a Meta Graph API sin esperar al horario programado.`)) {
                 return;
             }
 
-            // Indicadores de carga visual en botón de tarjeta y botón de modal
-            const cardBtns = document.querySelectorAll(`[data-publish-btn="${CSS.escape ? CSS.escape(eventId) : eventId}"]`);
+            // Indicadores de carga visual seguros en tarjeta y modal
+            const cardBtns = Array.from(document.querySelectorAll('[data-publish-btn]')).filter(
+                b => b.getAttribute('data-publish-btn') === eventId
+            );
             cardBtns.forEach(b => {
                 b.disabled = true;
                 b.classList.add('opacity-75', 'cursor-wait', 'pointer-events-none');
@@ -11746,24 +11759,45 @@
             });
 
             const modalBtn = document.getElementById('ap-modal-publish-now-btn');
+            let secondsLeft = 30;
+            let countdownInterval = null;
+
             if (modalBtn) {
                 modalBtn.disabled = true;
-                modalBtn.classList.add('opacity-75', 'cursor-wait');
-                modalBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-sm mr-1.5"></i> <span>Publicando en Instagram (aguarde 15s)...</span>';
+                modalBtn.classList.add('opacity-75', 'cursor-wait', 'pointer-events-none');
+                modalBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-sm mr-1.5"></i> <span>Publicando en Instagram (${secondsLeft}s)...</span>`;
+                countdownInterval = setInterval(() => {
+                    secondsLeft--;
+                    if (secondsLeft > 0 && modalBtn) {
+                        modalBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-sm mr-1.5"></i> <span>Publicando en Instagram (${secondsLeft}s)...</span>`;
+                    }
+                }, 1000);
             }
 
-            showToast(`🚀 Conectando con n8n y Meta Graph API para "${prodName}"...`, 'info');
+            showToast(`🚀 Conectando con n8n y Meta Graph API para "${prodName}"... aguarde unos segundos.`, 'info');
 
             const webhookTargetUrl = 'https://n8n.totodrilo.cloud/webhook/autopublicador-upload';
 
-            const cleanCaption = (ev.caption && !ev.caption.startsWith('Archivo en Google Drive'))
-                ? ev.caption
-                : buildApCleanCaption({
-                    name: prodName,
-                    sku: sku,
-                    price: ev.price,
-                    features: ev.features
-                  });
+            let cleanCaption = '';
+            try {
+                cleanCaption = (ev.caption && !String(ev.caption).startsWith('Archivo en Google Drive'))
+                    ? String(ev.caption)
+                    : buildApCleanCaption({
+                        name: prodName,
+                        sku: sku,
+                        price: ev.price,
+                        features: ev.features
+                      });
+            } catch (e) {
+                cleanCaption = `🔥 ${prodName} 🔥\n\n💰 Precio: ${ev.price || ''}\n📦 Envíos a todo el país.`;
+            }
+
+            const abortCtrl = new AbortController();
+            const abortTimeout = setTimeout(() => {
+                abortCtrl.abort();
+            }, 55000);
+
+            let publicationSuccess = false;
 
             try {
                 const payload = {
@@ -11784,7 +11818,8 @@
                 const resp = await fetch(webhookTargetUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify(payload),
+                    signal: abortCtrl.signal
                 });
 
                 if (!resp.ok) {
@@ -11792,6 +11827,8 @@
                 }
 
                 const data = await resp.json().catch(() => ({}));
+                publicationSuccess = true;
+                if (countdownInterval) clearInterval(countdownInterval);
 
                 // Marcar como publicado de forma persistente
                 setApItemPublished({
@@ -11808,7 +11845,7 @@
                 if (data.ig_story_ids) ev.igStoryIds = data.ig_story_ids;
 
                 if (ev.queueId) {
-                    const qItem = autopublisherQueue.find(q => q.id === ev.queueId);
+                    const qItem = (autopublisherQueue || []).find(q => q.id === ev.queueId);
                     if (qItem) {
                         qItem.statusType = 'published';
                         qItem.status = 'Publicado en Instagram OK';
@@ -11816,7 +11853,7 @@
                         if (data.ig_story_ids) qItem.igStoryIds = data.ig_story_ids;
                     }
                 }
-                localStorage.setItem('croc_autopublisher_queue', JSON.stringify(autopublisherQueue));
+                localStorage.setItem('crocscale_autopublisher_queue', JSON.stringify(autopublisherQueue));
 
                 addAutopublisherLog({
                     level: 'success',
@@ -11837,38 +11874,54 @@
                 pushCloudAppState();
                 showToast(`🎉 ¡"${prodName}" publicado en Instagram con éxito! ID: ${data.ig_post_id || 'OK'}`, 'success');
 
-                if (typeof closeApPostDetailModal === 'function') {
-                    closeApPostDetailModal();
+                if (modalBtn) {
+                    modalBtn.className = "w-full py-2.5 px-4 rounded-xl bg-emerald-600 text-white text-xs font-black flex items-center justify-center gap-2";
+                    modalBtn.innerHTML = `<i class="fa-solid fa-circle-check text-sm mr-1.5"></i> <span>✅ ¡Publicado con éxito! (ID: ${data.ig_post_id || 'OK'})</span>`;
                 }
 
                 renderAutopublisherDashboard();
 
                 setTimeout(() => {
+                    if (typeof closeApPostDetailModal === 'function') {
+                        closeApPostDetailModal();
+                    }
                     fetchApStoreHistory(currentApStore).then(() => renderAutopublisherDashboard());
-                }, 3000);
+                }, 1600);
 
             } catch (err) {
                 console.error('Error al publicar ahora:', err);
-                cardBtns.forEach(b => {
-                    b.disabled = false;
-                    b.classList.remove('opacity-75', 'cursor-wait', 'pointer-events-none');
-                    b.innerHTML = '<i class="fa-solid fa-paper-plane text-[8px]"></i> <span>Publicar Ahora</span>';
-                });
-                if (modalBtn) {
-                    modalBtn.disabled = false;
-                    modalBtn.classList.remove('opacity-75', 'cursor-wait');
-                    modalBtn.innerHTML = '<i class="fa-solid fa-paper-plane text-sm"></i> <span>🚀 Publicar Ahora en Instagram</span>';
-                }
-                showToast(`❌ Error al conectar con n8n: ${err.message}`, 'error');
+                const isTimeout = err.name === 'AbortError';
+                const errMsg = isTimeout
+                    ? 'Tiempo de espera agotado (>55s). Verificá en n8n si la publicación se completó.'
+                    : err.message;
+
+                showToast(`❌ Error al conectar con n8n: ${errMsg}`, 'error');
                 addAutopublisherLog({
                     level: 'error',
                     action: '🚀 Publicar Ahora (Fallido)',
                     store: currentApStore,
                     sku: sku,
                     productName: prodName,
-                    summary: `Error al publicar ahora: ${err.message}`,
+                    summary: `Error al publicar ahora: ${errMsg}`,
                     rawResponse: { error: String(err) }
                 });
+            } finally {
+                clearTimeout(abortTimeout);
+                if (countdownInterval) clearInterval(countdownInterval);
+
+                if (!publicationSuccess) {
+                    cardBtns.forEach(b => {
+                        b.disabled = false;
+                        b.classList.remove('opacity-75', 'cursor-wait', 'pointer-events-none');
+                        b.innerHTML = '<i class="fa-solid fa-paper-plane text-[8px]"></i> <span>Publicar Ahora</span>';
+                    });
+                    if (modalBtn) {
+                        modalBtn.className = "w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-black shadow-lg shadow-emerald-950/40 flex items-center justify-center gap-2 transition active:scale-98";
+                        modalBtn.disabled = false;
+                        modalBtn.classList.remove('opacity-75', 'cursor-wait', 'pointer-events-none');
+                        modalBtn.innerHTML = '<i class="fa-solid fa-paper-plane text-sm mr-1.5"></i> <span>🚀 Publicar Ahora en Instagram</span>';
+                    }
+                }
             }
         }
 
@@ -12257,7 +12310,9 @@
             const modal = document.getElementById('modal-ap-post-detail');
             if (!modal) return;
 
-            const isPub = ev.statusType === 'published';
+            const isPub = ev.statusType === 'published'
+                || (typeof isApItemExplicitlyPublished === 'function' && isApItemExplicitlyPublished(ev.id, ev.sku, ev.fileIds && ev.fileIds[0]))
+                || Boolean(ev.igPostId && ev.igPostId !== '-' && ev.igPostId !== 'no_feed_post');
             const badgeEl = document.getElementById('ap-modal-status-badge');
             if (badgeEl) {
                 badgeEl.className = isPub
@@ -12306,7 +12361,10 @@
                 if (isPub) {
                     pubNowBtn.classList.add('hidden');
                 } else {
-                    pubNowBtn.classList.remove('hidden');
+                    pubNowBtn.className = "w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-black shadow-lg shadow-emerald-950/40 flex items-center justify-center gap-2 transition active:scale-98";
+                    pubNowBtn.classList.remove('hidden', 'opacity-75', 'cursor-wait', 'pointer-events-none');
+                    pubNowBtn.disabled = false;
+                    pubNowBtn.innerHTML = '<i class="fa-solid fa-paper-plane text-sm mr-1.5"></i> <span>🚀 Publicar Ahora en Instagram</span>';
                     pubNowBtn.onclick = () => {
                         triggerApPublishNow(ev.id);
                     };

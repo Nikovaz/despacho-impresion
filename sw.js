@@ -1,5 +1,5 @@
 // Service Worker para CrocScale App
-const CACHE_NAME = 'crocscale-v10-clean-caption-published-state';
+const CACHE_NAME = 'crocscale-v11-fix-modal-freeze';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
