@@ -1,5 +1,5 @@
 // Service Worker para CrocScale App
-const CACHE_NAME = 'crocscale-v7-autopublisher-delete-fix';
+const CACHE_NAME = 'crocscale-v8-drag-drop-publish-now';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

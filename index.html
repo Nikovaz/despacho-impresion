@@ -1940,6 +1940,9 @@
                         </div>
 
                         <div class="pt-3 border-t border-slate-800 flex flex-col gap-2">
+                            <button type="button" id="ap-modal-publish-now-btn" onclick="triggerApModalPublishNow()" class="hidden w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-black shadow-lg shadow-emerald-950/40 flex items-center justify-center gap-2 transition active:scale-98">
+                                <i class="fa-solid fa-paper-plane text-sm"></i> <span>🚀 Publicar Ahora en Instagram</span>
+                            </button>
                             <div class="flex items-center gap-2">
                                 <a id="ap-modal-drive-btn" href="#" target="_blank" class="flex-1 py-2.5 px-3 rounded-xl bg-slate-950 hover:bg-slate-800 text-emerald-400 border border-slate-800 text-xs font-bold text-center transition flex items-center justify-center gap-1.5">
                                     <i class="fa-brands fa-google-drive"></i> <span>Abrir en Google Drive</span>
@@ -2500,10 +2503,15 @@
                 hasChanges = true;
             }
 
-            // 10. Autopublisher Deleted Items & Scheduled Queue
+            // 10. Autopublisher Deleted Items, Scheduled Queue & Date Overrides (Drag & Drop)
             if (Array.isArray(cloudState.deletedApItems) && typeof deletedApItems !== 'undefined') {
                 deletedApItems = Array.from(new Set([...(deletedApItems || []), ...cloudState.deletedApItems]));
                 localStorage.setItem('croc_autopublisher_deleted_v1', JSON.stringify(deletedApItems));
+                hasChanges = true;
+            }
+            if (cloudState.apDateOverrides && typeof cloudState.apDateOverrides === 'object' && typeof apDateOverrides !== 'undefined') {
+                apDateOverrides = { ...(apDateOverrides || {}), ...cloudState.apDateOverrides };
+                localStorage.setItem('croc_autopublisher_date_overrides_v1', JSON.stringify(apDateOverrides));
                 hasChanges = true;
             }
             if (Array.isArray(cloudState.autopublisherQueue) && typeof mergeCloudAutopublisherQueue === 'function') {
@@ -2554,6 +2562,7 @@
                     cadeteOverrides,
                     autopublisherQueue: (typeof autopublisherQueue !== 'undefined' ? autopublisherQueue : []),
                     deletedApItems: (typeof deletedApItems !== 'undefined' ? deletedApItems : []),
+                    apDateOverrides: (typeof apDateOverrides !== 'undefined' ? apDateOverrides : {}),
                     updatedAt: new Date().toISOString(),
                     updatedBy: currentUser?.username || 'usuario'
                 };
@@ -8583,6 +8592,26 @@
             localStorage.setItem('croc_autopublisher_deleted_v1', JSON.stringify(deletedApItems));
         }
 
+        let apDateOverrides = {};
+        try {
+            apDateOverrides = JSON.parse(localStorage.getItem('croc_autopublisher_date_overrides_v1') || '{}');
+            if (!apDateOverrides || typeof apDateOverrides !== 'object' || Array.isArray(apDateOverrides)) apDateOverrides = {};
+        } catch (e) {
+            apDateOverrides = {};
+        }
+
+        function getApDateOverride(key) {
+            if (!key || !apDateOverrides) return null;
+            return apDateOverrides[key] || null;
+        }
+
+        function setApDateOverride(key, newIsoDate) {
+            if (!key || !newIsoDate) return;
+            apDateOverrides[key] = newIsoDate;
+            localStorage.setItem('croc_autopublisher_date_overrides_v1', JSON.stringify(apDateOverrides));
+            pushCloudAppState();
+        }
+
         let apWebhookUrl = localStorage.getItem('croc_ap_webhook_url') || 'https://n8n.totodrilo.cloud/webhook/autopublicador-upload';
         if (apWebhookUrl.includes('n8n.nicovaz.tech')) {
             apWebhookUrl = 'https://n8n.totodrilo.cloud/webhook/autopublicador-upload';
@@ -11231,18 +11260,26 @@
 
             // Helper para insertar o fusionar archivos por Fecha + SKU
             const upsertDaySkuEvent = (item) => {
-                const groupKey = `EVT_${storeKey}_${item.isoDate}_${item.sku}`;
+                const skuClean = String(item.sku || 'S/D').trim().toUpperCase();
+                const baseGroupKey = `EVT_${storeKey}_${item.isoDate}_${skuClean}`;
+                const fileOverride = item.fileId ? getApDateOverride(`FID_${item.fileId}`) : null;
+                const effectiveIsoDate = getApDateOverride(baseGroupKey)
+                    || getApDateOverride(`EVT_${storeKey}_${skuClean}`)
+                    || fileOverride
+                    || item.isoDate;
+
+                const groupKey = `EVT_${storeKey}_${effectiveIsoDate}_${skuClean}`;
                 const matchedCat = findApCatalogItemBySku(item.sku, storeKey);
                 const catDriveId = (matchedCat && matchedCat.driveUrls && matchedCat.driveUrls[0]) ? matchedCat.driveUrls[0] : '';
 
                 if (!eventsMap.has(groupKey)) {
                     const firstFileId = item.fileId || catDriveId;
                     eventsMap.set(groupKey, {
-                        id: groupKey,
+                        id: baseGroupKey,
                         store: storeKey,
                         statusType: item.isPublished ? 'published' : 'scheduled',
                         statusLabel: item.isPublished ? (item.statusLabel || 'Publicado en IG') : 'Programado en Google Drive',
-                        isoDate: item.isoDate,
+                        isoDate: effectiveIsoDate,
                         timeStr: item.role === 'feed'
                             ? (storeKey === 'nnn' ? '18:00' : '12:00')
                             : (item.timeStr || (storeKey === 'nnn' ? '18:00' : '12:00')),
@@ -11363,8 +11400,11 @@
 
             // 3. Sumar publicaciones desde el creador del portal (autopublisherQueue), deduplicadas por Fecha + SKU
             queue.forEach(q => {
-                const iso = q.date || todayIso;
+                let iso = q.date || todayIso;
                 const skuClean = (q.sku || 'S/D').trim().toUpperCase();
+                const baseQKey = `EVT_${storeKey}_${iso}_${skuClean}`;
+                const overrideDate = getApDateOverride(baseQKey) || (q.id ? getApDateOverride(q.id) : null) || getApDateOverride(`EVT_${storeKey}_${skuClean}`);
+                if (overrideDate) iso = overrideDate;
                 const groupKey = `EVT_${storeKey}_${iso}_${skuClean}`;
                 if (isApItemDeleted({ eventId: groupKey, queueId: q.id, store: storeKey, isoDate: iso, sku: skuClean, fileName: q.officialFileName })) {
                     return;
@@ -11387,7 +11427,7 @@
                 const isPubNow = q.statusType === 'published' || String(q.status || '').includes('Publicado en Instagram');
                 const thumb = q.thumbnailDataUrl || (catDriveUrl ? buildApDriveThumbnailUrl(catDriveUrl, 400) : '');
                 eventsMap.set(groupKey, {
-                    id: groupKey,
+                    id: baseQKey,
                     queueId: q.id,
                     store: storeKey,
                     statusType: isPubNow ? 'published' : 'scheduled',
@@ -11485,6 +11525,224 @@
             renderApMetaPlanner();
         }
 
+        // ==========================================================
+        // DRAG AND DROP DEL PLANIFICADOR (Arrastrar entre días)
+        // ==========================================================
+        let apDraggedEventId = null;
+
+        function onApCardDragStart(e, eventId) {
+            apDraggedEventId = eventId;
+            if (e.dataTransfer) {
+                e.dataTransfer.setData('text/plain', eventId);
+                e.dataTransfer.effectAllowed = 'move';
+            }
+            const cardEl = e.currentTarget;
+            if (cardEl) {
+                cardEl.classList.add('opacity-40', 'scale-95');
+            }
+        }
+
+        function onApCardDragEnd(e) {
+            const cardEl = e.currentTarget;
+            if (cardEl) {
+                cardEl.classList.remove('opacity-40', 'scale-95');
+            }
+            document.querySelectorAll('[data-day-iso]').forEach(el => {
+                el.classList.remove('ring-2', 'ring-pink-500', 'bg-pink-950/30', 'scale-[1.01]');
+            });
+        }
+
+        function onApDayDragOver(e) {
+            e.preventDefault();
+            if (e.dataTransfer) {
+                e.dataTransfer.dropEffect = 'move';
+            }
+            const targetCell = e.currentTarget;
+            if (targetCell && !targetCell.classList.contains('ring-pink-500')) {
+                targetCell.classList.add('ring-2', 'ring-pink-500', 'bg-pink-950/30', 'scale-[1.01]');
+            }
+        }
+
+        function onApDayDragLeave(e) {
+            const targetCell = e.currentTarget;
+            if (targetCell && (!e.relatedTarget || !targetCell.contains(e.relatedTarget))) {
+                targetCell.classList.remove('ring-2', 'ring-pink-500', 'bg-pink-950/30', 'scale-[1.01]');
+            }
+        }
+
+        function onApDayDrop(e, targetIsoDate) {
+            e.preventDefault();
+            const targetCell = e.currentTarget;
+            if (targetCell) {
+                targetCell.classList.remove('ring-2', 'ring-pink-500', 'bg-pink-950/30', 'scale-[1.01]');
+            }
+            const eventId = (e.dataTransfer && e.dataTransfer.getData('text/plain')) || apDraggedEventId;
+            if (eventId && targetIsoDate) {
+                moveApPlannerEventToDate(eventId, targetIsoDate);
+            }
+        }
+
+        function moveApPlannerEventToDate(eventId, targetIsoDate) {
+            if (!eventId || !targetIsoDate) return;
+            const allEvents = getApPlannerEvents(currentApStore);
+            const ev = allEvents.find(e => e.id === eventId);
+            if (!ev) {
+                showToast('No se encontró la publicación a mover', 'warning');
+                return;
+            }
+            if (ev.isoDate === targetIsoDate) return;
+
+            const oldDate = ev.isoDate;
+            const prodTitle = ev.productName || ev.sku;
+
+            // 1. Si está en la cola local de autopublicador
+            let foundInQueue = false;
+            if (ev.queueId) {
+                const qItem = autopublisherQueue.find(q => q.id === ev.queueId);
+                if (qItem) {
+                    qItem.date = targetIsoDate;
+                    foundInQueue = true;
+                }
+            }
+            autopublisherQueue.forEach(q => {
+                if (q.store === currentApStore && q.date === oldDate && String(q.sku).toUpperCase() === String(ev.sku).toUpperCase()) {
+                    q.date = targetIsoDate;
+                    foundInQueue = true;
+                }
+            });
+            if (foundInQueue) {
+                localStorage.setItem('croc_autopublisher_queue', JSON.stringify(autopublisherQueue));
+            }
+
+            // 2. Guardar en el registro de fechas modificadas (apDateOverrides)
+            setApDateOverride(eventId, targetIsoDate);
+            setApDateOverride(`EVT_${currentApStore}_${oldDate}_${String(ev.sku).toUpperCase()}`, targetIsoDate);
+            setApDateOverride(`EVT_${currentApStore}_${String(ev.sku).toUpperCase()}`, targetIsoDate);
+            if (Array.isArray(ev.fileIds)) {
+                ev.fileIds.forEach(fid => {
+                    if (fid) setApDateOverride(`FID_${fid}`, targetIsoDate);
+                });
+            }
+
+            showToast(`📅 "${prodTitle}" movida al ${targetIsoDate.split('-').reverse().join('/')}`, 'success');
+            renderAutopublisherDashboard();
+        }
+
+        // ==========================================================
+        // BOTÓN PUBLICAR AHORA (Meta Graph API vía Webhook n8n)
+        // ==========================================================
+        async function triggerApPublishNow(eventId) {
+            if (!eventId) return;
+            const allEvents = getApPlannerEvents(currentApStore);
+            const ev = allEvents.find(e => e.id === eventId);
+            if (!ev) {
+                showToast('No se encontró la publicación a publicar', 'warning');
+                return;
+            }
+
+            const meta = AP_STORES_META[currentApStore] || AP_STORES_META.nnn;
+            const sku = ev.sku || 'S/D';
+            const prodName = ev.productName || sku;
+
+            if (!confirm(`¿Publicar AHORA "${prodName}" (${sku}) en Instagram (@${meta.igHandle})?\n\nSe enviará inmediatamente a Meta Graph API sin esperar al horario programado.`)) {
+                return;
+            }
+
+            showToast(`🚀 Disparando publicación de "${prodName}" en Instagram...`, 'info');
+
+            try {
+                const payload = {
+                    action: 'publish_existing_now',
+                    publishNow: true,
+                    publish_now: true,
+                    store: currentApStore,
+                    sku: sku,
+                    productName: prodName,
+                    price: ev.price || '',
+                    caption: ev.caption || '',
+                    isoDate: ev.isoDate || new Date().toISOString().slice(0, 10),
+                    fileIds: Array.isArray(ev.fileIds) ? ev.fileIds : [],
+                    fileNames: Array.isArray(ev.fileNames) ? ev.fileNames : [],
+                    target: ev.slotType || 'both'
+                };
+
+                const resp = await fetch(apWebhookUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!resp.ok) {
+                    throw new Error(`HTTP ${resp.status} ${resp.statusText}`);
+                }
+
+                const data = await resp.json().catch(() => ({}));
+
+                // Marcar como publicado
+                ev.statusType = 'published';
+                ev.statusLabel = 'Publicado en IG OK';
+                if (data.ig_post_id) ev.igPostId = data.ig_post_id;
+                if (data.ig_story_ids) ev.igStoryIds = data.ig_story_ids;
+
+                if (ev.queueId) {
+                    const qItem = autopublisherQueue.find(q => q.id === ev.queueId);
+                    if (qItem) {
+                        qItem.statusType = 'published';
+                        qItem.status = 'Publicado en Instagram OK';
+                        if (data.ig_post_id) qItem.igPostId = data.ig_post_id;
+                        if (data.ig_story_ids) qItem.igStoryIds = data.ig_story_ids;
+                    }
+                }
+                localStorage.setItem('croc_autopublisher_queue', JSON.stringify(autopublisherQueue));
+
+                addAutopublisherLog({
+                    level: 'success',
+                    action: '🚀 Publicar Ahora (Desde Planificador)',
+                    store: currentApStore,
+                    sku: sku,
+                    productName: prodName,
+                    target: ev.slotType || 'both',
+                    scheduleDate: ev.isoDate,
+                    feedTime: 'Inmediato',
+                    storyTime: 'Inmediato',
+                    igPostId: data.ig_post_id || 'OK',
+                    igStoryIds: data.ig_story_ids || '',
+                    summary: `¡Publicado Ahora en @${meta.igHandle}! (Post: ${data.ig_post_id || 'OK'}${data.ig_story_ids ? ' | Story: ' + data.ig_story_ids : ''})`,
+                    rawResponse: data
+                });
+
+                pushCloudAppState();
+                showToast(`🎉 ¡"${prodName}" publicado en Instagram con éxito!`, 'success');
+                renderAutopublisherDashboard();
+
+                if (typeof closeApPostDetailModal === 'function') {
+                    closeApPostDetailModal();
+                }
+
+                setTimeout(() => {
+                    fetchApStoreHistory(currentApStore).then(() => renderAutopublisherDashboard());
+                }, 3000);
+
+            } catch (err) {
+                console.error('Error al publicar ahora:', err);
+                showToast(`❌ Error al conectar con n8n: ${err.message}`, 'error');
+                addAutopublisherLog({
+                    level: 'error',
+                    action: '🚀 Publicar Ahora (Fallido)',
+                    store: currentApStore,
+                    sku: sku,
+                    productName: prodName,
+                    summary: `Error al publicar ahora: ${err.message}`,
+                    rawResponse: { error: String(err) }
+                });
+            }
+        }
+
+        function triggerApModalPublishNow() {
+            if (!apActiveModalEvent) return;
+            triggerApPublishNow(apActiveModalEvent.id);
+        }
+
         function renderApPlannerCardHTML(ev, compact = false) {
             const isPub = ev.statusType === 'published';
             const borderCls = isPub
@@ -11519,8 +11777,12 @@
                    </div>`;
 
             return `
-                <div onclick="openApPostDetailModal('${escapeHTML(ev.id)}')"
-                     class="group cursor-pointer p-2 rounded-xl border ${borderCls} shadow-md hover:shadow-xl transition text-left select-none relative">
+                <div draggable="true"
+                     ondragstart="onApCardDragStart(event, '${escapeHTML(ev.id)}')"
+                     ondragend="onApCardDragEnd(event)"
+                     onclick="openApPostDetailModal('${escapeHTML(ev.id)}')"
+                     data-event-id="${escapeHTML(ev.id)}"
+                     class="group cursor-grab active:cursor-grabbing p-2 rounded-xl border ${borderCls} shadow-md hover:shadow-xl transition text-left select-none relative">
                     <div class="flex items-center justify-between gap-1 text-[10px]">
                         <div class="flex items-center gap-1 font-bold text-slate-200 truncate">
                             <i class="fa-brands fa-instagram text-pink-400 text-[11px]"></i>
@@ -11546,6 +11808,25 @@
                         <span class="font-mono font-bold text-emerald-400 truncate">${escapeHTML(ev.sku)}</span>
                         <span class="font-bold text-amber-300 shrink-0">${escapeHTML(ev.price || '')}</span>
                     </div>
+                    ${!isPub ? `
+                        <div class="mt-2 pt-1.5 border-t border-slate-800/80 flex items-center justify-between gap-1">
+                            <span class="text-[9px] text-slate-400 font-medium truncate flex items-center gap-1">
+                                <i class="fa-solid fa-arrows-up-down-left-right text-[8px] text-slate-500"></i>
+                                <span>Mover</span>
+                            </span>
+                            <button type="button" onclick="event.stopPropagation(); triggerApPublishNow('${escapeHTML(ev.id)}')"
+                                    class="px-2 py-0.5 rounded-md bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-extrabold text-[9px] shadow-sm flex items-center gap-1 transition shrink-0"
+                                    title="Publicar inmediatamente en Instagram">
+                                <i class="fa-solid fa-paper-plane text-[8px]"></i>
+                                <span>Publicar Ahora</span>
+                            </button>
+                        </div>
+                    ` : `
+                        <div class="mt-1.5 pt-1 border-t border-slate-800/60 flex items-center justify-between text-[9px] text-emerald-400 font-bold">
+                            <span>✅ Publicado</span>
+                            <span class="text-slate-500 font-normal">Detalle &gt;</span>
+                        </div>
+                    `}
                 </div>
             `;
         }
@@ -11650,7 +11931,11 @@
                     const dayEvents = eventsByDay.get(iso) || [];
 
                     cellsHtml += `
-                        <div class="min-h-[155px] sm:min-h-[185px] p-2 rounded-2xl border transition flex flex-col justify-between ${
+                        <div ondragover="onApDayDragOver(event)"
+                             ondragleave="onApDayDragLeave(event)"
+                             ondrop="onApDayDrop(event, '${iso}')"
+                             data-day-iso="${iso}"
+                             class="min-h-[155px] sm:min-h-[185px] p-2 rounded-2xl border transition-all duration-150 flex flex-col justify-between ${
                             inCurrentMonth
                                 ? (isToday ? 'bg-blue-950/20 border-blue-500/60 shadow-lg shadow-blue-950/30' : 'bg-slate-900/70 border-slate-800/90 hover:border-slate-700')
                                 : 'bg-slate-950/40 border-slate-900/60 opacity-45'
@@ -11718,7 +12003,11 @@
                     const dayEvents = filteredEvents.filter(e => e.isoDate === iso);
 
                     colsHtml.push(`
-                        <div class="min-h-[360px] rounded-2xl border ${isToday ? 'bg-blue-950/20 border-blue-500/60' : 'bg-slate-900/75 border-slate-800'} p-2.5 flex flex-col justify-between">
+                        <div ondragover="onApDayDragOver(event)"
+                             ondragleave="onApDayDragLeave(event)"
+                             ondrop="onApDayDrop(event, '${iso}')"
+                             data-day-iso="${iso}"
+                             class="min-h-[360px] rounded-2xl border transition-all duration-150 ${isToday ? 'bg-blue-950/20 border-blue-500/60' : 'bg-slate-900/75 border-slate-800'} p-2.5 flex flex-col justify-between">
                             <div>
                                 <div class="pb-2.5 mb-2.5 border-b border-slate-800 flex items-center justify-between">
                                     <div>
@@ -11862,6 +12151,18 @@
                 delBtn.onclick = () => {
                     deleteApPlannerEvent(ev.id);
                 };
+            }
+
+            const pubNowBtn = document.getElementById('ap-modal-publish-now-btn');
+            if (pubNowBtn) {
+                if (isPub) {
+                    pubNowBtn.classList.add('hidden');
+                } else {
+                    pubNowBtn.classList.remove('hidden');
+                    pubNowBtn.onclick = () => {
+                        triggerApPublishNow(ev.id);
+                    };
+                }
             }
 
             renderApModalSlide();
