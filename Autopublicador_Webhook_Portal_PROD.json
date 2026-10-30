@@ -733,7 +733,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// ==========================================\n// RECIBIR ARCHIVOS DESDE PORTAL WEB (app.crocscale.com)\n// Soporta Archivos Separados para PUBLICACIÓN (Feed/Carrusel/Reel) y STORY (9:16)\n// ==========================================\nconst raw = $input.first().json || {};\nlet body = raw.body !== undefined ? raw.body : raw;\nif (typeof body === 'string') {\n  try {\n    body = JSON.parse(body);\n  } catch (e) {\n    body = {};\n  }\n}\n\nconst uploads = Array.isArray(body.uploads) ? body.uploads : [];\nconst store = body.store || 'nnn';\nconst schedule = body.schedule || {};\nconst product = body.product || {};\nconst publishNow = Boolean(body.publishNow);\nconst caption = body.caption || '';\n\nconst defaultFeedFolder = '1Tqu0lGDDETlIwtpAA5w7zsjkgLtU8SVv'; // NNN.Public.2026\nconst defaultStoryFolder = '1WDQSvu9qvL7MadLJDuJwhrgf2XdRXd1T'; // NNN.Story.2026\n\nconst outItems = [];\nfor (let i = 0; i < uploads.length; i++) {\n  const u = uploads[i];\n  if (!u || !u.base64Data) continue;\n\n  const cleanB64 = String(u.base64Data).includes(',')\n    ? String(u.base64Data).split(',')[1]\n    : String(u.base64Data);\n\n  const buffer = Buffer.from(cleanB64, 'base64');\n  const fileName = u.fileName || `post_${Date.now()}_${i}.jpg`;\n  const mimeType = u.mimeType || (fileName.toLowerCase().endsWith('.mp4') ? 'video/mp4' : 'image/jpeg');\n\n  const binaryData = await this.helpers.prepareBinaryData(buffer, fileName, mimeType);\n  const role = u.role || 'feed';\n  const folderId = u.folderId || (role === 'story' ? defaultStoryFolder : defaultFeedFolder);\n\n  outItems.push({\n    json: {\n      uploadIdx: i,\n      store,\n      role,\n      folderId,\n      fileName,\n      mimeType,\n      isVideo: Boolean(u.isVideo) || /\\.(mp4|mov)$/i.test(fileName),\n      scheduleTime: u.scheduleTime || (role === 'story' ? (schedule.storyTime || '20:30') : (schedule.feedTime || '18:00')),\n      publishNow,\n      caption,\n      sku: product.sku || '',\n      productName: product.name || '',\n      price: product.price || '',\n      variants: product.variants || '',\n      features: product.features || '',\n      scheduledDate: schedule.date || '',\n      feedTime: schedule.feedTime || '18:00',\n      storyTime: schedule.storyTime || '20:30',\n      target: schedule.target || 'both'\n    },\n    binary: {\n      data: binaryData\n    }\n  });\n}\n\nif (outItems.length === 0) {\n  throw new Error('No se recibieron archivos válidos en uploads[] desde el portal.');\n}\n\nreturn outItems;"
+        "jsCode": "// ==========================================\n// RECIBIR ARCHIVOS O ACCIÓN DE ELIMINACIÓN DESDE PORTAL WEB (app.crocscale.com)\n// Soporta Archivos Separados para PUBLICACIÓN (Feed/Carrusel/Reel), STORY (9:16) y ELIMINACIÓN DE DRIVE\n// ==========================================\nconst raw = $input.first().json || {};\nlet body = raw.body !== undefined ? raw.body : raw;\nif (typeof body === 'string') {\n  try {\n    body = JSON.parse(body);\n  } catch (e) {\n    body = {};\n  }\n}\n\nif (body.action === 'delete_from_drive') {\n  const fids = Array.isArray(body.fileIds) ? body.fileIds.filter(Boolean) : [];\n  const fnames = Array.isArray(body.fileNames) ? body.fileNames : [];\n  if (fids.length === 0) {\n    return [{\n      json: {\n        action: 'delete_from_drive',\n        fileId: '',\n        sku: body.sku || '',\n        isoDate: body.isoDate || ''\n      }\n    }];\n  }\n  return fids.map((fid, idx) => ({\n    json: {\n      action: 'delete_from_drive',\n      fileId: String(fid).trim(),\n      fileName: fnames[idx] || '',\n      sku: body.sku || '',\n      isoDate: body.isoDate || ''\n    }\n  }));\n}\n\nconst uploads = Array.isArray(body.uploads) ? body.uploads : [];\nconst store = body.store || 'nnn';\nconst schedule = body.schedule || {};\nconst product = body.product || {};\nconst publishNow = Boolean(body.publishNow);\nconst caption = body.caption || '';\n\nconst defaultFeedFolder = '1Tqu0lGDDETlIwtpAA5w7zsjkgLtU8SVv'; // NNN.Public.2026\nconst defaultStoryFolder = '1WDQSvu9qvL7MadLJDuJwhrgf2XdRXd1T'; // NNN.Story.2026\n\nconst outItems = [];\nfor (let i = 0; i < uploads.length; i++) {\n  const u = uploads[i];\n  if (!u || !u.base64Data) continue;\n\n  const cleanB64 = String(u.base64Data).includes(',')\n    ? String(u.base64Data).split(',')[1]\n    : String(u.base64Data);\n\n  const buffer = Buffer.from(cleanB64, 'base64');\n  const fileName = u.fileName || `post_${Date.now()}_${i}.jpg`;\n  const mimeType = u.mimeType || (fileName.toLowerCase().endsWith('.mp4') ? 'video/mp4' : 'image/jpeg');\n\n  const binaryData = await this.helpers.prepareBinaryData(buffer, fileName, mimeType);\n  const role = u.role || 'feed';\n  const folderId = u.folderId || (role === 'story' ? defaultStoryFolder : defaultFeedFolder);\n\n  outItems.push({\n    json: {\n      action: body.action || 'upload_to_drive',\n      uploadIdx: i,\n      store,\n      role,\n      folderId,\n      fileName,\n      mimeType,\n      isVideo: Boolean(u.isVideo) || /\\.(mp4|mov)$/i.test(fileName),\n      scheduleTime: u.scheduleTime || (role === 'story' ? (schedule.storyTime || '20:30') : (schedule.feedTime || '18:00')),\n      publishNow,\n      caption,\n      sku: product.sku || '',\n      productName: product.name || '',\n      price: product.price || '',\n      variants: product.variants || '',\n      features: product.features || '',\n      scheduledDate: schedule.date || '',\n      feedTime: schedule.feedTime || '18:00',\n      storyTime: schedule.storyTime || '20:30',\n      target: schedule.target || 'both'\n    },\n    binary: {\n      data: binaryData\n    }\n  });\n}\n\nif (outItems.length === 0) {\n  throw new Error('No se recibieron archivos válidos en uploads[] desde el portal.');\n}\n\nreturn outItems;"
       },
       "id": "dc0f973b-4fdc-4c4e-899a-e36e462108ca",
       "name": "8a. Preparar Archivos del Portal",
@@ -1392,6 +1392,92 @@
       "id": "3a441abb-ca7e-4236-b6dd-ee49b3d2adbd",
       "name": "Leer catalogo Bazar",
       "executeOnce": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "del_cond_1",
+              "leftValue": "={{ $json.action }}",
+              "rightValue": "delete_from_drive",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "8a2-delete-check-node",
+      "name": "8a2. ¿Eliminar de Drive?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -32,
+        2960
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "deleteFile",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.fileId }}",
+          "mode": "id"
+        },
+        "options": {
+          "deletePermanently": false
+        }
+      },
+      "id": "8b2-delete-drive-file-node",
+      "name": "8b2. Eliminar Archivo de Drive NNN",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        192,
+        2768
+      ],
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "3HuY6vo5wwgyvfmD",
+          "name": "Google Drive NNN"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, mode: 'deleted', message: 'Archivo(s) eliminado(s) de Google Drive correctamente' }) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "id": "9c-respond-delete-ok-node",
+      "name": "9c. Responder Portal (Eliminado OK)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        448,
+        2768
+      ],
+      "executeOnce": true
     }
   ],
   "connections": {
@@ -1638,7 +1724,7 @@
       "main": [
         [
           {
-            "node": "8b. Subir Archivo a Drive NNN",
+            "node": "8a2. ¿Eliminar de Drive?",
             "type": "main",
             "index": 0
           }
@@ -1869,6 +1955,35 @@
         [
           {
             "node": "3. Elegir Foto Nueva",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "8a2. ¿Eliminar de Drive?": {
+      "main": [
+        [
+          {
+            "node": "8b2. Eliminar Archivo de Drive NNN",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "8b. Subir Archivo a Drive NNN",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "8b2. Eliminar Archivo de Drive NNN": {
+      "main": [
+        [
+          {
+            "node": "9c. Responder Portal (Eliminado OK)",
             "type": "main",
             "index": 0
           }

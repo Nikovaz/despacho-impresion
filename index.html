@@ -2500,7 +2500,12 @@
                 hasChanges = true;
             }
 
-            // 10. Autopublisher Scheduled Queue
+            // 10. Autopublisher Deleted Items & Scheduled Queue
+            if (Array.isArray(cloudState.deletedApItems) && typeof deletedApItems !== 'undefined') {
+                deletedApItems = Array.from(new Set([...(deletedApItems || []), ...cloudState.deletedApItems]));
+                localStorage.setItem('croc_autopublisher_deleted_v1', JSON.stringify(deletedApItems));
+                hasChanges = true;
+            }
             if (Array.isArray(cloudState.autopublisherQueue) && typeof mergeCloudAutopublisherQueue === 'function') {
                 mergeCloudAutopublisherQueue(cloudState.autopublisherQueue);
                 hasChanges = true;
@@ -2548,6 +2553,7 @@
                     customPaymentMethods,
                     cadeteOverrides,
                     autopublisherQueue: (typeof autopublisherQueue !== 'undefined' ? autopublisherQueue : []),
+                    deletedApItems: (typeof deletedApItems !== 'undefined' ? deletedApItems : []),
                     updatedAt: new Date().toISOString(),
                     updatedBy: currentUser?.username || 'usuario'
                 };
@@ -8545,6 +8551,38 @@
         let apCarouselPreviewIdx = 0;
 
         let autopublisherQueue = JSON.parse(localStorage.getItem('croc_autopublisher_queue') || '[]');
+        let deletedApItems = [];
+        try {
+            deletedApItems = JSON.parse(localStorage.getItem('croc_autopublisher_deleted_v1') || '[]');
+            if (!Array.isArray(deletedApItems)) deletedApItems = [];
+        } catch (e) {
+            deletedApItems = [];
+        }
+
+        function isApItemDeleted({ eventId, queueId, store, isoDate, sku, fileId, fileName } = {}) {
+            if (!deletedApItems || deletedApItems.length === 0) return false;
+            const set = new Set(deletedApItems);
+            if (eventId && set.has(String(eventId))) return true;
+            if (queueId && set.has(String(queueId))) return true;
+            if (store && isoDate && sku) {
+                const skuClean = String(sku).trim().toUpperCase();
+                if (set.has(`EVT_${store}_${isoDate}_${skuClean}`)) return true;
+                if (set.has(`DSKU_${store}_${isoDate}_${skuClean}`)) return true;
+            }
+            if (fileId && set.has(`FID_${String(fileId).trim()}`)) return true;
+            if (store && fileName && set.has(`FNAME_${store}_${String(fileName).trim().toLowerCase()}`)) return true;
+            return false;
+        }
+
+        function unmarkApItemDeleted(store, isoDate, sku) {
+            if (!deletedApItems || deletedApItems.length === 0) return;
+            const skuClean = String(sku || '').trim().toUpperCase();
+            const evtKey = `EVT_${store}_${isoDate}_${skuClean}`;
+            const dskuKey = `DSKU_${store}_${isoDate}_${skuClean}`;
+            deletedApItems = deletedApItems.filter(k => k !== evtKey && k !== dskuKey);
+            localStorage.setItem('croc_autopublisher_deleted_v1', JSON.stringify(deletedApItems));
+        }
+
         let apWebhookUrl = localStorage.getItem('croc_ap_webhook_url') || 'https://n8n.totodrilo.cloud/webhook/autopublicador-upload';
         if (apWebhookUrl.includes('n8n.nicovaz.tech')) {
             apWebhookUrl = 'https://n8n.totodrilo.cloud/webhook/autopublicador-upload';
@@ -8789,9 +8827,16 @@
 
         function mergeCloudAutopublisherQueue(cloudList) {
             if (!Array.isArray(cloudList)) return;
-            const map = new Map((autopublisherQueue || []).map(item => [item.id, item]));
+            const map = new Map();
+            (autopublisherQueue || []).forEach(item => {
+                if (!item || !item.id) return;
+                if (isApItemDeleted({ queueId: item.id, store: item.store, isoDate: item.date, sku: item.sku, fileName: item.officialFileName })) return;
+                map.set(item.id, item);
+            });
             cloudList.forEach(item => {
-                if (item && item.id) map.set(item.id, item);
+                if (!item || !item.id) return;
+                if (isApItemDeleted({ queueId: item.id, store: item.store, isoDate: item.date, sku: item.sku, fileName: item.officialFileName })) return;
+                map.set(item.id, item);
             });
             autopublisherQueue = Array.from(map.values()).sort((a, b) => (a.date || '').localeCompare(b.date || ''));
             localStorage.setItem('croc_autopublisher_queue', JSON.stringify(autopublisherQueue));
@@ -10902,7 +10947,8 @@
                 rawResponse: webhookRespData || { error: webhookHttpError }
             });
 
-            // Actualizar cola y planificador
+            // Actualizar cola y planificador (y quitar de eliminados si se vuelve a programar el mismo día/SKU)
+            unmarkApItemDeleted(currentApStore, dateVal, sku);
             autopublisherQueue = autopublisherQueue.filter(x => !(x.store === currentApStore && x.date === dateVal && String(x.sku).toUpperCase() === String(sku).toUpperCase()));
             autopublisherQueue.unshift(newQueueItem);
             localStorage.setItem('croc_autopublisher_queue', JSON.stringify(autopublisherQueue));
@@ -10947,12 +10993,181 @@
             if (btnNow) btnNow.disabled = false;
         }
 
-        function deleteApQueueItem(id) {
-            if (!confirm('¿Quitar esta publicación programada de la cola del portal?')) return;
-            autopublisherQueue = autopublisherQueue.filter(x => x.id !== id);
+        async function deleteApPlannerEvent(eventOrQueueId) {
+            if (!eventOrQueueId) return;
+            const targetKey = String(eventOrQueueId).trim();
+
+            // Buscar en el cache del planificador (por event.id o event.queueId)
+            let ev = (apPlannerEventsCache || []).find(x => x.id === targetKey || x.queueId === targetKey);
+
+            // Si vino desde un item directo de autopublisherQueue
+            if (!ev) {
+                const qMatch = (autopublisherQueue || []).find(q => q.id === targetKey);
+                if (qMatch) {
+                    const skuClean = String(qMatch.sku || 'S/D').trim().toUpperCase();
+                    ev = {
+                        id: `EVT_${qMatch.store || currentApStore}_${qMatch.date}_${skuClean}`,
+                        queueId: qMatch.id,
+                        store: qMatch.store || currentApStore,
+                        isoDate: qMatch.date || '',
+                        sku: qMatch.sku || 'S/D',
+                        productName: qMatch.productName || qMatch.sku || 'Publicación',
+                        fileIds: (qMatch.uploadedFiles || []).map(uf => uf.id).filter(Boolean),
+                        fileNames: qMatch.officialFileName ? [qMatch.officialFileName] : []
+                    };
+                }
+            }
+
+            // Si aún no se encontró y tiene formato EVT_store_YYYY-MM-DD_SKU
+            if (!ev && targetKey.startsWith('EVT_')) {
+                const parts = targetKey.split('_');
+                const st = parts[1] || currentApStore;
+                const dt = parts[2] || '';
+                const sk = parts.slice(3).join('_') || 'S/D';
+                ev = {
+                    id: targetKey,
+                    store: st,
+                    isoDate: dt,
+                    sku: sk,
+                    productName: sk,
+                    fileIds: [],
+                    fileNames: []
+                };
+            }
+
+            if (!ev) return;
+
+            // Cerrar modal de detalle inmediatamente si estaba abierto
+            closeApPostDetailModal();
+
+            const store = ev.store || currentApStore;
+            const isoDate = ev.isoDate || '';
+            const skuClean = String(ev.sku || '').trim().toUpperCase();
+
+            const keysToTombstone = new Set(deletedApItems || []);
+            if (ev.id) keysToTombstone.add(String(ev.id));
+            if (ev.queueId) keysToTombstone.add(String(ev.queueId));
+            if (store && isoDate && skuClean) {
+                keysToTombstone.add(`EVT_${store}_${isoDate}_${skuClean}`);
+                keysToTombstone.add(`DSKU_${store}_${isoDate}_${skuClean}`);
+            }
+
+            // También recolectar cualquier archivo subido en entradas coincidentes de autopublisherQueue
+            const allFileIds = new Set((ev.fileIds || []).map(f => String(f).trim()).filter(Boolean));
+            const allFileNames = new Set((ev.fileNames || []).map(fn => String(fn).trim()).filter(Boolean));
+
+            (autopublisherQueue || []).forEach(q => {
+                const qSku = String(q.sku || '').trim().toUpperCase();
+                const isSame = (ev.queueId && q.id === ev.queueId) ||
+                    (q.store === store && q.date === isoDate && qSku === skuClean);
+                if (isSame) {
+                    keysToTombstone.add(String(q.id));
+                    if (q.officialFileName) allFileNames.add(String(q.officialFileName).trim());
+                    (q.uploadedFiles || []).forEach(uf => {
+                        if (uf && uf.id) allFileIds.add(String(uf.id).trim());
+                        if (uf && uf.name) allFileNames.add(String(uf.name).trim());
+                    });
+                }
+            });
+
+            allFileIds.forEach(fid => keysToTombstone.add(`FID_${fid}`));
+            allFileNames.forEach(fn => keysToTombstone.add(`FNAME_${store}_${fn.toLowerCase()}`));
+
+            deletedApItems = Array.from(keysToTombstone);
+            localStorage.setItem('croc_autopublisher_deleted_v1', JSON.stringify(deletedApItems));
+
+            // 1. Limpiar de autopublisherQueue
+            autopublisherQueue = (autopublisherQueue || []).filter(q => {
+                if (ev.queueId && q.id === ev.queueId) return false;
+                const qSku = String(q.sku || '').trim().toUpperCase();
+                if (q.store === store && q.date === isoDate && qSku === skuClean) return false;
+                return true;
+            });
             localStorage.setItem('croc_autopublisher_queue', JSON.stringify(autopublisherQueue));
+
+            // 2. Limpiar de apDriveFilesByStore en memoria
+            if (apDriveFilesByStore[store]) {
+                const shouldRemoveDriveFile = (f) => {
+                    if (!f) return false;
+                    if (allFileIds.has(String(f.id || '').trim())) return true;
+                    if (allFileNames.has(String(f.name || '').trim())) return true;
+                    const parsedDT = parseApPublishedDateAndTime('', f.name, store);
+                    const fSku = String(extractSkuFromPublishedFilename(f.name, store) || '').trim().toUpperCase();
+                    return parsedDT.isoDate === isoDate && fSku === skuClean;
+                };
+                apDriveFilesByStore[store].feed = (apDriveFilesByStore[store].feed || []).filter(f => !shouldRemoveDriveFile(f));
+                apDriveFilesByStore[store].story = (apDriveFilesByStore[store].story || []).filter(f => !shouldRemoveDriveFile(f));
+            }
+
+            // 3. Limpiar de apHistoryByStore en memoria
+            if (Array.isArray(apHistoryByStore[store])) {
+                apHistoryByStore[store] = apHistoryByStore[store].filter(h => {
+                    if (!h) return false;
+                    if (h.fileId && allFileIds.has(String(h.fileId).trim())) return false;
+                    if (h.fileName && allFileNames.has(String(h.fileName).trim())) return false;
+                    const hSku = String(h.sku || '').trim().toUpperCase();
+                    if (h.isoDate === isoDate && hSku === skuClean) return false;
+                    return true;
+                });
+            }
+
+            // 4. Sincronizar con Supabase Cloud y refrescar UI al instante
             pushCloudAppState();
             renderAutopublisherDashboard();
+
+            // 5. Mostrar confirmación visual en el banner y en el Registro de Logs
+            const banner = document.getElementById('ap-upload-status-banner');
+            const fileIdsArr = Array.from(allFileIds);
+            const fileNamesArr = Array.from(allFileNames);
+
+            if (banner) {
+                banner.className = "p-3.5 rounded-2xl text-xs font-bold bg-rose-500/15 border border-rose-500/30 text-rose-200 flex items-center justify-between gap-2";
+                banner.innerHTML = `
+                    <span>🗑️ Publicación eliminada: <b>${escapeHTML(ev.productName || ev.sku)}</b> (${escapeHTML(ev.sku)} • ${escapeHTML(isoDate)})</span>
+                    <span class="text-[10px] font-mono text-rose-300">${fileIdsArr.length > 0 ? 'Eliminando también de Google Drive...' : 'Quitado del Planificador'}</span>
+                `;
+                banner.classList.remove('hidden');
+            }
+
+            addAutopublisherLog({
+                level: 'info',
+                action: '🗑️ Publicación Eliminada',
+                store,
+                sku: ev.sku || 'S/D',
+                productName: ev.productName || ev.sku || '',
+                feedSchedule: ev.timeStr || '-',
+                storySchedule: '-',
+                feedFiles: fileNamesArr.map((fn, idx) => ({ id: fileIdsArr[idx] || '', name: fn })),
+                summary: `Se eliminó la publicación ${ev.productName || ''} (${ev.sku}) del día ${isoDate} del Planificador y Cola.${fileIdsArr.length > 0 ? ' Se solicitó eliminación de ' + fileIdsArr.length + ' archivo(s) en Google Drive.' : ''}`,
+                rawDetails: {
+                    deleted_event_id: ev.id,
+                    deleted_file_ids: fileIdsArr,
+                    deleted_file_names: fileNamesArr
+                }
+            });
+
+            // 6. Si tiene archivos en Google Drive, solicitar a n8n que los elimine de la carpeta Drive
+            if (fileIdsArr.length > 0 && apWebhookUrl) {
+                try {
+                    fetch(apWebhookUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+                        body: JSON.stringify({
+                            action: 'delete_from_drive',
+                            store,
+                            sku: ev.sku,
+                            productName: ev.productName,
+                            isoDate,
+                            fileIds: fileIdsArr,
+                            fileNames: fileNamesArr
+                        })
+                    }).catch(() => {});
+                } catch (_) {}
+            }
+        }
+
+        function deleteApQueueItem(id) {
+            deleteApPlannerEvent(id);
         }
 
         function preloadApProductFromTable(sku) {
@@ -11085,6 +11300,7 @@
                 const parsedDT = parseApPublishedDateAndTime('', f.name, storeKey);
                 if (!parsedDT.isoDate) return;
                 const sku = extractSkuFromPublishedFilename(f.name, storeKey) || 'S/D';
+                if (isApItemDeleted({ store: storeKey, isoDate: parsedDT.isoDate, sku, fileId: f.id, fileName: f.name })) return;
                 const isPub = (parsedDT.isoDate <= todayIso) && (publishedFileIdSet.has(f.id) || publishedDateSkuSet.has(`${parsedDT.isoDate}_${sku}`));
                 const feedSlotTime = parsedDT.timeStr || (storeKey === 'nnn' ? '18:00' : '12:00');
                 upsertDaySkuEvent({
@@ -11104,6 +11320,7 @@
                 const parsedDT = parseApPublishedDateAndTime('', f.name, storeKey);
                 if (!parsedDT.isoDate) return;
                 const sku = extractSkuFromPublishedFilename(f.name, storeKey) || 'S/D';
+                if (isApItemDeleted({ store: storeKey, isoDate: parsedDT.isoDate, sku, fileId: f.id, fileName: f.name })) return;
                 const isPub = (parsedDT.isoDate <= todayIso) && (publishedFileIdSet.has(f.id) || publishedDateSkuSet.has(`${parsedDT.isoDate}_${sku}`));
                 upsertDaySkuEvent({
                     isoDate: parsedDT.isoDate,
@@ -11122,12 +11339,14 @@
             const chronologicalHistory = [...history].reverse();
             chronologicalHistory.forEach(h => {
                 const iso = h.isoDate || '2026-07-24';
+                const skuVal = h.sku || 'S/D';
+                if (isApItemDeleted({ store: storeKey, isoDate: iso, sku: skuVal, fileId: h.fileId, fileName: h.fileName })) return;
                 const isFutureInSheet = iso > todayIso;
                 const isStoryFile = /09HS|20HS|STORY/i.test(h.fileName) || h.slotType === 'story';
                 upsertDaySkuEvent({
                     isoDate: iso,
                     timeStr: h.timeStr || (storeKey === 'nnn' ? '18:00' : '12:00'),
-                    sku: h.sku || 'S/D',
+                    sku: skuVal,
                     productName: h.productName,
                     price: h.price,
                     features: h.features,
@@ -11147,7 +11366,11 @@
                 const iso = q.date || todayIso;
                 const skuClean = (q.sku || 'S/D').trim().toUpperCase();
                 const groupKey = `EVT_${storeKey}_${iso}_${skuClean}`;
+                if (isApItemDeleted({ eventId: groupKey, queueId: q.id, store: storeKey, isoDate: iso, sku: skuClean, fileName: q.officialFileName })) {
+                    return;
+                }
                 if (eventsMap.has(groupKey) && eventsMap.get(groupKey).statusType === 'published') {
+                    eventsMap.get(groupKey).queueId = q.id;
                     return; // Ya figura como publicado desde Sheets/Drive
                 }
 
@@ -11297,7 +11520,7 @@
 
             return `
                 <div onclick="openApPostDetailModal('${escapeHTML(ev.id)}')"
-                     class="group cursor-pointer p-2 rounded-xl border ${borderCls} shadow-md hover:shadow-xl transition text-left select-none">
+                     class="group cursor-pointer p-2 rounded-xl border ${borderCls} shadow-md hover:shadow-xl transition text-left select-none relative">
                     <div class="flex items-center justify-between gap-1 text-[10px]">
                         <div class="flex items-center gap-1 font-bold text-slate-200 truncate">
                             <i class="fa-brands fa-instagram text-pink-400 text-[11px]"></i>
@@ -11308,6 +11531,11 @@
                                 ${isPub ? 'Subido' : 'Programado'}
                             </span>
                             ${statusDot}
+                            <button type="button" onclick="event.stopPropagation(); deleteApPlannerEvent('${escapeHTML(ev.id)}')"
+                                    class="ml-0.5 w-4 h-4 rounded bg-rose-950/80 hover:bg-rose-600 text-rose-300 hover:text-white flex items-center justify-center text-[9px] transition"
+                                    title="Eliminar publicación">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
                         </div>
                     </div>
                     ${thumbHtml}
@@ -11574,7 +11802,14 @@
                                             ${isPub ? '✅ Subido' : '⏳ Programado'}
                                         </span>
                                     </div>
-                                    ${ev.mediaCount > 1 ? `<span class="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-slate-950/85 text-white text-[10px] font-bold"><i class="fa-solid fa-clone mr-1"></i>${ev.mediaCount}</span>` : ''}
+                                    <div class="absolute top-2 right-2 flex items-center gap-1">
+                                        ${ev.mediaCount > 1 ? `<span class="px-2 py-0.5 rounded-md bg-slate-950/85 text-white text-[10px] font-bold"><i class="fa-solid fa-clone mr-1"></i>${ev.mediaCount}</span>` : ''}
+                                        <button type="button" onclick="event.stopPropagation(); deleteApPlannerEvent('${escapeHTML(ev.id)}')"
+                                                class="w-6 h-6 rounded-md bg-rose-950/90 hover:bg-rose-600 text-rose-300 hover:text-white flex items-center justify-center text-[10px] shadow transition"
+                                                title="Eliminar publicación">
+                                            <i class="fa-solid fa-trash-can"></i>
+                                        </button>
+                                    </div>
                                     <div class="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-slate-950 via-slate-950/85 to-transparent">
                                         <div class="text-xs font-extrabold text-white truncate">${escapeHTML(ev.productName)}</div>
                                         <div class="flex items-center justify-between text-[10px] mt-0.5">
@@ -11622,15 +11857,11 @@
 
             const delBtn = document.getElementById('ap-modal-delete-queue-btn');
             if (delBtn) {
-                if (ev.queueId) {
-                    delBtn.classList.remove('hidden');
-                    delBtn.onclick = () => {
-                        closeApPostDetailModal();
-                        deleteApQueueItem(ev.queueId);
-                    };
-                } else {
-                    delBtn.classList.add('hidden');
-                }
+                delBtn.classList.remove('hidden');
+                delBtn.innerHTML = `<i class="fa-solid fa-trash-can mr-1.5"></i> ${isPub ? 'Eliminar Publicación del Planificador y Drive' : 'Eliminar de la Cola Programada y Drive'}`;
+                delBtn.onclick = () => {
+                    deleteApPlannerEvent(ev.id);
+                };
             }
 
             renderApModalSlide();
@@ -11826,11 +12057,10 @@
                                             </div>
                                         </div>
                                     </div>
-                                    ${item.queueId ? `
-                                        <button type="button" onclick="event.stopPropagation(); deleteApQueueItem('${escapeHTML(item.queueId)}')" class="text-slate-500 hover:text-rose-400 p-1 text-xs" title="Eliminar de la cola">
-                                            <i class="fa-solid fa-trash-can"></i>
-                                        </button>
-                                    ` : ''}
+                                    <button type="button" onclick="event.stopPropagation(); deleteApPlannerEvent('${escapeHTML(item.id)}')" class="px-2 py-1 rounded-lg bg-rose-950/60 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-800/50 text-xs transition flex items-center gap-1 shrink-0" title="Eliminar publicación">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                        <span class="text-[10px] font-bold">Eliminar</span>
+                                    </button>
                                 </div>
 
                                 <div class="flex items-center justify-between pt-2 border-t border-slate-800/80 text-[11px]">
@@ -11845,14 +12075,24 @@
                 }
             }
 
-            // Renderizar Sub-Tab 2: Historial Publicado en Sheets
+            // Renderizar Sub-Tab 2: Historial Publicado en Sheets (filtrado por eliminados)
+            const visibleHistory = history.filter(h => !isApItemDeleted({
+                store: currentApStore,
+                isoDate: h.isoDate,
+                sku: h.sku,
+                fileId: h.fileId,
+                fileName: h.fileName
+            }));
+            if (tHist) tHist.innerText = visibleHistory.length;
+
             const histBody = document.getElementById('ap-history-table-body');
             if (histBody) {
-                if (history.length === 0) {
+                if (visibleHistory.length === 0) {
                     histBody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-slate-500">No se encontraron registros en la hoja de historial.</td></tr>`;
                 } else {
-                    histBody.innerHTML = history.slice(0, 80).map(h => {
+                    histBody.innerHTML = visibleHistory.slice(0, 80).map(h => {
                         const thumbUrl = h.fileId ? buildApDriveThumbnailUrl(h.fileId, 160) : '';
+                        const evtKey = `EVT_${currentApStore}_${h.isoDate || '2026-07-24'}_${String(h.sku || 'S/D').trim().toUpperCase()}`;
                         return `
                         <tr class="hover:bg-slate-800/40 transition">
                             <td class="p-3.5 font-mono text-slate-300 text-[11px]">${escapeHTML(h.dateStr)}</td>
@@ -11877,9 +12117,16 @@
                             <td class="p-3.5 font-mono text-slate-400 text-[11px]">${escapeHTML(h.igPostId)}</td>
                             <td class="p-3.5 font-mono text-slate-400 text-[11px] max-w-[180px] truncate">${escapeHTML(h.igStoryIds)}</td>
                             <td class="p-3.5 text-right">
-                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                                    ✅ ${escapeHTML(h.status)}
-                                </span>
+                                <div class="flex items-center justify-end gap-2">
+                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                        ✅ ${escapeHTML(h.status)}
+                                    </span>
+                                    <button type="button" onclick="deleteApPlannerEvent('${escapeHTML(evtKey)}')"
+                                            class="px-2 py-1 rounded-lg bg-rose-950/60 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-800/50 text-[10px] font-bold transition"
+                                            title="Eliminar publicación">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     `}).join('');
