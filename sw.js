@@ -1,5 +1,5 @@
 // Service Worker para CrocScale App
-const CACHE_NAME = 'crocscale-v8-drag-drop-publish-now';
+const CACHE_NAME = 'crocscale-v9-publish-now-live-feedback';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

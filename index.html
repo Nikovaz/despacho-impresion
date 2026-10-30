@@ -11648,7 +11648,24 @@
                 return;
             }
 
-            showToast(`🚀 Disparando publicación de "${prodName}" en Instagram...`, 'info');
+            // Indicadores de carga visual en botón de tarjeta y botón de modal
+            const cardBtns = document.querySelectorAll(`[data-publish-btn="${CSS.escape ? CSS.escape(eventId) : eventId}"]`);
+            cardBtns.forEach(b => {
+                b.disabled = true;
+                b.classList.add('opacity-75', 'cursor-wait', 'pointer-events-none');
+                b.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-[8px]"></i> <span>Publicando...</span>';
+            });
+
+            const modalBtn = document.getElementById('ap-modal-publish-now-btn');
+            if (modalBtn) {
+                modalBtn.disabled = true;
+                modalBtn.classList.add('opacity-75', 'cursor-wait');
+                modalBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-sm mr-1.5"></i> <span>Publicando en Instagram (aguarde 15s)...</span>';
+            }
+
+            showToast(`🚀 Conectando con n8n y Meta Graph API para "${prodName}"...`, 'info');
+
+            const webhookTargetUrl = 'https://n8n.totodrilo.cloud/webhook/autopublicador-upload';
 
             try {
                 const payload = {
@@ -11666,7 +11683,7 @@
                     target: ev.slotType || 'both'
                 };
 
-                const resp = await fetch(apWebhookUrl, {
+                const resp = await fetch(webhookTargetUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
                     body: JSON.stringify(payload)
@@ -11712,12 +11729,13 @@
                 });
 
                 pushCloudAppState();
-                showToast(`🎉 ¡"${prodName}" publicado en Instagram con éxito!`, 'success');
-                renderAutopublisherDashboard();
+                showToast(`🎉 ¡"${prodName}" publicado en Instagram con éxito! ID: ${data.ig_post_id || 'OK'}`, 'success');
 
                 if (typeof closeApPostDetailModal === 'function') {
                     closeApPostDetailModal();
                 }
+
+                renderAutopublisherDashboard();
 
                 setTimeout(() => {
                     fetchApStoreHistory(currentApStore).then(() => renderAutopublisherDashboard());
@@ -11725,6 +11743,16 @@
 
             } catch (err) {
                 console.error('Error al publicar ahora:', err);
+                cardBtns.forEach(b => {
+                    b.disabled = false;
+                    b.classList.remove('opacity-75', 'cursor-wait', 'pointer-events-none');
+                    b.innerHTML = '<i class="fa-solid fa-paper-plane text-[8px]"></i> <span>Publicar Ahora</span>';
+                });
+                if (modalBtn) {
+                    modalBtn.disabled = false;
+                    modalBtn.classList.remove('opacity-75', 'cursor-wait');
+                    modalBtn.innerHTML = '<i class="fa-solid fa-paper-plane text-sm"></i> <span>🚀 Publicar Ahora en Instagram</span>';
+                }
                 showToast(`❌ Error al conectar con n8n: ${err.message}`, 'error');
                 addAutopublisherLog({
                     level: 'error',
@@ -11814,7 +11842,7 @@
                                 <i class="fa-solid fa-arrows-up-down-left-right text-[8px] text-slate-500"></i>
                                 <span>Mover</span>
                             </span>
-                            <button type="button" onclick="event.stopPropagation(); triggerApPublishNow('${escapeHTML(ev.id)}')"
+                            <button type="button" data-publish-btn="${escapeHTML(ev.id)}" onclick="event.stopPropagation(); triggerApPublishNow('${escapeHTML(ev.id)}')"
                                     class="px-2 py-0.5 rounded-md bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-extrabold text-[9px] shadow-sm flex items-center gap-1 transition shrink-0"
                                     title="Publicar inmediatamente en Instagram">
                                 <i class="fa-solid fa-paper-plane text-[8px]"></i>
