@@ -11371,6 +11371,14 @@
 
                 if (!eventsMap.has(groupKey)) {
                     const firstFileId = item.fileId || catDriveId;
+                    const feedFiles = [];
+                    const storyFiles = [];
+                    if (item.role === 'story') {
+                        if (firstFileId) storyFiles.push({ id: firstFileId, name: item.fileName || 'story.jpg', isVideo: Boolean(item.isVideo) });
+                    } else {
+                        if (firstFileId) feedFiles.push({ id: firstFileId, name: item.fileName || 'feed.jpg', isVideo: Boolean(item.isVideo) });
+                    }
+
                     eventsMap.set(groupKey, {
                         id: baseGroupKey,
                         store: storeKey,
@@ -11390,15 +11398,20 @@
                         isVideo: Boolean(item.isVideo),
                         igPostId: item.igPostId || (item.isPublished ? 'Publicado OK' : 'En carpeta Drive (Pendiente)'),
                         igStoryIds: item.igStoryIds || (item.role === 'story' ? 'En carpeta Drive' : '-'),
+                        feedFiles: feedFiles,
+                        storyFiles: storyFiles,
                         fileIds: firstFileId ? [firstFileId] : [],
                         fileNames: item.fileName ? [item.fileName] : [],
-                        thumbnailUrl: firstFileId ? buildApDriveThumbnailUrl(firstFileId, 400) : '',
+                        thumbnailUrl: (feedFiles[0]?.id || storyFiles[0]?.id) ? buildApDriveThumbnailUrl(feedFiles[0]?.id || storyFiles[0]?.id, 400) : '',
                         caption: matchedCat
                             ? buildApCleanCaption({ name: matchedCat.name, sku: item.sku, price: matchedCat.price, features: matchedCat.features })
                             : buildApCleanCaption({ name: item.productName || item.sku, sku: item.sku, price: item.price, features: item.features })
                     });
                 } else {
                     const existing = eventsMap.get(groupKey);
+                    if (!existing.feedFiles) existing.feedFiles = [];
+                    if (!existing.storyFiles) existing.storyFiles = [];
+
                     if (item.isPublished) {
                         existing.statusType = 'published';
                         existing.statusLabel = item.statusLabel || 'Publicado en IG';
@@ -11406,23 +11419,24 @@
                     if (item.role === 'feed') {
                         existing.hasFeed = true;
                         existing.timeStr = storeKey === 'nnn' ? '18:00' : '12:00';
-                        // Priorizar siempre la foto de Feed como portada de la tarjeta
-                        if (item.fileId) {
-                            existing.fileIds = [item.fileId, ...existing.fileIds.filter(id => id !== item.fileId)];
+                        if (item.fileId && !existing.feedFiles.some(f => f.id === item.fileId)) {
+                            existing.feedFiles.push({ id: item.fileId, name: item.fileName || 'feed.jpg', isVideo: Boolean(item.isVideo) });
                             existing.thumbnailUrl = buildApDriveThumbnailUrl(item.fileId, 400);
                         }
                     } else {
                         existing.hasStory = true;
-                        if (item.fileId && !existing.fileIds.includes(item.fileId)) {
-                            existing.fileIds.push(item.fileId);
+                        if (item.fileId && !existing.storyFiles.some(f => f.id === item.fileId)) {
+                            existing.storyFiles.push({ id: item.fileId, name: item.fileName || 'story.jpg', isVideo: Boolean(item.isVideo) });
                         }
                     }
                     if (existing.hasFeed && existing.hasStory) {
                         existing.slotType = 'both';
                     }
-                    if (item.fileName && !existing.fileNames.includes(item.fileName)) {
-                        existing.fileNames.push(item.fileName);
-                    }
+
+                    // Sincronizar fileIds y fileNames ordenados: FEED primero, STORY después
+                    existing.fileIds = [...existing.feedFiles.map(f => f.id), ...existing.storyFiles.map(f => f.id)];
+                    existing.fileNames = [...existing.feedFiles.map(f => f.name), ...existing.storyFiles.map(f => f.name)];
+
                     if (item.igPostId && item.igPostId !== '-') existing.igPostId = item.igPostId;
                     if (item.igStoryIds && item.igStoryIds !== '-') existing.igStoryIds = item.igStoryIds;
                 }
@@ -11841,6 +11855,8 @@
                     price: ev.price || '',
                     caption: cleanCaption,
                     isoDate: ev.isoDate || new Date().toISOString().slice(0, 10),
+                    feedFiles: Array.isArray(ev.feedFiles) ? ev.feedFiles : [],
+                    storyFiles: Array.isArray(ev.storyFiles) ? ev.storyFiles : [],
                     fileIds: Array.isArray(ev.fileIds) ? ev.fileIds : [],
                     fileNames: Array.isArray(ev.fileNames) ? ev.fileNames : [],
                     target: ev.slotType || 'both'

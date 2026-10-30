@@ -1,5 +1,5 @@
 // Service Worker para CrocScale App
-const CACHE_NAME = 'crocscale-v12-defined-showtoast';
+const CACHE_NAME = 'crocscale-v13-fix-feed-story-separation';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
