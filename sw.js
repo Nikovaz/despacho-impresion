@@ -1,5 +1,5 @@
 // Service Worker para CrocScale App
-const CACHE_NAME = 'crocscale-v13-fix-feed-story-separation';
+const CACHE_NAME = 'crocscale-v14-add-crocscale-store';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
