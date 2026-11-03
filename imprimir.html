@@ -229,7 +229,7 @@
                     <span class="text-slate-300 font-semibold">Despacho Diario</span>
                 </h1>
                 <p class="text-slate-400 text-xs sm:text-sm mt-1">
-                    Corte diario a las 12:00 hs | Fin de semana acumulado (Viernes 12hs a Lunes 12hs)
+                    Corte diario a las 23:59 hs (salen al día siguiente) | Fin de semana acumulado (Viernes, Sábado y Domingo salen el Lunes)
                 </p>
             </div>
 
@@ -5915,61 +5915,90 @@
             }
         }
 
+        function getExpectedDispatchDate(orderDateInput) {
+            const d = new Date(orderDateInput);
+            if (isNaN(d.getTime())) return '';
+            const day = d.getDay(); // 0 Dom, 1 Lun, 2 Mar, 3 Mie, 4 Jue, 5 Vie, 6 Sab
+            const target = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+            if (day === 5) {
+                // Viernes -> Sale Lunes (+3 días)
+                target.setDate(target.getDate() + 3);
+            } else if (day === 6) {
+                // Sábado -> Sale Lunes (+2 días)
+                target.setDate(target.getDate() + 2);
+            } else if (day === 0) {
+                // Domingo -> Sale Lunes (+1 día)
+                target.setDate(target.getDate() + 1);
+            } else {
+                // Lunes a Jueves -> Sale al día hábil siguiente (+1 día, corte 23:59 hs)
+                target.setDate(target.getDate() + 1);
+            }
+            return getLocalTodayIso(target);
+        }
+
         function getBatchConfig(now = new Date()) {
             const day = now.getDay();
-            const hour = now.getHours();
-            const minute = now.getMinutes();
-            const isPast13 = (hour > 13) || (hour === 13 && minute >= 0);
+            const DAYS_ES = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
-            let currentBatchStart, currentBatchEnd, tabTodayLabel, tabTodayDesc, tabTomorrowLabel, tabTomorrowDesc;
-
-            if (day === 1) { 
-                currentBatchStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 3, 13, 0, 0);
-                currentBatchEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 13, 0, 0);
-                tabTodayLabel = "Lote de Hoy Lunes (Corte 12hs)";
-                tabTodayDesc = "Acumulado Fin de Semana (Viernes 12hs a Lunes 12hs)";
-                tabTomorrowLabel = "Lote de Mañana (Martes)";
-                tabTomorrowDesc = "Pedidos entrados el lunes después de las 12:00 hs";
-            } else if (day === 5) {
-                if (!isPast13) {
-                    currentBatchStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 13, 0, 0);
-                    currentBatchEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 13, 0, 0);
-                    tabTodayLabel = "Lote de Hoy Viernes (Corte 12hs)";
-                    tabTodayDesc = "Pedidos para despachar hoy viernes a la tarde";
-                    tabTomorrowLabel = "Lote del Lunes (Fin de Semana)";
-                    tabTomorrowDesc = "Pedidos entrados después de las 12:00 hs";
-                } else {
-                    currentBatchStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 13, 0, 0);
-                    currentBatchEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 3, 13, 0, 0);
-                    tabTodayLabel = "Lote del Lunes (Acumulado Finde)";
-                    tabTodayDesc = "Todo lo que entra desde hoy 12hs hasta el Lunes 12hs";
-                    tabTomorrowLabel = "Lote del Martes";
-                    tabTomorrowDesc = "Pedidos posteriores al corte del Lunes";
-                }
-            } else if (day === 6) {
-                currentBatchStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 13, 0, 0);
-                currentBatchEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2, 13, 0, 0);
-                tabTodayLabel = "Lote del Lunes (Acumulado Finde)";
-                tabTodayDesc = "Viernes 12hs a Lunes 12hs (Se despacha el Lunes)";
-                tabTomorrowLabel = "Lote del Martes";
-                tabTomorrowDesc = "Pedidos posteriores al corte del Lunes";
+            // Fecha que se despacha en el lote principal de hoy
+            let todayDispatchDate;
+            if (day === 6) {
+                // Sábado: el despacho en preparación es el del próximo Lunes
+                const mon = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2);
+                todayDispatchDate = getLocalTodayIso(mon);
             } else if (day === 0) {
-                currentBatchStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 2, 13, 0, 0);
-                currentBatchEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 13, 0, 0);
-                tabTodayLabel = "Lote del Lunes (Acumulado Finde)";
-                tabTodayDesc = "Viernes 12hs a Lunes 12hs (Se despacha mañana Lunes)";
-                tabTomorrowLabel = "Lote del Martes";
-                tabTomorrowDesc = "Pedidos posteriores al corte del Lunes";
+                // Domingo: el despacho en preparación es el de mañana Lunes
+                const mon = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+                todayDispatchDate = getLocalTodayIso(mon);
             } else {
-                currentBatchStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 13, 0, 0);
-                currentBatchEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 13, 0, 0);
-                tabTodayLabel = "Lote de Hoy (Corte 12:00 hs)";
-                tabTodayDesc = "Pedidos para preparar y despachar hoy";
-                tabTomorrowLabel = "Lote de Mañana (Entraron tarde)";
-                tabTomorrowDesc = "Pedidos entrados después de las 12:00 hs";
+                todayDispatchDate = getLocalTodayIso(now);
             }
 
-            return { currentBatchStart, currentBatchEnd, tabTodayLabel, tabTodayDesc, tabTomorrowLabel, tabTomorrowDesc };
+            // Siguiente día hábil de despacho
+            const tDate = new Date(todayDispatchDate + 'T00:00:00');
+            const tDay = tDate.getDay();
+            const nextTarget = new Date(tDate);
+            if (tDay === 5) {
+                // Después del viernes el siguiente es lunes (+3 días)
+                nextTarget.setDate(nextTarget.getDate() + 3);
+            } else {
+                nextTarget.setDate(nextTarget.getDate() + 1);
+            }
+            const nextDispatchDate = getLocalTodayIso(nextTarget);
+
+            let tabTodayLabel, tabTodayDesc, tabTomorrowLabel, tabTomorrowDesc;
+
+            if (day === 1) { // Lunes
+                tabTodayLabel = 'Lote de Hoy Lunes';
+                tabTodayDesc = 'Acumulado Fin de Semana (Viernes, Sábado y Domingo)';
+                tabTomorrowLabel = 'Lote de Mañana (Martes)';
+                tabTomorrowDesc = 'Pedidos confirmados hoy Lunes (hasta 23:59 hs)';
+            } else if (day === 5) { // Viernes
+                tabTodayLabel = 'Lote de Hoy Viernes';
+                tabTodayDesc = 'Pedidos confirmados ayer Jueves (para despachar hoy)';
+                tabTomorrowLabel = 'Lote del Lunes';
+                tabTomorrowDesc = 'Pedidos confirmados hoy Viernes (salen el Lunes)';
+            } else if (day === 6) { // Sábado
+                tabTodayLabel = 'Lote del Lunes (Fin de Semana)';
+                tabTodayDesc = 'Acumulado Viernes y Sábado (se despacha el Lunes)';
+                tabTomorrowLabel = 'Lote del Martes';
+                tabTomorrowDesc = 'Pedidos confirmados para el Martes';
+            } else if (day === 0) { // Domingo
+                tabTodayLabel = 'Lote del Lunes (Fin de Semana)';
+                tabTodayDesc = 'Acumulado Viernes, Sábado y Domingo (se despacha mañana Lunes)';
+                tabTomorrowLabel = 'Lote del Martes';
+                tabTomorrowDesc = 'Pedidos confirmados para el Martes';
+            } else { // Martes, Miércoles, Jueves
+                const todayName = DAYS_ES[day];
+                const nextDayName = DAYS_ES[day + 1];
+                const prevDayName = DAYS_ES[day - 1];
+                tabTodayLabel = 'Lote de Hoy ' + todayName;
+                tabTodayDesc = 'Pedidos confirmados ayer ' + prevDayName + ' (para despachar hoy)';
+                tabTomorrowLabel = 'Lote de Mañana (' + nextDayName + ')';
+                tabTomorrowDesc = 'Pedidos confirmados hoy ' + todayName + ' hasta 23:59 hs';
+            }
+
+            return { todayDispatchDate, nextDispatchDate, tabTodayLabel, tabTodayDesc, tabTomorrowLabel, tabTomorrowDesc };
         }
 
         /* ====================================================== */
@@ -6110,7 +6139,7 @@
         }
 
         function categorizeDispatchOrders(orders) {
-            const { currentBatchStart, currentBatchEnd, tabTodayLabel, tabTodayDesc, tabTomorrowLabel, tabTomorrowDesc } = getBatchConfig();
+            const { todayDispatchDate, nextDispatchDate, tabTodayLabel, tabTodayDesc, tabTomorrowLabel, tabTomorrowDesc } = getBatchConfig();
 
             const elTodayLabel = document.getElementById('label-tab-today');
             const elTodayDesc = document.getElementById('desc-tab-today');
@@ -6129,40 +6158,31 @@
             // Filtrar historyBatch según el ciclo seleccionado (current_month, prev_month, all, custom)
             const historyBatch = filterOrdersByDispatchCycle(orders);
 
-            const nowDate = new Date();
-            const todayStr = getLocalTodayIso(nowDate);
-
             orders.forEach(order => {
-                // 1. Si tiene fecha programada futura (ej. 24 o 25)
-                if (order.fecha_programada && order.fecha_programada > todayStr) {
+                // Fecha de despacho efectiva: si tiene fecha_programada explícita, se respeta; sino, día hábil según fecha de creación
+                const expectedDate = getExpectedDispatchDate(order.fecha_hora);
+                const targetDate = order.fecha_programada || expectedDate;
+
+                // 1. Si está programado para una fecha posterior al siguiente despacho hábil
+                if (targetDate > nextDispatchDate) {
                     scheduledBatch.push(order);
-                    return; // No mezclar con el lote de hoy ni de mañana
+                    return;
                 }
 
-                // 1b. Si fue programado previamente para el día de hoy, incluir en el Lote de Hoy
-                const orderCreatedIso = getLocalTodayIso(new Date(order.fecha_hora));
-                if (order.fecha_programada && order.fecha_programada === todayStr && order.fecha_programada > orderCreatedIso) {
+                // 2. Si su fecha de despacho es hoy (o acumulado anterior no despachado), va a Lote de Hoy
+                if (targetDate <= todayDispatchDate) {
                     todayBatch.push(order);
                     return;
                 }
-                // 2. Lógica normal por horario de corte 12:00 hs
-                const orderDate = new Date(order.fecha_hora);
-                if (orderDate >= currentBatchStart && orderDate < currentBatchEnd) {
-                    todayBatch.push(order);
-                } else if (orderDate >= currentBatchEnd) {
-                    tomorrowBatch.push(order);
-                }
-            });
 
-            // Si hubo pedidos entrados hoy fuera del rango estricto pero no son de mañana ni programados, asegurar que estén en lote
-            orders.forEach(order => {
-                if (order.fecha_programada && order.fecha_programada > todayStr) return;
-                const oDate = new Date(order.fecha_hora);
-                if (getLocalTodayIso(oDate) === todayStr) {
-                    if (!todayBatch.some(o => o.id === order.id) && !tomorrowBatch.some(o => o.id === order.id)) {
-                        todayBatch.unshift(order);
-                    }
+                // 3. Si su fecha de despacho es el próximo día hábil (mañana o lunes), va a Lote Siguiente
+                if (targetDate === nextDispatchDate) {
+                    tomorrowBatch.push(order);
+                    return;
                 }
+
+                // 4. Cualquier otra fecha futura va a Programados
+                scheduledBatch.push(order);
             });
 
             scheduledBatch.sort((a, b) => (a.fecha_programada || '').localeCompare(b.fecha_programada || ''));
@@ -13066,7 +13086,7 @@
                     </label>
                     <div class="flex items-center gap-3">
                         <input type="date" id="mo-scheduled-date" onclick="try{this.showPicker()}catch(e){}" class="bg-slate-950 text-white text-xs rounded-xl px-3 py-2 border border-purple-800 focus:outline-none focus:border-purple-500 cursor-pointer">
-                        <span class="text-[11px] text-slate-400">Dejar vacío para despacho inmediato según corte de las 12hs</span>
+                        <span class="text-[11px] text-slate-400">Dejar vacío para despacho al siguiente día hábil (corte 23:59 hs)</span>
                     </div>
                 </div>
 
