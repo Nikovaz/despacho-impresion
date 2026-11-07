@@ -5871,25 +5871,37 @@
                 });
 
                 
-                // Apply any manual edits made to orders (with auto-healing for Moreno / Norte / Hornos bug)
+                // Apply any manual edits made to orders (with auto-healing for Moreno / Norte / Hornos / Sheet Sync bug)
+                let editedOrdersChanged = false;
                 dispatchOrders = dispatchOrders.map(o => {
                     if (editedOrders[o.id]) {
                         const ed = { ...editedOrders[o.id] };
-                        if (!ed.fecha_programada && o.fecha_programada && !ed.fecha_programada_cleared) {
+                        // Si en Google Sheets se cargó o actualizó fecha_despacho / programada, debe prevalecer
+                        if (o.fecha_programada && (!ed.fecha_programada || ed.fecha_programada_cleared)) {
                             ed.fecha_programada = o.fecha_programada;
+                            delete ed.fecha_programada_cleared;
+                            editedOrders[o.id].fecha_programada = o.fecha_programada;
+                            delete editedOrders[o.id].fecha_programada_cleared;
+                            editedOrdersChanged = true;
                         }
-                        if (ed.tipoEntrega === 'cadete' && ed.envio === false && !/\bno\b|\bretira|\bretiro/i.test(ed.costo_envio || '')) {
+                        // Auto-healing de envío cadete para pedidos con flete asignado que no sean retiro
+                        if (ed.envio === false && !/\bno\b|\bretira|\bretiro/i.test(ed.costo_envio || '') && !/\bretiro\b|\bdepósito\b/i.test(ed.direccion || '')) {
                             ed.envio = true;
                             editedOrders[o.id].envio = true;
+                            editedOrdersChanged = true;
                         }
                         if (o.id === '542215403699-2026-10-14' && (ed.direccion || '').includes('Retiro en Dep')) {
                             ed.direccion = 'Calle 73 entre 151 y 152, Los Hornos (La Plata) - Apt #7';
                             editedOrders[o.id].direccion = ed.direccion;
+                            editedOrdersChanged = true;
                         }
                         return { ...o, ...ed, isEdited: true };
                     }
                     return o;
                 });
+                if (editedOrdersChanged) {
+                    localStorage.setItem('croc_edited_orders', JSON.stringify(editedOrders));
+                }
 
                 // Filter out deleted orders (unless showDeletedOrders is enabled)
                 if (!showDeletedOrders) {
@@ -7735,9 +7747,23 @@
             }
         }
 
+        function parseDateForCadete(val) {
+            if (!val) return new Date();
+            if (val instanceof Date) return isNaN(val.getTime()) ? new Date() : val;
+            if (typeof val === 'string') {
+                const s = val.trim();
+                const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+                if (m) {
+                    return new Date(parseInt(m[1], 10), parseInt(m[2], 10) - 1, parseInt(m[3], 10), 12, 0, 0);
+                }
+            }
+            const d = new Date(val);
+            return isNaN(d.getTime()) ? new Date() : d;
+        }
+
         /* Determinar ciclo semanal (Corte: Viernes 12:00 hs -> entra al lote del Lunes) */
         function getCadeteCycleForDate(dateInput) {
-            const d = new Date(dateInput);
+            const d = parseDateForCadete(dateInput);
             if (isNaN(d.getTime())) return null;
 
             const day = d.getDay(); // 0 Dom, 1 Lun, ..., 5 Vie, 6 Sab
@@ -7911,15 +7937,15 @@
 
                 cycleFiltered = motoOrders.filter(o => {
                     const dateToUse = o.fecha_programada || o.fecha_hora || new Date().toISOString();
-                    const d = new Date(dateToUse);
+                    const d = parseDateForCadete(dateToUse);
                     return d >= activeCycleObj.start && d < activeCycleObj.end;
                 });
             }
 
             // Ordenar por fecha cronológica ascendente para ver el recorrido de la semana
             cycleFiltered.sort((a, b) => {
-                const da = new Date(a.fecha_programada || a.fecha_hora || 0);
-                const db = new Date(b.fecha_programada || b.fecha_hora || 0);
+                const da = parseDateForCadete(a.fecha_programada || a.fecha_hora || 0);
+                const db = parseDateForCadete(b.fecha_programada || b.fecha_hora || 0);
                 return da.getTime() - db.getTime();
             });
 
@@ -8133,7 +8159,7 @@
 
             tableBody.innerHTML = filtered.map(item => {
                 const o = item.order;
-                const dDate = new Date(o.fecha_programada || o.fecha_hora);
+                const dDate = parseDateForCadete(o.fecha_programada || o.fecha_hora);
                 const pad = n => String(n).padStart(2, '0');
                 const dateStr = !isNaN(dDate.getTime()) ? `${pad(dDate.getDate())}/${pad(dDate.getMonth() + 1)}` : 'S/F';
 
@@ -8480,7 +8506,7 @@
                 totalCash += item.collectedCash;
                 totalTrips += item.attempts;
 
-                const dDate = new Date(o.fecha_programada || o.fecha_hora);
+                const dDate = parseDateForCadete(o.fecha_programada || o.fecha_hora);
                 const pad = n => String(n).padStart(2, '0');
                 const dateStr = !isNaN(dDate.getTime()) ? `${pad(dDate.getDate())}/${pad(dDate.getMonth() + 1)}` : 'S/F';
 
