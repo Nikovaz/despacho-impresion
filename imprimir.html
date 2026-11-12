@@ -94,7 +94,6 @@
             background: #475569;
         }
 
-        input[type="date"] { color-scheme: dark; }
         input[type="date"]::-webkit-calendar-picker-indicator {
             filter: invert(1);
             cursor: pointer;
@@ -229,7 +228,7 @@
                     <span class="text-slate-300 font-semibold">Despacho Diario</span>
                 </h1>
                 <p class="text-slate-400 text-xs sm:text-sm mt-1">
-                    Corte diario a las 23:59 hs (salen al día siguiente) | Fin de semana acumulado (Viernes, Sábado y Domingo salen el Lunes)
+                    Corte diario a las 12:00 hs | Fin de semana acumulado (Viernes 12hs a Lunes 12hs)
                 </p>
             </div>
 
@@ -2361,37 +2360,6 @@
     <div id="print-area" class="hidden"></div>
 
     <script>
-        // ==========================================
-        // NOTIFICACIONES TOAST GLOBALES (CrocScale)
-        // ==========================================
-        function showToast(message, type = 'info') {
-            console.log('[TOAST][' + type.toUpperCase() + ']', message);
-            try {
-                let container = document.getElementById('croc-toast-container');
-                if (!container) {
-                    container = document.createElement('div');
-                    container.id = 'croc-toast-container';
-                    container.className = 'fixed bottom-6 right-6 z-[99999] flex flex-col gap-2 max-w-sm pointer-events-none';
-                    document.body.appendChild(container);
-                }
-                const toast = document.createElement('div');
-                const bg = type === 'success' ? 'bg-emerald-600' : (type === 'error' ? 'bg-rose-600' : (type === 'warning' ? 'bg-amber-600' : 'bg-slate-800'));
-                toast.className = `${bg} text-white text-xs font-bold px-4 py-3 rounded-xl shadow-2xl border border-white/20 flex items-center gap-2.5 transition-all duration-300 transform translate-y-4 opacity-0 pointer-events-auto`;
-                toast.innerHTML = `<span>${message}</span>`;
-                container.appendChild(toast);
-                requestAnimationFrame(() => {
-                    toast.classList.remove('translate-y-4', 'opacity-0');
-                });
-                setTimeout(() => {
-                    toast.classList.add('opacity-0', 'translate-y-2');
-                    setTimeout(() => toast.remove(), 300);
-                }, 4000);
-            } catch (e) {
-                console.warn('Error mostrando toast:', e);
-            }
-        }
-        window.showToast = showToast;
-
         /* ====================================================== */
         /* SUPABASE LIVE CONFIGURATION (NNN & CROCSCALE)         */
         /* ====================================================== */
@@ -2965,7 +2933,7 @@
                 if (ch === ',' && inParen > 0) cleaned += '___COMMA___';
                 else cleaned += ch;
             }
-            const parts = cleaned.split(/[\r\n\u2022|]+|\s+-\s+|,/);
+            const parts = cleaned.split(/[\r\n\u2022]+|\s+-\s+|,/);
             const res = [];
             for (let p of parts) {
                 p = p.replace(/___COMMA___/g, ',').trim();
@@ -3061,10 +3029,6 @@
             let totalCost = 0;
 
             for (const it of items) {
-                const itTrim = it.trim();
-                if (/^\(?\s*(?:promo|subtotal|total|aclaraci[oó]n|nota\b)/i.test(itTrim) && !/x\s*\d+/i.test(itTrim)) {
-                    continue;
-                }
                 const bazarMatch = matchNNNBazarItem(it);
                 if (bazarMatch) {
                     const bQty = extractBazarOrderMultiplier(it, bazarMatch);
@@ -4750,142 +4714,7 @@
             pushCloudAppState();
         }
 
-        function getLocalTodayIso(d = new Date()) {
-            if (!d || isNaN(d.getTime())) d = new Date();
-            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-        }
-
-        function formatScheduledDateAR(isoStr) {
-            if (!isoStr) return '';
-            const m = String(isoStr).trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
-            if (m) return `${m[3]}/${m[2]}/${m[1]}`;
-            return isoStr;
-        }
-
-        function parseSheetScheduledDate(rawVal, orderYear = 2026) {
-            if (!rawVal) return '';
-            const s = String(rawVal).trim();
-            if (!s) return '';
-            let year = 0, month = 0, day = 0;
-
-            const mGviz = s.match(/^Date\(\s*(\d{4})\s*,\s*(\d{1,2})\s*,\s*(\d{1,2})/i);
-            const mIso = s.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
-            const mLat = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
-
-            if (mGviz) {
-                year = parseInt(mGviz[1], 10);
-                month = parseInt(mGviz[2], 10) + 1;
-                day = parseInt(mGviz[3], 10);
-            } else if (mIso) {
-                year = parseInt(mIso[1], 10);
-                month = parseInt(mIso[2], 10);
-                day = parseInt(mIso[3], 10);
-            } else if (mLat) {
-                day = parseInt(mLat[1], 10);
-                month = parseInt(mLat[2], 10);
-                year = parseInt(mLat[3], 10);
-                if (year < 100) year += 2000;
-            } else {
-                return '';
-            }
-
-            if (month < 1 || month > 12 || day < 1 || day > 31) return '';
-            if (orderYear >= 2026 && year < orderYear) {
-                year = orderYear;
-            }
-            return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        }
-
         function promptSetScheduledDate(orderId) {
-            const order = dispatchOrders.find(o => o.id === orderId);
-            if (!order) return;
-
-            const modal = document.getElementById('modal-schedule-date');
-            if (!modal) return;
-
-            document.getElementById('sched-modal-order-id').value = order.id;
-            document.getElementById('sched-modal-client-name').innerText = order.cliente_nombre || 'Cliente';
-            document.getElementById('sched-modal-ticket-id').innerText = `${order.id} • ${order.direccion || ''}`;
-
-            const dateInput = document.getElementById('sched-modal-date-input');
-            const curDate = order.fecha_programada || '';
-            if (curDate && curDate >= getLocalTodayIso()) {
-                dateInput.value = curDate;
-            } else {
-                const tomorrow = new Date();
-                tomorrow.setDate(tomorrow.getDate() + 1);
-                dateInput.value = getLocalTodayIso(tomorrow);
-            }
-
-            const btnClear = document.getElementById('btn-sched-modal-clear');
-            if (btnClear) {
-                btnClear.style.display = curDate ? 'inline-flex' : 'none';
-            }
-
-            modal.classList.remove('hidden');
-            setTimeout(() => {
-                if (dateInput) {
-                    dateInput.focus();
-                    try { dateInput.showPicker(); } catch (err) {}
-                }
-            }, 60);
-        }
-
-        function setQuickScheduleDate(mode) {
-            const d = new Date();
-            if (mode === 'tomorrow') {
-                d.setDate(d.getDate() + 1);
-            } else if (mode === 'day_after') {
-                d.setDate(d.getDate() + 2);
-            } else if (mode === 'next_monday') {
-                const day = d.getDay();
-                const diff = (8 - day) % 7 || 7;
-                d.setDate(d.getDate() + diff);
-            }
-            const dateInput = document.getElementById('sched-modal-date-input');
-            if (dateInput) {
-                dateInput.value = getLocalTodayIso(d);
-            }
-        }
-
-        function closeScheduleDateModal() {
-            const modal = document.getElementById('modal-schedule-date');
-            if (modal) modal.classList.add('hidden');
-        }
-
-        function clearScheduleDateModal() {
-            const orderId = document.getElementById('sched-modal-order-id').value;
-            const order = dispatchOrders.find(o => o.id === orderId);
-            if (order) {
-                order.fecha_programada = '';
-                editedOrders[orderId] = { ...(editedOrders[orderId] || {}), fecha_programada: '', fecha_programada_cleared: true };
-                localStorage.setItem('croc_edited_orders', JSON.stringify(editedOrders));
-                renderDispatchDashboard();
-                pushCloudAppState();
-            }
-            closeScheduleDateModal();
-        }
-
-        function saveScheduleDateModal(e) {
-            if (e) e.preventDefault();
-            const orderId = document.getElementById('sched-modal-order-id').value;
-            const newDate = (document.getElementById('sched-modal-date-input')?.value || '').trim();
-            const order = dispatchOrders.find(o => o.id === orderId);
-            if (order) {
-                order.fecha_programada = newDate;
-                editedOrders[orderId] = {
-                    ...(editedOrders[orderId] || {}),
-                    fecha_programada: newDate,
-                    fecha_programada_cleared: !newDate
-                };
-                localStorage.setItem('croc_edited_orders', JSON.stringify(editedOrders));
-                renderDispatchDashboard();
-                pushCloudAppState();
-            }
-            closeScheduleDateModal();
-        }
-
-        function _legacyPromptSetScheduledDate(orderId) {
             const order = dispatchOrders.find(o => o.id === orderId);
             if (!order) return;
             const curDate = order.fecha_programada || '';
@@ -4994,7 +4823,6 @@
                 intentosCadete: attempts,
                 segundaEntrega: attempts === 2,
                 fecha_programada: scheduledDate,
-                fecha_programada_cleared: !scheduledDate,
                 detalles: products,
                 subtotal: subtotal || total,
                 total: total,
@@ -5818,7 +5646,6 @@
                     const subtotal = getVal(r, ['subtotal', 'sub'], 7);
                     const total = getVal(r, ['total', 'totalfinal', 'monto'], 8);
                     const metodoPagoCol = getVal(r, ['metododepago', 'metodopago', 'pago', 'metodo'], 9);
-                    const rawFechaDespacho = getVal(r, ['fechadespacho', 'fechaprogramada', 'fechaentrega', 'despacho'], 10);
 
                     let direccion = direccionRaw.trim();
                     if (!direccion || direccion.toLowerCase() === 'true' || direccion.toLowerCase() === 'false') {
@@ -5856,7 +5683,6 @@
                         subtotal: subtotal,
                         total: total,
                         fecha_hora: fechaParsed.toISOString(),
-                        fecha_programada: parseSheetScheduledDate(rawFechaDespacho, fechaParsed.getFullYear()),
                         estado: printedOrderIds.includes(ticketId) ? 'impreso' : 'pendiente'
                     });
                 }
@@ -5871,37 +5697,22 @@
                 });
 
                 
-                // Apply any manual edits made to orders (with auto-healing for Moreno / Norte / Hornos / Sheet Sync bug)
-                let editedOrdersChanged = false;
+                // Apply any manual edits made to orders (with auto-healing for Moreno / Norte / Hornos bug)
                 dispatchOrders = dispatchOrders.map(o => {
                     if (editedOrders[o.id]) {
                         const ed = { ...editedOrders[o.id] };
-                        // Si en Google Sheets se cargó o actualizó fecha_despacho / programada, debe prevalecer
-                        if (o.fecha_programada && (!ed.fecha_programada || ed.fecha_programada_cleared)) {
-                            ed.fecha_programada = o.fecha_programada;
-                            delete ed.fecha_programada_cleared;
-                            editedOrders[o.id].fecha_programada = o.fecha_programada;
-                            delete editedOrders[o.id].fecha_programada_cleared;
-                            editedOrdersChanged = true;
-                        }
-                        // Auto-healing de envío cadete para pedidos con flete asignado que no sean retiro
-                        if (ed.envio === false && !/\bno\b|\bretira|\bretiro/i.test(ed.costo_envio || '') && !/\bretiro\b|\bdepósito\b/i.test(ed.direccion || '')) {
+                        if (ed.tipoEntrega === 'cadete' && ed.envio === false && !/\bno\b|\bretira|\bretiro/i.test(ed.costo_envio || '')) {
                             ed.envio = true;
                             editedOrders[o.id].envio = true;
-                            editedOrdersChanged = true;
                         }
                         if (o.id === '542215403699-2026-10-14' && (ed.direccion || '').includes('Retiro en Dep')) {
                             ed.direccion = 'Calle 73 entre 151 y 152, Los Hornos (La Plata) - Apt #7';
                             editedOrders[o.id].direccion = ed.direccion;
-                            editedOrdersChanged = true;
                         }
                         return { ...o, ...ed, isEdited: true };
                     }
                     return o;
                 });
-                if (editedOrdersChanged) {
-                    localStorage.setItem('croc_edited_orders', JSON.stringify(editedOrders));
-                }
 
                 // Filter out deleted orders (unless showDeletedOrders is enabled)
                 if (!showDeletedOrders) {
@@ -5927,90 +5738,61 @@
             }
         }
 
-        function getExpectedDispatchDate(orderDateInput) {
-            const d = new Date(orderDateInput);
-            if (isNaN(d.getTime())) return '';
-            const day = d.getDay(); // 0 Dom, 1 Lun, 2 Mar, 3 Mie, 4 Jue, 5 Vie, 6 Sab
-            const target = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-            if (day === 5) {
-                // Viernes -> Sale Lunes (+3 días)
-                target.setDate(target.getDate() + 3);
-            } else if (day === 6) {
-                // Sábado -> Sale Lunes (+2 días)
-                target.setDate(target.getDate() + 2);
-            } else if (day === 0) {
-                // Domingo -> Sale Lunes (+1 día)
-                target.setDate(target.getDate() + 1);
-            } else {
-                // Lunes a Jueves -> Sale al día hábil siguiente (+1 día, corte 23:59 hs)
-                target.setDate(target.getDate() + 1);
-            }
-            return getLocalTodayIso(target);
-        }
-
         function getBatchConfig(now = new Date()) {
             const day = now.getDay();
-            const DAYS_ES = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+            const hour = now.getHours();
+            const minute = now.getMinutes();
+            const isPast13 = (hour > 13) || (hour === 13 && minute >= 0);
 
-            // Fecha que se despacha en el lote principal de hoy
-            let todayDispatchDate;
-            if (day === 6) {
-                // Sábado: el despacho en preparación es el del próximo Lunes
-                const mon = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2);
-                todayDispatchDate = getLocalTodayIso(mon);
+            let currentBatchStart, currentBatchEnd, tabTodayLabel, tabTodayDesc, tabTomorrowLabel, tabTomorrowDesc;
+
+            if (day === 1) { 
+                currentBatchStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 3, 13, 0, 0);
+                currentBatchEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 13, 0, 0);
+                tabTodayLabel = "Lote de Hoy Lunes (Corte 12hs)";
+                tabTodayDesc = "Acumulado Fin de Semana (Viernes 12hs a Lunes 12hs)";
+                tabTomorrowLabel = "Lote de Mañana (Martes)";
+                tabTomorrowDesc = "Pedidos entrados el lunes después de las 12:00 hs";
+            } else if (day === 5) {
+                if (!isPast13) {
+                    currentBatchStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 13, 0, 0);
+                    currentBatchEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 13, 0, 0);
+                    tabTodayLabel = "Lote de Hoy Viernes (Corte 12hs)";
+                    tabTodayDesc = "Pedidos para despachar hoy viernes a la tarde";
+                    tabTomorrowLabel = "Lote del Lunes (Fin de Semana)";
+                    tabTomorrowDesc = "Pedidos entrados después de las 12:00 hs";
+                } else {
+                    currentBatchStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 13, 0, 0);
+                    currentBatchEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 3, 13, 0, 0);
+                    tabTodayLabel = "Lote del Lunes (Acumulado Finde)";
+                    tabTodayDesc = "Todo lo que entra desde hoy 12hs hasta el Lunes 12hs";
+                    tabTomorrowLabel = "Lote del Martes";
+                    tabTomorrowDesc = "Pedidos posteriores al corte del Lunes";
+                }
+            } else if (day === 6) {
+                currentBatchStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 13, 0, 0);
+                currentBatchEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2, 13, 0, 0);
+                tabTodayLabel = "Lote del Lunes (Acumulado Finde)";
+                tabTodayDesc = "Viernes 12hs a Lunes 12hs (Se despacha el Lunes)";
+                tabTomorrowLabel = "Lote del Martes";
+                tabTomorrowDesc = "Pedidos posteriores al corte del Lunes";
             } else if (day === 0) {
-                // Domingo: el despacho en preparación es el de mañana Lunes
-                const mon = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-                todayDispatchDate = getLocalTodayIso(mon);
+                currentBatchStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 2, 13, 0, 0);
+                currentBatchEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 13, 0, 0);
+                tabTodayLabel = "Lote del Lunes (Acumulado Finde)";
+                tabTodayDesc = "Viernes 12hs a Lunes 12hs (Se despacha mañana Lunes)";
+                tabTomorrowLabel = "Lote del Martes";
+                tabTomorrowDesc = "Pedidos posteriores al corte del Lunes";
             } else {
-                todayDispatchDate = getLocalTodayIso(now);
+                currentBatchStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 13, 0, 0);
+                currentBatchEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 13, 0, 0);
+                tabTodayLabel = "Lote de Hoy (Corte 12:00 hs)";
+                tabTodayDesc = "Pedidos para preparar y despachar hoy";
+                tabTomorrowLabel = "Lote de Mañana (Entraron tarde)";
+                tabTomorrowDesc = "Pedidos entrados después de las 12:00 hs";
             }
 
-            // Siguiente día hábil de despacho
-            const tDate = new Date(todayDispatchDate + 'T00:00:00');
-            const tDay = tDate.getDay();
-            const nextTarget = new Date(tDate);
-            if (tDay === 5) {
-                // Después del viernes el siguiente es lunes (+3 días)
-                nextTarget.setDate(nextTarget.getDate() + 3);
-            } else {
-                nextTarget.setDate(nextTarget.getDate() + 1);
-            }
-            const nextDispatchDate = getLocalTodayIso(nextTarget);
-
-            let tabTodayLabel, tabTodayDesc, tabTomorrowLabel, tabTomorrowDesc;
-
-            if (day === 1) { // Lunes
-                tabTodayLabel = 'Lote de Hoy Lunes';
-                tabTodayDesc = 'Acumulado Fin de Semana (Viernes, Sábado y Domingo)';
-                tabTomorrowLabel = 'Lote de Mañana (Martes)';
-                tabTomorrowDesc = 'Pedidos confirmados hoy Lunes (hasta 23:59 hs)';
-            } else if (day === 5) { // Viernes
-                tabTodayLabel = 'Lote de Hoy Viernes';
-                tabTodayDesc = 'Pedidos confirmados ayer Jueves (para despachar hoy)';
-                tabTomorrowLabel = 'Lote del Lunes';
-                tabTomorrowDesc = 'Pedidos confirmados hoy Viernes (salen el Lunes)';
-            } else if (day === 6) { // Sábado
-                tabTodayLabel = 'Lote del Lunes (Fin de Semana)';
-                tabTodayDesc = 'Acumulado Viernes y Sábado (se despacha el Lunes)';
-                tabTomorrowLabel = 'Lote del Martes';
-                tabTomorrowDesc = 'Pedidos confirmados para el Martes';
-            } else if (day === 0) { // Domingo
-                tabTodayLabel = 'Lote del Lunes (Fin de Semana)';
-                tabTodayDesc = 'Acumulado Viernes, Sábado y Domingo (se despacha mañana Lunes)';
-                tabTomorrowLabel = 'Lote del Martes';
-                tabTomorrowDesc = 'Pedidos confirmados para el Martes';
-            } else { // Martes, Miércoles, Jueves
-                const todayName = DAYS_ES[day];
-                const nextDayName = DAYS_ES[day + 1];
-                const prevDayName = DAYS_ES[day - 1];
-                tabTodayLabel = 'Lote de Hoy ' + todayName;
-                tabTodayDesc = 'Pedidos confirmados ayer ' + prevDayName + ' (para despachar hoy)';
-                tabTomorrowLabel = 'Lote de Mañana (' + nextDayName + ')';
-                tabTomorrowDesc = 'Pedidos confirmados hoy ' + todayName + ' hasta 23:59 hs';
-            }
-
-            return { todayDispatchDate, nextDispatchDate, tabTodayLabel, tabTodayDesc, tabTomorrowLabel, tabTomorrowDesc };
+            return { currentBatchStart, currentBatchEnd, tabTodayLabel, tabTodayDesc, tabTomorrowLabel, tabTomorrowDesc };
         }
 
         /* ====================================================== */
@@ -6089,14 +5871,6 @@
             const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
             const curMonthName = MESES[now.getMonth()];
             const prevMonthName = MESES[(now.getMonth() - 1 + 12) % 12];
-            if (btns.current_month) {
-                btns.current_month.innerText = `🗓️ Este Mes (${curMonthName})`;
-                btns.current_month.title = `Mostrar únicamente los pedidos de ${curMonthName} ${now.getFullYear()}`;
-            }
-            if (btns.prev_month) {
-                btns.prev_month.innerText = `⏮️ Mes Pasado (${prevMonthName})`;
-                btns.prev_month.title = `Mostrar pedidos de ${prevMonthName}`;
-            }
 
             if (dispatchCyclePeriod === 'current_month') {
                 if (summaryLabel) summaryLabel.innerText = `${curMonthName} ${now.getFullYear()} (Mes Actual)`;
@@ -6151,7 +5925,7 @@
         }
 
         function categorizeDispatchOrders(orders) {
-            const { todayDispatchDate, nextDispatchDate, tabTodayLabel, tabTodayDesc, tabTomorrowLabel, tabTomorrowDesc } = getBatchConfig();
+            const { currentBatchStart, currentBatchEnd, tabTodayLabel, tabTodayDesc, tabTomorrowLabel, tabTomorrowDesc } = getBatchConfig();
 
             const elTodayLabel = document.getElementById('label-tab-today');
             const elTodayDesc = document.getElementById('desc-tab-today');
@@ -6170,34 +5944,36 @@
             // Filtrar historyBatch según el ciclo seleccionado (current_month, prev_month, all, custom)
             const historyBatch = filterOrdersByDispatchCycle(orders);
 
+            const nowDate = new Date();
+            const todayStr = nowDate.toISOString().slice(0, 10);
+
             orders.forEach(order => {
-                // Fecha de despacho efectiva: si tiene fecha_programada explícita, se respeta; sino, día hábil según fecha de creación
-                const expectedDate = getExpectedDispatchDate(order.fecha_hora);
-                const targetDate = order.fecha_programada || expectedDate;
-
-                // 1. Si está programado para una fecha posterior al siguiente despacho hábil
-                if (targetDate > nextDispatchDate) {
+                // 1. Si tiene fecha programada futura (ej. 24 o 25)
+                if (order.fecha_programada && order.fecha_programada > todayStr) {
                     scheduledBatch.push(order);
-                    return;
+                    return; // No mezclar con el lote de hoy ni de mañana
                 }
 
-                // 2. Si su fecha de despacho es hoy (o acumulado anterior no despachado), va a Lote de Hoy
-                if (targetDate <= todayDispatchDate) {
+                // 2. Lógica normal por horario de corte 12:00 hs
+                const orderDate = new Date(order.fecha_hora);
+                if (orderDate >= currentBatchStart && orderDate < currentBatchEnd) {
                     todayBatch.push(order);
-                    return;
-                }
-
-                // 3. Si su fecha de despacho es el próximo día hábil (mañana o lunes), va a Lote Siguiente
-                if (targetDate === nextDispatchDate) {
+                } else if (orderDate >= currentBatchEnd) {
                     tomorrowBatch.push(order);
-                    return;
                 }
-
-                // 4. Cualquier otra fecha futura va a Programados
-                scheduledBatch.push(order);
             });
 
-            scheduledBatch.sort((a, b) => (a.fecha_programada || '').localeCompare(b.fecha_programada || ''));
+            // Si hubo pedidos entrados hoy fuera del rango estricto pero no son de mañana ni programados, asegurar que estén en lote
+            orders.forEach(order => {
+                if (order.fecha_programada && order.fecha_programada > todayStr) return;
+                const oDate = new Date(order.fecha_hora);
+                if (oDate.toISOString().slice(0, 10) === todayStr) {
+                    if (!todayBatch.some(o => o.id === order.id) && !tomorrowBatch.some(o => o.id === order.id)) {
+                        todayBatch.unshift(order);
+                    }
+                }
+            });
+
             return { todayBatch, tomorrowBatch, scheduledBatch, historyBatch };
         }
 
@@ -6218,12 +5994,7 @@
 
         function parseMonto(val) {
             if (!val) return 0;
-            const str = String(val).trim();
-            const m = str.match(/\$?\s*([0-9]{1,3}(?:\.[0-9]{3})+|[0-9]{4,7})/);
-            if (m) {
-                return parseInt(m[1].replace(/\./g, ''), 10) || 0;
-            }
-            const num = str.replace(/[^0-9]/g, '');
+            const num = String(val).replace(/[^0-9]/g, '');
             return parseInt(num, 10) || 0;
         }
 
@@ -6267,7 +6038,7 @@
 
             // Seleccionar lote a computar en el Banner:
             const nowDate = new Date();
-            const todayStr = getLocalTodayIso(nowDate);
+            const todayStr = nowDate.toISOString().slice(0, 10);
             const activeTabList = getActiveDispatchList();
             const baseCycleOrders = filterOrdersByDispatchCycle(dispatchOrders);
             const confirmedCycleOrders = baseCycleOrders.filter(o => {
@@ -6402,7 +6173,7 @@
                             <span class="text-xs px-2 py-0.5 rounded font-bold ${isTransfer ? 'bg-sky-500/20 text-sky-300 border border-sky-500/30' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'}">
                                 ${isTransfer ? '💳 Transferencia' : '💵 Efectivo'}
                             </span>
-                            ${(order.fecha_programada && order.fecha_programada >= getLocalTodayIso()) ? `<span class="text-xs px-2 py-0.5 rounded-full font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30 flex items-center gap-1"><i class="fa-solid fa-calendar-day"></i> Programado: ${formatScheduledDateAR(order.fecha_programada)}</span>` : ''}
+                            ${order.fecha_programada ? `<span class="text-xs px-2 py-0.5 rounded-full font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30 flex items-center gap-1"><i class="fa-solid fa-calendar-day"></i> Programado: ${order.fecha_programada}</span>` : ''}
                             ${prof.isLoss ? `<span class="text-xs px-2 py-0.5 rounded-full font-black bg-rose-500/20 text-rose-300 border border-rose-500/40">🔴 PÉRDIDA CADETE</span>` : ''}
                             ${(prof.isCancelled && !prof.isLoss) ? `<span class="text-xs px-2 py-0.5 rounded-full font-bold bg-slate-800 text-slate-400 border border-slate-700">⚪ CANCELADO</span>` : ''}
                             ${(order.isEdited || editedOrders[order.id]) ? '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">✏️ Editado</span>' : ''}
@@ -6490,8 +6261,8 @@
                             <button onclick="openOrderLossModal('${order.id}')" class="px-2.5 py-2 ${prof.isLoss ? 'bg-rose-600/30 border-rose-500/60 text-rose-300' : 'bg-slate-800 hover:bg-slate-700 text-slate-300'} rounded-xl text-xs font-bold flex items-center gap-1.5 transition border border-slate-700" title="Registrar Pérdida / Cancelación">
                                 <i class="fa-solid fa-triangle-exclamation ${prof.isLoss ? 'text-rose-400' : 'text-amber-400'}"></i> ${prof.isLoss ? 'Pérdida' : 'Pérdida/Canc'}
                             </button>
-                            <button onclick="promptSetScheduledDate('${order.id}')" class="px-2.5 py-2 ${(order.fecha_programada && order.fecha_programada > getLocalTodayIso()) ? 'bg-purple-600/30 border-purple-500/50 text-purple-300' : 'bg-slate-800 hover:bg-slate-700 text-slate-300'} rounded-xl text-xs font-bold flex items-center gap-1.5 transition border border-slate-700" title="Programar fecha de entrega en calendario">
-                                <i class="fa-solid fa-calendar-day text-purple-400"></i> ${(order.fecha_programada && order.fecha_programada > getLocalTodayIso()) ? formatScheduledDateAR(order.fecha_programada).slice(0, 5) : 'Programar'}
+                            <button onclick="promptSetScheduledDate('${order.id}')" class="px-2.5 py-2 ${order.fecha_programada ? 'bg-purple-600/30 border-purple-500/50 text-purple-300' : 'bg-slate-800 hover:bg-slate-700 text-slate-300'} rounded-xl text-xs font-bold flex items-center gap-1.5 transition border border-slate-700" title="Programar fecha futura">
+                                <i class="fa-solid fa-calendar-day text-purple-400"></i> ${order.fecha_programada ? 'Fecha' : 'Programar'}
                             </button>
                             <button onclick="openEditOrderModal('${order.id}')" class="px-3 py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded-xl text-xs font-bold flex items-center gap-1.5 transition border border-amber-500/30" title="Editar datos del pedido">
                                 <i class="fa-solid fa-pen"></i> Editar
@@ -7747,23 +7518,9 @@
             }
         }
 
-        function parseDateForCadete(val) {
-            if (!val) return new Date();
-            if (val instanceof Date) return isNaN(val.getTime()) ? new Date() : val;
-            if (typeof val === 'string') {
-                const s = val.trim();
-                const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-                if (m) {
-                    return new Date(parseInt(m[1], 10), parseInt(m[2], 10) - 1, parseInt(m[3], 10), 12, 0, 0);
-                }
-            }
-            const d = new Date(val);
-            return isNaN(d.getTime()) ? new Date() : d;
-        }
-
         /* Determinar ciclo semanal (Corte: Viernes 12:00 hs -> entra al lote del Lunes) */
         function getCadeteCycleForDate(dateInput) {
-            const d = parseDateForCadete(dateInput);
+            const d = new Date(dateInput);
             if (isNaN(d.getTime())) return null;
 
             const day = d.getDay(); // 0 Dom, 1 Lun, ..., 5 Vie, 6 Sab
@@ -7937,15 +7694,15 @@
 
                 cycleFiltered = motoOrders.filter(o => {
                     const dateToUse = o.fecha_programada || o.fecha_hora || new Date().toISOString();
-                    const d = parseDateForCadete(dateToUse);
+                    const d = new Date(dateToUse);
                     return d >= activeCycleObj.start && d < activeCycleObj.end;
                 });
             }
 
             // Ordenar por fecha cronológica ascendente para ver el recorrido de la semana
             cycleFiltered.sort((a, b) => {
-                const da = parseDateForCadete(a.fecha_programada || a.fecha_hora || 0);
-                const db = parseDateForCadete(b.fecha_programada || b.fecha_hora || 0);
+                const da = new Date(a.fecha_programada || a.fecha_hora || 0);
+                const db = new Date(b.fecha_programada || b.fecha_hora || 0);
                 return da.getTime() - db.getTime();
             });
 
@@ -8159,7 +7916,7 @@
 
             tableBody.innerHTML = filtered.map(item => {
                 const o = item.order;
-                const dDate = parseDateForCadete(o.fecha_programada || o.fecha_hora);
+                const dDate = new Date(o.fecha_programada || o.fecha_hora);
                 const pad = n => String(n).padStart(2, '0');
                 const dateStr = !isNaN(dDate.getTime()) ? `${pad(dDate.getDate())}/${pad(dDate.getMonth() + 1)}` : 'S/F';
 
@@ -8506,7 +8263,7 @@
                 totalCash += item.collectedCash;
                 totalTrips += item.attempts;
 
-                const dDate = parseDateForCadete(o.fecha_programada || o.fecha_hora);
+                const dDate = new Date(o.fecha_programada || o.fecha_hora);
                 const pad = n => String(n).padStart(2, '0');
                 const dateStr = !isNaN(dDate.getTime()) ? `${pad(dDate.getDate())}/${pad(dDate.getMonth() + 1)}` : 'S/F';
 
@@ -9342,10 +9099,6 @@
                 const m = raw.match(/Num0*(\d+)/i);
                 return m ? `Num${m[1]}` : '';
             }
-            if (storeKey === 'crocscale') {
-                const m = raw.match(/(?:^|[_\s])0?(\d{1,2}[.\/\-_]0?\d{1,2})(?:[.\s_-]+|$)/);
-                return m ? `Reel ${m[1].replace(/[\/\\_]/g, '-')}` : raw.replace(/\.[^/.]+$/, '');
-            }
             // NNN: limpiar extensión, fecha, prefijos y sufijos (_09hs, _12hs, _15hs, _18hs, _20hs, _21hs, (1), etc.)
             let clean = raw.replace(/\.[^/.]+$/, '');
             clean = clean.replace(/^(?:\d{1,2}[\/._-]\d{1,2})[\s._-]*/i, '');
@@ -9710,16 +9463,8 @@
                 timeStr = `${hh}:${min}`;
             }
 
-            // 3. Fecha en el nombre del archivo (ej: "24_07.art.266500-99.jpg", "01.11CRG-004.jpg", "Num087_25.07.png", "30.10_L25931.jpg", "9-7.mp4")
-            if (storeKey === 'crocscale') {
-                const fnMatch = fn.match(/(?:^|[_\s])0?(\d{1,2})[.\/\-_]0?(\d{1,2})(?:[.\s_-]+|$)/);
-                if (fnMatch) {
-                    const dd = fnMatch[1].padStart(2, '0');
-                    const mm = fnMatch[2].padStart(2, '0');
-                    isoDate = `2026-${mm}-${dd}`;
-                    timeStr = '12:00';
-                }
-            } else if (storeKey === 'nacha') {
+            // 3. Fecha en el nombre del archivo (ej: "24_07.art.266500-99.jpg", "01.11CRG-004.jpg", "Num087_25.07.png", "30.10_L25931.jpg")
+            if (storeKey === 'nacha') {
                 const fnMatch = fn.match(/(?:_|^)(\d{1,2})\.(\d{1,2})(?=_|\.|$)/);
                 if (fnMatch) {
                     const dd = fnMatch[1].padStart(2, '0');
@@ -9794,39 +9539,6 @@
                             igStoryIds: igStoryIds.replace(/[\[\]"]/g, '') || '-',
                             slotType: igPostId && igStoryIds ? 'both' : (igPostId ? 'feed' : 'story'),
                             status: `Publicado (${slot})`
-                        });
-                    } else if (storeKey === 'crocscale') {
-                        // Columnas Public_Story (CrocScale): file_id(0), file_name(1), ig_post_id(2), ig_story_ids(3), fileId(4), FileID(5), fileName(6), failed_stories(7)
-                        const fileId = c[0] || c[4] || c[5] || '';
-                        const fileName = c[1] || c[6] || '';
-                        const igPostId = c[2] || '';
-                        const igStoryIds = c[3] || '';
-                        if (!fileName || fileName.toLowerCase() === 'file_name') return;
-
-                        const detectedSku = extractSkuFromPublishedFilename(fileName, 'crocscale');
-                        if (detectedSku) {
-                            skuSet.add(detectedSku.toUpperCase());
-                        }
-
-                        const parsedDT = parseApPublishedDateAndTime('', fileName, 'crocscale');
-                        const isVideo = /\.(mp4|mov)$/i.test(fileName) || true;
-
-                        historyItems.push({
-                            idx,
-                            isoDate: parsedDT.isoDate,
-                            timeStr: parsedDT.timeStr || '12:00',
-                            dateStr: parsedDT.isoDate ? parsedDT.isoDate.split('-').reverse().join('/') : 'Publicado en IG',
-                            fileId,
-                            fileName,
-                            isVideo,
-                            sku: detectedSku || 'REEL',
-                            productName: `CrocScale IA • ${detectedSku || fileName}`,
-                            price: '',
-                            features: 'Automatización de ventas con IA multimodal en WhatsApp e Instagram.',
-                            igPostId: igPostId || '-',
-                            igStoryIds: igStoryIds.replace(/[\[\]"]/g, '') || '-',
-                            slotType: igPostId && igStoryIds ? 'both' : (igPostId ? 'feed' : 'story'),
-                            status: 'Publicado OK'
                         });
                     } else {
                         // Columnas Contenido (Nacha): fecha(0), file_name(1), file_id(2), ig_post_id(3), ig_story_ids(4), estado(5)
@@ -11224,7 +10936,8 @@
                         fileName: feedFileName,
                         mimeType,
                         isVideo: f.isVideo,
-                        base64Data: base64Clean
+                        base64Data: base64Clean,
+                        _rawFile: f.file || null
                     });
                 });
             }
@@ -11246,7 +10959,8 @@
                             fileName: storyFileName,
                             mimeType,
                             isVideo: f.isVideo,
-                            base64Data: base64Clean
+                            base64Data: base64Clean,
+                            _rawFile: f.file || null
                         });
                     });
                 });
@@ -11283,36 +10997,221 @@
             let webhookRespData = null;
             let webhookHttpError = '';
             try {
-                const resp = await fetch(apWebhookUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
-                    body: JSON.stringify({
-                        action: publishNow ? 'upload_and_publish_now' : 'upload_to_drive',
-                        publishNow,
-                        store: currentApStore,
-                        storeMeta: meta,
-                        product: {
-                            sku,
-                            name: productName,
-                            price,
-                            variants,
-                            features
-                        },
-                        schedule: {
-                            date: dateVal,
-                            target,
-                            feedTime,
-                            storyTime,
-                            officialFileName: newQueueItem.officialFileName
-                        },
-                        caption,
-                        uploads: uploadsPayload,
-                        catalogDriveUrls: apSelectedDriveUrls
-                    })
-                });
-                if (resp.ok) {
-                    webhookRespData = await resp.json().catch(() => ({}));
-                    webhookOk = true;
+                const totalB64Len = uploadsPayload.reduce((acc, u) => acc + (u.base64Data ? u.base64Data.length : 0), 0);
+                const useResumableUpload = uploadsPayload.some(u => u.isVideo) || totalB64Len > 6000000;
+
+                if (useResumableUpload) {
+                    const uploadedDriveFiles = [];
+                    const CHUNK_SIZE = 4 * 1024 * 1024; // 4 MB (múltiplo exacto de 256 KB para Google Drive Resumable API)
+
+                    const uint8ToBase64 = (u8) => {
+                        let binary = '';
+                        const step = 0x8000;
+                        for (let i = 0; i < u8.length; i += step) {
+                            binary += String.fromCharCode.apply(null, u8.subarray(i, i + step));
+                        }
+                        return btoa(binary);
+                    };
+
+                    for (let idx = 0; idx < uploadsPayload.length; idx++) {
+                        const u = uploadsPayload[idx];
+                        if (banner) {
+                            banner.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> <span>Iniciando subida rápida a Google Drive (${idx + 1}/${uploadsPayload.length}: ${escapeHTML(u.fileName)})...</span>`;
+                        }
+
+                        const initResp = await fetch(apWebhookUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+                            body: JSON.stringify({
+                                action: 'init_resumable_upload',
+                                store: currentApStore,
+                                role: u.role,
+                                folderId: u.folderId,
+                                fileName: u.fileName,
+                                mimeType: u.mimeType,
+                                origin: window.location.origin
+                            })
+                        });
+                        if (!initResp.ok) {
+                            throw new Error(`Error al iniciar sesión Resumable en Drive: HTTP ${initResp.status}`);
+                        }
+                        const initData = await initResp.json();
+                        if (!initData || !initData.uploadUrl) {
+                            throw new Error('Google Drive no devolvió uploadUrl para la sesión resumable.');
+                        }
+
+                        let fileBytes = null;
+                        if (u._rawFile && typeof u._rawFile.arrayBuffer === 'function') {
+                            fileBytes = new Uint8Array(await u._rawFile.arrayBuffer());
+                        } else {
+                            const binStr = atob(u.base64Data);
+                            fileBytes = new Uint8Array(binStr.length);
+                            for (let k = 0; k < binStr.length; k++) {
+                                fileBytes[k] = binStr.charCodeAt(k);
+                            }
+                        }
+
+                        const totalBytes = fileBytes.byteLength;
+                        let finalFileId = '';
+                        let finalFileName = u.fileName;
+
+                        // Intentar subida directa del navegador a Google Drive Resumable URL; si el navegador bloquea por CORS, subir por bloques de 4 MB vía n8n
+                        let directOk = false;
+                        try {
+                            if (banner) {
+                                banner.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> <span>Subiendo archivo ${idx + 1}/${uploadsPayload.length} (${escapeHTML(u.fileName)} • ${(totalBytes / (1024 * 1024)).toFixed(1)} MB) directo a Google Drive...</span>`;
+                            }
+                            const directPut = await fetch(initData.uploadUrl, {
+                                method: 'PUT',
+                                headers: { 'Content-Type': u.mimeType },
+                                body: fileBytes
+                            });
+                            if (directPut.ok) {
+                                const directJson = await directPut.json().catch(() => ({}));
+                                if (directJson && directJson.id) {
+                                    finalFileId = directJson.id;
+                                    finalFileName = directJson.name || u.fileName;
+                                    directOk = true;
+                                }
+                            }
+                        } catch (directErr) {
+                            directOk = false;
+                        }
+
+                        if (!directOk) {
+                            for (let offset = 0; offset < totalBytes; offset += CHUNK_SIZE) {
+                                const end = Math.min(offset + CHUNK_SIZE, totalBytes);
+                                const pct = Math.round((end / totalBytes) * 100);
+                                if (banner) {
+                                    banner.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> <span>Subiendo archivo ${idx + 1}/${uploadsPayload.length} (${escapeHTML(u.fileName)}) a Google Drive... ${pct}%</span>`;
+                                }
+                                const slice = fileBytes.subarray(offset, end);
+                                const chunkB64 = uint8ToBase64(slice);
+                                const contentRange = `bytes ${offset}-${end - 1}/${totalBytes}`;
+
+                                const chunkResp = await fetch(apWebhookUrl, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+                                    body: JSON.stringify({
+                                        action: 'upload_chunk',
+                                        store: currentApStore,
+                                        uploadUrl: initData.uploadUrl,
+                                        fileName: u.fileName,
+                                        mimeType: u.mimeType,
+                                        contentRange,
+                                        chunkBase64: chunkB64
+                                    })
+                                });
+                                if (!chunkResp.ok) {
+                                    throw new Error(`Error subiendo bloque (${pct}%) a Drive: HTTP ${chunkResp.status}`);
+                                }
+                                const chunkData = await chunkResp.json().catch(() => ({}));
+                                if (chunkData && chunkData.fileId) {
+                                    finalFileId = chunkData.fileId;
+                                    finalFileName = chunkData.fileName || u.fileName;
+                                }
+                            }
+                        }
+
+                        if (!finalFileId) {
+                            throw new Error(`No se obtuvo fileId de Google Drive para ${u.fileName}`);
+                        }
+
+                        uploadedDriveFiles.push({
+                            id: finalFileId,
+                            name: finalFileName,
+                            role: u.role,
+                            isVideo: Boolean(u.isVideo),
+                            scheduleTime: u.scheduleTime,
+                            folderId: u.folderId
+                        });
+                    }
+
+                    if (!publishNow) {
+                        webhookOk = true;
+                        webhookRespData = {
+                            ok: true,
+                            mode: 'scheduled',
+                            uploaded_files: uploadedDriveFiles,
+                            feed_files: uploadedDriveFiles.filter(x => x.role === 'feed'),
+                            story_files: uploadedDriveFiles.filter(x => x.role === 'story')
+                        };
+                    } else {
+                        if (banner) {
+                            banner.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> <span>🚀 Videos subidos a Google Drive OK. Publicando Reel y Story en Instagram (@${escapeHTML(meta.igHandle)})... (puede demorar 30-60 seg)</span>`;
+                        }
+                        const pubResp = await fetch(apWebhookUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+                            body: JSON.stringify({
+                                action: 'publish_existing_now',
+                                publishNow: true,
+                                store: currentApStore,
+                                product: {
+                                    sku,
+                                    name: productName,
+                                    price,
+                                    variants,
+                                    features
+                                },
+                                schedule: {
+                                    date: dateVal,
+                                    target,
+                                    feedTime,
+                                    storyTime,
+                                    officialFileName: newQueueItem.officialFileName
+                                },
+                                caption,
+                                feedFiles: uploadedDriveFiles.filter(x => x.role === 'feed'),
+                                storyFiles: uploadedDriveFiles.filter(x => x.role === 'story')
+                            })
+                        });
+                        if (pubResp.ok) {
+                            webhookRespData = await pubResp.json().catch(() => ({}));
+                            webhookRespData.uploaded_files = uploadedDriveFiles;
+                            webhookOk = true;
+                        } else {
+                            webhookHttpError = `HTTP ${pubResp.status} ${pubResp.statusText}`;
+                        }
+                    }
+                } else {
+                    const cleanUploadsPayload = uploadsPayload.map(({ _rawFile, ...rest }) => rest);
+                    const resp = await fetch(apWebhookUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+                        body: JSON.stringify({
+                            action: publishNow ? 'upload_and_publish_now' : 'upload_to_drive',
+                            publishNow,
+                            store: currentApStore,
+                            storeMeta: meta,
+                            product: {
+                                sku,
+                                name: productName,
+                                price,
+                                variants,
+                                features
+                            },
+                            schedule: {
+                                date: dateVal,
+                                target,
+                                feedTime,
+                                storyTime,
+                                officialFileName: newQueueItem.officialFileName
+                            },
+                            caption,
+                            uploads: cleanUploadsPayload,
+                            catalogDriveUrls: apSelectedDriveUrls
+                        })
+                    });
+                    if (resp.ok) {
+                        webhookRespData = await resp.json().catch(() => ({}));
+                        webhookOk = true;
+                    } else {
+                        webhookHttpError = `HTTP ${resp.status} ${resp.statusText}`;
+                    }
+                }
+
+                if (webhookOk) {
                     newQueueItem.statusType = publishNow ? 'published' : 'scheduled';
                     newQueueItem.status = publishNow ? 'Publicado en Instagram OK' : `En Google Drive (${feedTime}hs / ${storyTime}hs)`;
                     if (webhookRespData && webhookRespData.ig_post_id) {
@@ -11331,8 +11230,6 @@
                             }
                         });
                     }
-                } else {
-                    webhookHttpError = `HTTP ${resp.status} ${resp.statusText}`;
                 }
             } catch (err) {
                 webhookHttpError = err.message || String(err);
@@ -11683,14 +11580,6 @@
 
                 if (!eventsMap.has(groupKey)) {
                     const firstFileId = item.fileId || catDriveId;
-                    const feedFiles = [];
-                    const storyFiles = [];
-                    if (item.role === 'story') {
-                        if (firstFileId) storyFiles.push({ id: firstFileId, name: item.fileName || 'story.jpg', isVideo: Boolean(item.isVideo) });
-                    } else {
-                        if (firstFileId) feedFiles.push({ id: firstFileId, name: item.fileName || 'feed.jpg', isVideo: Boolean(item.isVideo) });
-                    }
-
                     eventsMap.set(groupKey, {
                         id: baseGroupKey,
                         store: storeKey,
@@ -11710,20 +11599,17 @@
                         isVideo: Boolean(item.isVideo),
                         igPostId: item.igPostId || (item.isPublished ? 'Publicado OK' : 'En carpeta Drive (Pendiente)'),
                         igStoryIds: item.igStoryIds || (item.role === 'story' ? 'En carpeta Drive' : '-'),
-                        feedFiles: feedFiles,
-                        storyFiles: storyFiles,
                         fileIds: firstFileId ? [firstFileId] : [],
                         fileNames: item.fileName ? [item.fileName] : [],
-                        thumbnailUrl: (feedFiles[0]?.id || storyFiles[0]?.id) ? buildApDriveThumbnailUrl(feedFiles[0]?.id || storyFiles[0]?.id, 400) : '',
+                        feedFiles: item.role === 'feed' && item.fileId ? [{ id: item.fileId, name: item.fileName || 'feed.jpg' }] : [],
+                        storyFiles: item.role === 'story' && item.fileId ? [{ id: item.fileId, name: item.fileName || 'story.jpg' }] : [],
+                        thumbnailUrl: firstFileId ? buildApDriveThumbnailUrl(firstFileId, 400) : '',
                         caption: matchedCat
                             ? buildApCleanCaption({ name: matchedCat.name, sku: item.sku, price: matchedCat.price, features: matchedCat.features })
                             : buildApCleanCaption({ name: item.productName || item.sku, sku: item.sku, price: item.price, features: item.features })
                     });
                 } else {
                     const existing = eventsMap.get(groupKey);
-                    if (!existing.feedFiles) existing.feedFiles = [];
-                    if (!existing.storyFiles) existing.storyFiles = [];
-
                     if (item.isPublished) {
                         existing.statusType = 'published';
                         existing.statusLabel = item.statusLabel || 'Publicado en IG';
@@ -11731,24 +11617,33 @@
                     if (item.role === 'feed') {
                         existing.hasFeed = true;
                         existing.timeStr = storeKey === 'nnn' ? '18:00' : '12:00';
-                        if (item.fileId && !existing.feedFiles.some(f => f.id === item.fileId)) {
-                            existing.feedFiles.push({ id: item.fileId, name: item.fileName || 'feed.jpg', isVideo: Boolean(item.isVideo) });
+                        // Priorizar siempre la foto de Feed como portada de la tarjeta
+                        if (item.fileId) {
+                            existing.fileIds = [item.fileId, ...existing.fileIds.filter(id => id !== item.fileId)];
                             existing.thumbnailUrl = buildApDriveThumbnailUrl(item.fileId, 400);
+                            if (!existing.feedFiles) existing.feedFiles = [];
+                            if (!existing.feedFiles.some(f => f.id === item.fileId)) {
+                                existing.feedFiles.push({ id: item.fileId, name: item.fileName || 'feed.jpg' });
+                            }
                         }
                     } else {
                         existing.hasStory = true;
-                        if (item.fileId && !existing.storyFiles.some(f => f.id === item.fileId)) {
-                            existing.storyFiles.push({ id: item.fileId, name: item.fileName || 'story.jpg', isVideo: Boolean(item.isVideo) });
+                        if (item.fileId && !existing.fileIds.includes(item.fileId)) {
+                            existing.fileIds.push(item.fileId);
+                        }
+                        if (item.fileId) {
+                            if (!existing.storyFiles) existing.storyFiles = [];
+                            if (!existing.storyFiles.some(s => s.id === item.fileId)) {
+                                existing.storyFiles.push({ id: item.fileId, name: item.fileName || 'story.jpg' });
+                            }
                         }
                     }
                     if (existing.hasFeed && existing.hasStory) {
                         existing.slotType = 'both';
                     }
-
-                    // Sincronizar fileIds y fileNames ordenados: FEED primero, STORY después
-                    existing.fileIds = [...existing.feedFiles.map(f => f.id), ...existing.storyFiles.map(f => f.id)];
-                    existing.fileNames = [...existing.feedFiles.map(f => f.name), ...existing.storyFiles.map(f => f.name)];
-
+                    if (item.fileName && !existing.fileNames.includes(item.fileName)) {
+                        existing.fileNames.push(item.fileName);
+                    }
                     if (item.igPostId && item.igPostId !== '-') existing.igPostId = item.igPostId;
                     if (item.igStoryIds && item.igStoryIds !== '-') existing.igStoryIds = item.igStoryIds;
                 }
@@ -12079,9 +11974,7 @@
         // ==========================================================
         async function triggerApPublishNow(eventId) {
             if (!eventId) return;
-            const allEvents = (apPlannerEventsCache && apPlannerEventsCache.length > 0)
-                ? apPlannerEventsCache
-                : getApPlannerEvents(currentApStore);
+            const allEvents = getApPlannerEvents(currentApStore);
             const ev = allEvents.find(e => e.id === eventId);
             if (!ev) {
                 showToast('No se encontró la publicación a publicar', 'warning');
@@ -12092,23 +11985,12 @@
             const sku = ev.sku || 'S/D';
             const prodName = ev.productName || sku;
 
-            const alreadyPublished = ev.statusType === 'published'
-                || (typeof isApItemExplicitlyPublished === 'function' && isApItemExplicitlyPublished(ev.id, sku, ev.fileIds && ev.fileIds[0]))
-                || Boolean(ev.igPostId && ev.igPostId !== '-' && ev.igPostId !== 'no_feed_post');
-
-            if (alreadyPublished) {
-                showToast(`ℹ️ "${prodName}" ya se encuentra publicado en Instagram (ID: ${ev.igPostId || 'OK'}).`, 'info');
-                return;
-            }
-
             if (!confirm(`¿Publicar AHORA "${prodName}" (${sku}) en Instagram (@${meta.igHandle})?\n\nSe enviará inmediatamente a Meta Graph API sin esperar al horario programado.`)) {
                 return;
             }
 
-            // Indicadores de carga visual seguros en tarjeta y modal
-            const cardBtns = Array.from(document.querySelectorAll('[data-publish-btn]')).filter(
-                b => b.getAttribute('data-publish-btn') === eventId
-            );
+            // Indicadores de carga visual en botón de tarjeta y botón de modal
+            const cardBtns = document.querySelectorAll(`[data-publish-btn="${CSS.escape ? CSS.escape(eventId) : eventId}"]`);
             cardBtns.forEach(b => {
                 b.disabled = true;
                 b.classList.add('opacity-75', 'cursor-wait', 'pointer-events-none');
@@ -12116,45 +11998,24 @@
             });
 
             const modalBtn = document.getElementById('ap-modal-publish-now-btn');
-            let secondsLeft = 30;
-            let countdownInterval = null;
-
             if (modalBtn) {
                 modalBtn.disabled = true;
-                modalBtn.classList.add('opacity-75', 'cursor-wait', 'pointer-events-none');
-                modalBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-sm mr-1.5"></i> <span>Publicando en Instagram (${secondsLeft}s)...</span>`;
-                countdownInterval = setInterval(() => {
-                    secondsLeft--;
-                    if (secondsLeft > 0 && modalBtn) {
-                        modalBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-sm mr-1.5"></i> <span>Publicando en Instagram (${secondsLeft}s)...</span>`;
-                    }
-                }, 1000);
+                modalBtn.classList.add('opacity-75', 'cursor-wait');
+                modalBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-sm mr-1.5"></i> <span>Publicando en Instagram (aguarde 15s)...</span>';
             }
 
-            showToast(`🚀 Conectando con n8n y Meta Graph API para "${prodName}"... aguarde unos segundos.`, 'info');
+            showToast(`🚀 Conectando con n8n y Meta Graph API para "${prodName}"...`, 'info');
 
             const webhookTargetUrl = 'https://n8n.totodrilo.cloud/webhook/autopublicador-upload';
 
-            let cleanCaption = '';
-            try {
-                cleanCaption = (ev.caption && !String(ev.caption).startsWith('Archivo en Google Drive'))
-                    ? String(ev.caption)
-                    : buildApCleanCaption({
-                        name: prodName,
-                        sku: sku,
-                        price: ev.price,
-                        features: ev.features
-                      });
-            } catch (e) {
-                cleanCaption = `🔥 ${prodName} 🔥\n\n💰 Precio: ${ev.price || ''}\n📦 Envíos a todo el país.`;
-            }
-
-            const abortCtrl = new AbortController();
-            const abortTimeout = setTimeout(() => {
-                abortCtrl.abort();
-            }, 55000);
-
-            let publicationSuccess = false;
+            const cleanCaption = (ev.caption && !ev.caption.startsWith('Archivo en Google Drive'))
+                ? ev.caption
+                : buildApCleanCaption({
+                    name: prodName,
+                    sku: sku,
+                    price: ev.price,
+                    features: ev.features
+                  });
 
             try {
                 const payload = {
@@ -12167,18 +12028,17 @@
                     price: ev.price || '',
                     caption: cleanCaption,
                     isoDate: ev.isoDate || new Date().toISOString().slice(0, 10),
-                    feedFiles: Array.isArray(ev.feedFiles) ? ev.feedFiles : [],
-                    storyFiles: Array.isArray(ev.storyFiles) ? ev.storyFiles : [],
                     fileIds: Array.isArray(ev.fileIds) ? ev.fileIds : [],
                     fileNames: Array.isArray(ev.fileNames) ? ev.fileNames : [],
+                    feedFiles: Array.isArray(ev.feedFiles) ? ev.feedFiles : [],
+                    storyFiles: Array.isArray(ev.storyFiles) ? ev.storyFiles : [],
                     target: ev.slotType || 'both'
                 };
 
                 const resp = await fetch(webhookTargetUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
-                    body: JSON.stringify(payload),
-                    signal: abortCtrl.signal
+                    body: JSON.stringify(payload)
                 });
 
                 if (!resp.ok) {
@@ -12186,8 +12046,6 @@
                 }
 
                 const data = await resp.json().catch(() => ({}));
-                publicationSuccess = true;
-                if (countdownInterval) clearInterval(countdownInterval);
 
                 // Marcar como publicado de forma persistente
                 setApItemPublished({
@@ -12204,7 +12062,7 @@
                 if (data.ig_story_ids) ev.igStoryIds = data.ig_story_ids;
 
                 if (ev.queueId) {
-                    const qItem = (autopublisherQueue || []).find(q => q.id === ev.queueId);
+                    const qItem = autopublisherQueue.find(q => q.id === ev.queueId);
                     if (qItem) {
                         qItem.statusType = 'published';
                         qItem.status = 'Publicado en Instagram OK';
@@ -12212,7 +12070,7 @@
                         if (data.ig_story_ids) qItem.igStoryIds = data.ig_story_ids;
                     }
                 }
-                localStorage.setItem('crocscale_autopublisher_queue', JSON.stringify(autopublisherQueue));
+                localStorage.setItem('croc_autopublisher_queue', JSON.stringify(autopublisherQueue));
 
                 addAutopublisherLog({
                     level: 'success',
@@ -12233,54 +12091,38 @@
                 pushCloudAppState();
                 showToast(`🎉 ¡"${prodName}" publicado en Instagram con éxito! ID: ${data.ig_post_id || 'OK'}`, 'success');
 
-                if (modalBtn) {
-                    modalBtn.className = "w-full py-2.5 px-4 rounded-xl bg-emerald-600 text-white text-xs font-black flex items-center justify-center gap-2";
-                    modalBtn.innerHTML = `<i class="fa-solid fa-circle-check text-sm mr-1.5"></i> <span>✅ ¡Publicado con éxito! (ID: ${data.ig_post_id || 'OK'})</span>`;
+                if (typeof closeApPostDetailModal === 'function') {
+                    closeApPostDetailModal();
                 }
 
                 renderAutopublisherDashboard();
 
                 setTimeout(() => {
-                    if (typeof closeApPostDetailModal === 'function') {
-                        closeApPostDetailModal();
-                    }
                     fetchApStoreHistory(currentApStore).then(() => renderAutopublisherDashboard());
-                }, 1600);
+                }, 3000);
 
             } catch (err) {
                 console.error('Error al publicar ahora:', err);
-                const isTimeout = err.name === 'AbortError';
-                const errMsg = isTimeout
-                    ? 'Tiempo de espera agotado (>55s). Verificá en n8n si la publicación se completó.'
-                    : err.message;
-
-                showToast(`❌ Error al conectar con n8n: ${errMsg}`, 'error');
+                cardBtns.forEach(b => {
+                    b.disabled = false;
+                    b.classList.remove('opacity-75', 'cursor-wait', 'pointer-events-none');
+                    b.innerHTML = '<i class="fa-solid fa-paper-plane text-[8px]"></i> <span>Publicar Ahora</span>';
+                });
+                if (modalBtn) {
+                    modalBtn.disabled = false;
+                    modalBtn.classList.remove('opacity-75', 'cursor-wait');
+                    modalBtn.innerHTML = '<i class="fa-solid fa-paper-plane text-sm"></i> <span>🚀 Publicar Ahora en Instagram</span>';
+                }
+                showToast(`❌ Error al conectar con n8n: ${err.message}`, 'error');
                 addAutopublisherLog({
                     level: 'error',
                     action: '🚀 Publicar Ahora (Fallido)',
                     store: currentApStore,
                     sku: sku,
                     productName: prodName,
-                    summary: `Error al publicar ahora: ${errMsg}`,
+                    summary: `Error al publicar ahora: ${err.message}`,
                     rawResponse: { error: String(err) }
                 });
-            } finally {
-                clearTimeout(abortTimeout);
-                if (countdownInterval) clearInterval(countdownInterval);
-
-                if (!publicationSuccess) {
-                    cardBtns.forEach(b => {
-                        b.disabled = false;
-                        b.classList.remove('opacity-75', 'cursor-wait', 'pointer-events-none');
-                        b.innerHTML = '<i class="fa-solid fa-paper-plane text-[8px]"></i> <span>Publicar Ahora</span>';
-                    });
-                    if (modalBtn) {
-                        modalBtn.className = "w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-black shadow-lg shadow-emerald-950/40 flex items-center justify-center gap-2 transition active:scale-98";
-                        modalBtn.disabled = false;
-                        modalBtn.classList.remove('opacity-75', 'cursor-wait', 'pointer-events-none');
-                        modalBtn.innerHTML = '<i class="fa-solid fa-paper-plane text-sm mr-1.5"></i> <span>🚀 Publicar Ahora en Instagram</span>';
-                    }
-                }
             }
         }
 
@@ -12669,9 +12511,7 @@
             const modal = document.getElementById('modal-ap-post-detail');
             if (!modal) return;
 
-            const isPub = ev.statusType === 'published'
-                || (typeof isApItemExplicitlyPublished === 'function' && isApItemExplicitlyPublished(ev.id, ev.sku, ev.fileIds && ev.fileIds[0]))
-                || Boolean(ev.igPostId && ev.igPostId !== '-' && ev.igPostId !== 'no_feed_post');
+            const isPub = ev.statusType === 'published';
             const badgeEl = document.getElementById('ap-modal-status-badge');
             if (badgeEl) {
                 badgeEl.className = isPub
@@ -12720,10 +12560,7 @@
                 if (isPub) {
                     pubNowBtn.classList.add('hidden');
                 } else {
-                    pubNowBtn.className = "w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-black shadow-lg shadow-emerald-950/40 flex items-center justify-center gap-2 transition active:scale-98";
-                    pubNowBtn.classList.remove('hidden', 'opacity-75', 'cursor-wait', 'pointer-events-none');
-                    pubNowBtn.disabled = false;
-                    pubNowBtn.innerHTML = '<i class="fa-solid fa-paper-plane text-sm mr-1.5"></i> <span>🚀 Publicar Ahora en Instagram</span>';
+                    pubNowBtn.classList.remove('hidden');
                     pubNowBtn.onclick = () => {
                         triggerApPublishNow(ev.id);
                     };
@@ -13111,8 +12948,8 @@
                         <i class="fa-solid fa-calendar-day"></i> Fecha de Entrega Programada (Opcional):
                     </label>
                     <div class="flex items-center gap-3">
-                        <input type="date" id="mo-scheduled-date" onclick="try{this.showPicker()}catch(e){}" class="bg-slate-950 text-white text-xs rounded-xl px-3 py-2 border border-purple-800 focus:outline-none focus:border-purple-500 cursor-pointer">
-                        <span class="text-[11px] text-slate-400">Dejar vacío para despacho al siguiente día hábil (corte 23:59 hs)</span>
+                        <input type="date" id="mo-scheduled-date" class="bg-slate-950 text-white text-xs rounded-xl px-3 py-2 border border-purple-800 focus:outline-none focus:border-purple-500">
+                        <span class="text-[11px] text-slate-400">Dejar vacío para despacho inmediato según corte de las 12hs</span>
                     </div>
                 </div>
 
@@ -13236,7 +13073,7 @@
                         <i class="fa-solid fa-calendar-day"></i> Fecha de Entrega Programada (Opcional - Ej: 24 o 25):
                     </label>
                     <div class="flex items-center gap-3">
-                        <input type="date" id="eo-scheduled-date" onclick="try{this.showPicker()}catch(e){}" class="bg-slate-950 text-white text-xs rounded-xl px-3 py-2 border border-purple-800 focus:outline-none focus:border-purple-500 cursor-pointer">
+                        <input type="date" id="eo-scheduled-date" class="bg-slate-950 text-white text-xs rounded-xl px-3 py-2 border border-purple-800 focus:outline-none focus:border-purple-500">
                         <span class="text-[11px] text-slate-400">Si se programa para fecha futura, irá a la pestaña "Programados"</span>
                     </div>
                 </div>
@@ -13302,74 +13139,6 @@
                         </button>
                         <button type="submit" class="px-5 py-2.5 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-slate-950 rounded-xl text-xs font-bold shadow-lg shadow-amber-900/30 transition flex items-center gap-2">
                             <i class="fa-solid fa-floppy-disk"></i> Guardar Cambios
-                        </button>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- ========================================== -->
-    <!-- MODAL: PROGRAMAR FECHA CON CALENDARIO      -->
-    <!-- ========================================== -->
-    <div id="modal-schedule-date" onclick="if(event.target===this)closeScheduleDateModal()" class="no-print fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
-        <div class="bg-slate-900 border border-purple-500/40 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-            <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/70">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-400">
-                        <i class="fa-solid fa-calendar-days text-lg"></i>
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-white text-sm sm:text-base">Programar Fecha de Despacho</h3>
-                        <p class="text-xs text-purple-300 font-semibold truncate max-w-[230px]" id="sched-modal-client-name">Cliente</p>
-                    </div>
-                </div>
-                <button type="button" onclick="closeScheduleDateModal()" class="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-800 transition">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
-            </div>
-
-            <form onsubmit="saveScheduleDateModal(event)" class="p-5 space-y-4">
-                <input type="hidden" id="sched-modal-order-id">
-                <div class="text-[11px] text-slate-400 truncate bg-slate-950/80 px-3 py-1.5 rounded-lg border border-slate-800" id="sched-modal-ticket-id"></div>
-
-                <!-- Atajos rápidos de 1 clic -->
-                <div>
-                    <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Atajos Rápidos:</label>
-                    <div class="grid grid-cols-3 gap-2">
-                        <button type="button" onclick="setQuickScheduleDate('tomorrow')" class="px-2.5 py-2 rounded-xl bg-slate-950 hover:bg-purple-950/60 text-purple-300 border border-slate-800 hover:border-purple-500/50 text-xs font-bold transition">
-                            ☀️ Mañana
-                        </button>
-                        <button type="button" onclick="setQuickScheduleDate('day_after')" class="px-2.5 py-2 rounded-xl bg-slate-950 hover:bg-purple-950/60 text-purple-300 border border-slate-800 hover:border-purple-500/50 text-xs font-bold transition">
-                            📆 Pasado Mañana
-                        </button>
-                        <button type="button" onclick="setQuickScheduleDate('next_monday')" class="px-2.5 py-2 rounded-xl bg-slate-950 hover:bg-purple-950/60 text-purple-300 border border-slate-800 hover:border-purple-500/50 text-xs font-bold transition">
-                            🚀 Próx. Lunes
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Selector de Calendario Visual -->
-                <div>
-                    <label class="block text-xs font-bold text-slate-200 mb-1.5 flex items-center gap-1.5">
-                        <i class="fa-regular fa-calendar-check text-purple-400"></i> Elegir día en el calendario:
-                    </label>
-                    <input type="date" id="sched-modal-date-input" onclick="try{this.showPicker()}catch(e){}" class="w-full bg-slate-950 text-white text-base font-bold rounded-xl px-4 py-3 border-2 border-purple-500/50 focus:outline-none focus:border-purple-400 cursor-pointer shadow-inner" required>
-                    <p class="text-[11px] text-slate-400 mt-1.5">
-                        El pedido pasará automáticamente a la pestaña <b class="text-purple-300">📅 Programados</b> hasta que llegue esa fecha.
-                    </p>
-                </div>
-
-                <div class="pt-3 border-t border-slate-800 flex items-center justify-between gap-2">
-                    <button type="button" id="btn-sched-modal-clear" onclick="clearScheduleDateModal()" class="px-3 py-2.5 rounded-xl border border-rose-900/60 hover:bg-rose-950/60 text-rose-300 text-xs font-bold transition items-center gap-1.5">
-                        <i class="fa-solid fa-calendar-xmark"></i> Quitar Fecha
-                    </button>
-                    <div class="flex items-center gap-2 ml-auto">
-                        <button type="button" onclick="closeScheduleDateModal()" class="px-4 py-2.5 rounded-xl border border-slate-700 hover:bg-slate-800 text-slate-300 text-xs font-bold transition">
-                            Cancelar
-                        </button>
-                        <button type="submit" class="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-purple-900/40 transition flex items-center gap-1.5">
-                            <i class="fa-solid fa-check"></i> Guardar Fecha
                         </button>
                     </div>
                 </div>

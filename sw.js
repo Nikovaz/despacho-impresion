@@ -1,5 +1,5 @@
 // Service Worker para CrocScale App
-const CACHE_NAME = 'crocscale-v14-add-crocscale-store';
+const CACHE_NAME = 'crocscale-v15-resumable-video-uploads';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
