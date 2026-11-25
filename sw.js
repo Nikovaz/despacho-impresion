@@ -1,5 +1,5 @@
 // Service Worker para CrocScale App
-const CACHE_NAME = 'crocscale-v15-resumable-video-uploads';
+const CACHE_NAME = 'crocscale-v16-autopublisher-inmemory-fix';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

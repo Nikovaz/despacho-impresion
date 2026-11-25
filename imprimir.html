@@ -11041,14 +11041,32 @@
                         }
 
                         let fileBytes = null;
-                        if (u._rawFile && typeof u._rawFile.arrayBuffer === 'function') {
-                            fileBytes = new Uint8Array(await u._rawFile.arrayBuffer());
-                        } else {
-                            const binStr = atob(u.base64Data);
-                            fileBytes = new Uint8Array(binStr.length);
-                            for (let k = 0; k < binStr.length; k++) {
-                                fileBytes[k] = binStr.charCodeAt(k);
+                        // Priorizar datos en memoria (base64Data) para evitar fallos de lectura en disco por archivos temporales o movidos
+                        if (u.base64Data) {
+                            try {
+                                const binStr = atob(u.base64Data);
+                                fileBytes = new Uint8Array(binStr.length);
+                                for (let k = 0; k < binStr.length; k++) {
+                                    fileBytes[k] = binStr.charCodeAt(k);
+                                }
+                            } catch (b64Err) {
+                                console.warn('Aviso: error decodificando base64Data en memoria, probando lectura directa:', b64Err);
+                                fileBytes = null;
                             }
+                        }
+
+                        // Si no hay base64Data o falló, intentar leer _rawFile con try/catch seguro
+                        if (!fileBytes && u._rawFile && typeof u._rawFile.arrayBuffer === 'function') {
+                            try {
+                                fileBytes = new Uint8Array(await u._rawFile.arrayBuffer());
+                            } catch (rawReadErr) {
+                                console.warn('Aviso: no se pudo leer _rawFile del disco (posible archivo temporal o movido):', rawReadErr);
+                                fileBytes = null;
+                            }
+                        }
+
+                        if (!fileBytes || fileBytes.byteLength === 0) {
+                            throw new Error(`No se pudieron obtener los datos binarios del archivo "${u.fileName}". Por favor volvé a seleccionarlo.`);
                         }
 
                         const totalBytes = fileBytes.byteLength;
