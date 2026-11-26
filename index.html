@@ -8596,6 +8596,13 @@
         let apCarouselPreviewIdx = 0;
 
         let autopublisherQueue = JSON.parse(localStorage.getItem('croc_autopublisher_queue') || '[]');
+        if (Array.isArray(autopublisherQueue)) {
+            autopublisherQueue.forEach(q => {
+                if (q && q.thumbnailDataUrl && (q.thumbnailDataUrl.length > 50000 || (!q.thumbnailDataUrl.startsWith('http') && !q.thumbnailDataUrl.startsWith('data:image/')))) {
+                    q.thumbnailDataUrl = '';
+                }
+            });
+        }
         let deletedApItems = [];
         try {
             deletedApItems = JSON.parse(localStorage.getItem('croc_autopublisher_deleted_v1') || '[]');
@@ -10987,7 +10994,7 @@
                 officialFileName: officialMainName,
                 mediaCount: uploadsPayload.length || 1,
                 isVideo: primaryFile?.isVideo || false,
-                thumbnailDataUrl: (!primaryFile?.isVideo && primaryFile?.dataUrl) ? primaryFile.dataUrl.slice(0, 180000) : '',
+                thumbnailDataUrl: (!primaryFile?.isVideo && primaryFile?.dataUrl && primaryFile.dataUrl.length < 50000) ? primaryFile.dataUrl : '',
                 caption,
                 status: publishNow ? 'Publicación Inmediata Solicitada' : 'Programado en Cola Drive',
                 createdAt: new Date().toISOString()
@@ -11784,7 +11791,8 @@
                     story: (q.storyTime && q.storyTime !== 'both_09_20' && q.storyTime !== 'with_feed') ? q.storyTime : '09:30'
                 };
                 const isPubNow = q.statusType === 'published' || String(q.status || '').includes('Publicado en Instagram');
-                const thumb = q.thumbnailDataUrl || (catDriveUrl ? buildApDriveThumbnailUrl(catDriveUrl, 400) : '');
+                const validQueueThumb = (q.thumbnailDataUrl && q.thumbnailDataUrl.length < 50000 && !q.thumbnailDataUrl.includes('\n')) ? q.thumbnailDataUrl : '';
+                const thumb = validQueueThumb || (catDriveUrl ? buildApDriveThumbnailUrl(catDriveUrl, 400) : '');
                 eventsMap.set(groupKey, {
                     id: baseQKey,
                     queueId: q.id,
@@ -12040,7 +12048,7 @@
                     action: 'publish_existing_now',
                     publishNow: true,
                     publish_now: true,
-                    store: currentApStore,
+                    store: currentApStore || 'nnn',
                     sku: sku,
                     productName: prodName,
                     price: ev.price || '',
@@ -12053,17 +12061,26 @@
                     target: ev.slotType || 'both'
                 };
 
+                console.log('🚀 [Publicar Ahora] Enviando payload a n8n:', payload);
+
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 65000);
+
                 const resp = await fetch(webhookTargetUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify(payload),
+                    signal: controller.signal
                 });
+                clearTimeout(timeoutId);
 
                 if (!resp.ok) {
-                    throw new Error(`HTTP ${resp.status} ${resp.statusText}`);
+                    const errTxt = await resp.text().catch(() => '');
+                    throw new Error(`HTTP ${resp.status} ${resp.statusText} ${errTxt ? '- ' + errTxt.slice(0, 150) : ''}`);
                 }
 
-                const data = await resp.json().catch(() => ({}));
+                const data = await resp.json().catch(() => ({ ok: true }));
+                console.log('✅ [Publicar Ahora] Respuesta recibida de n8n:', data);
 
                 // Marcar como publicado de forma persistente
                 setApItemPublished({
@@ -12164,7 +12181,12 @@
             else if (String(ev.slotType).startsWith('story')) typeBadge = '📱 Story';
             else if (ev.slotType === 'both') typeBadge = '🔥 Post+Story';
 
-            const thumbHtml = ev.thumbnailUrl
+            const isSafeThumb = ev.thumbnailUrl && (
+                ev.thumbnailUrl.startsWith('https://') ||
+                ev.thumbnailUrl.startsWith('http://') ||
+                (ev.thumbnailUrl.startsWith('data:image/') && ev.thumbnailUrl.length < 60000 && !ev.thumbnailUrl.includes('\n'))
+            );
+            const thumbHtml = isSafeThumb
                 ? `<div class="relative w-full ${compact ? 'h-20' : 'h-28'} rounded-lg overflow-hidden bg-slate-950 border border-slate-800/80 my-1.5 group-hover:opacity-95 transition">
                         <img src="${escapeHTML(ev.thumbnailUrl)}" alt="${escapeHTML(ev.sku)}" loading="lazy" referrerpolicy="no-referrer"
                              onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');"
@@ -12624,10 +12646,16 @@
             }
 
             if (mediaBox) {
-                const imgUrl = curFileId ? buildApDriveThumbnailUrl(curFileId, 800) : ev.thumbnailUrl;
-                if (imgUrl) {
+                const rawImg = curFileId ? buildApDriveThumbnailUrl(curFileId, 800) : ev.thumbnailUrl;
+                const isSafeModalImg = rawImg && (
+                    rawImg.startsWith('https://') ||
+                    rawImg.startsWith('http://') ||
+                    (rawImg.startsWith('data:image/') && rawImg.length < 60000 && !rawImg.includes('\n'))
+                );
+                if (isSafeModalImg) {
                     mediaBox.innerHTML = `
-                        <img src="${escapeHTML(imgUrl)}" alt="${escapeHTML(ev.sku)}" referrerpolicy="no-referrer"
+                        <img src="${escapeHTML(rawImg)}" alt="${escapeHTML(ev.sku)}" referrerpolicy="no-referrer"
+                             onerror="this.style.display='none'; this.nextElementSibling && this.nextElementSibling.classList.remove('hidden');"
                              class="w-full h-full object-contain bg-slate-950">
                     `;
                 } else {
