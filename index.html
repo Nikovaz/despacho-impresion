@@ -1046,66 +1046,127 @@
     <!-- ========================================== -->
     <!-- MODULE 2.5: AUTOPUBLICADOR IA (SAAS STUDIO) -->
     <!-- ========================================== -->
-    <div id="view-autopublisher" class="no-print max-w-7xl mx-auto p-4 md:p-6 hidden">
-        <!-- Header Autopublicador -->
-        <header class="flex flex-col lg:flex-row items-start lg:items-center justify-between pb-6 border-b border-slate-800 gap-4">
-            <div>
-                <h1 class="text-xl sm:text-2xl font-bold text-white flex items-center gap-2.5 flex-wrap">
-                    <span class="p-2 bg-gradient-to-tr from-pink-500/20 to-amber-500/20 text-pink-400 rounded-xl border border-pink-500/30 shadow-lg shadow-pink-500/10">
-                        <i class="fa-brands fa-instagram"></i>
-                    </span>
-                    <span id="ap-title-store" class="text-white">NNN / Bross London</span>
-                    <span class="text-slate-500 font-light">|</span>
-                    <span class="bg-gradient-to-r from-pink-400 via-fuchsia-400 to-amber-300 bg-clip-text text-transparent font-extrabold">Estudio Autopublicador IA</span>
-                    <span class="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Drive + Sheets + Meta API
-                    </span>
-                </h1>
-                <p class="text-slate-400 text-xs sm:text-sm mt-1" id="ap-subtitle-schedule">
-                    Subí tu foto o video, elegí el producto del catálogo y la fecha: el sistema lo renombra solo con el SKU exacto y lo guarda en tu Google Drive para publicar en Feed y Stories.
-                </p>
-            </div>
+    <div id="view-autopublisher" class="no-print max-w-7xl mx-auto p-4 md:p-6 hidden space-y-6">
+        <!-- HERO HEADER AUTOPUBLICADOR (LIMPIO Y AMIGABLE PARA CLIENTES) -->
+        <header class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-900 to-fuchsia-950/35 border border-slate-800/90 p-5 sm:p-6 shadow-2xl">
+            <div class="pointer-events-none absolute -top-24 -right-24 w-72 h-72 rounded-full bg-pink-500/10 blur-3xl"></div>
+            <div class="pointer-events-none absolute -bottom-24 -left-16 w-64 h-64 rounded-full bg-indigo-500/10 blur-3xl"></div>
 
-            <div class="flex items-center gap-2.5 flex-wrap w-full lg:w-auto">
-                <!-- Selector de Marca (NNN vs NachaHome) -->
-                <div id="ap-store-selector-wrap" class="flex items-center bg-slate-900 rounded-xl p-1 border border-slate-800 shadow-inner">
-                    <button onclick="switchAutopublisherStore('nnn')" id="btn-ap-store-nnn" class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-pink-600 to-fuchsia-600 text-white transition flex items-center gap-1.5 shadow">
-                        <i class="fa-solid fa-shirt"></i> NNN / Bross
-                    </button>
-                    <button onclick="switchAutopublisherStore('nacha')" id="btn-ap-store-nacha" class="px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5">
-                        <i class="fa-solid fa-house"></i> Nacha Home
-                    </button>
-                    <button onclick="switchAutopublisherStore('crocscale')" id="btn-ap-store-crocscale" class="px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5">
-                        <i class="fa-solid fa-robot"></i> 🐊 CrocScale
-                    </button>
+            <div class="relative flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5">
+                <div class="space-y-2 max-w-2xl">
+                    <div class="flex items-center gap-2.5 flex-wrap">
+                        <span class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-500 via-pink-500 to-fuchsia-600 text-white flex items-center justify-center shadow-lg shadow-pink-500/25 text-lg shrink-0">
+                            <i class="fa-brands fa-instagram"></i>
+                        </span>
+                        <h1 class="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2 flex-wrap">
+                            <span id="ap-title-store" class="text-white">NNN / Bross London</span>
+                            <span class="text-slate-600 font-light">•</span>
+                            <span class="bg-gradient-to-r from-pink-400 via-fuchsia-300 to-amber-300 bg-clip-text text-transparent">Estudio Autopublicador IA</span>
+                        </h1>
+                        <span class="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Conectado a Instagram
+                        </span>
+                    </div>
+                    <p class="text-slate-300 text-xs sm:text-sm leading-relaxed" id="ap-subtitle-schedule">
+                        Elegí un producto de tu catálogo, subí tus fotos o video y elegí el día: la IA redacta el texto con tus precios reales y publica automáticamente en Feed, Reels e Historias.
+                    </p>
                 </div>
 
-                <!-- Botón Sincronizar Catálogo, Carpetas Drive e Historial -->
-                <button onclick="refreshAutopublisherData(true)" class="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-emerald-300 rounded-xl font-bold text-xs flex items-center gap-1.5 border border-emerald-500/30 transition" title="Refrescar archivos programados en Google Drive y catálogo/historial de Google Sheets">
-                    <i class="fa-solid fa-rotate" id="ap-refresh-icon"></i> <span>Sincronizar Drive & Sheets</span>
-                </button>
+                <div class="flex flex-col sm:items-end gap-2.5 w-full lg:w-auto">
+                    <!-- Fila 1: Selector de Marca (solo SuperAdmin) + CTA Principal -->
+                    <div class="flex items-center gap-2 flex-wrap w-full sm:w-auto sm:justify-end">
+                        <div id="ap-store-selector-wrap" class="flex items-center bg-slate-950/90 rounded-xl p-1 border border-slate-800 shadow-inner">
+                            <button onclick="switchAutopublisherStore('nnn')" id="btn-ap-store-nnn" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-pink-600 to-fuchsia-600 text-white transition flex items-center gap-1.5 shadow">
+                                <i class="fa-solid fa-shirt"></i> NNN / Bross
+                            </button>
+                            <button onclick="switchAutopublisherStore('nacha')" id="btn-ap-store-nacha" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-house"></i> Nacha Home
+                            </button>
+                            <button onclick="switchAutopublisherStore('crocscale')" id="btn-ap-store-crocscale" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-robot"></i> 🐊 CrocScale
+                            </button>
+                        </div>
 
-                <!-- Botón Registro de Logs en Vivo -->
-                <button onclick="openApLogsSection()" class="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-cyan-300 rounded-xl font-bold text-xs flex items-center gap-1.5 border border-cyan-500/30 transition" title="Ver Registro de Logs y Ejecuciones de n8n / Meta API">
-                    <i class="fa-solid fa-terminal"></i> <span>Registro de Logs (<span id="ap-header-logs-count">0</span>)</span>
-                </button>
+                        <button type="button" onclick="scrollToApCreatorStudio()" class="px-4 py-2 bg-gradient-to-r from-pink-600 via-fuchsia-600 to-indigo-600 hover:from-pink-500 hover:to-indigo-500 text-white rounded-xl font-extrabold text-xs flex items-center gap-1.5 shadow-lg shadow-pink-950/50 transition active:scale-95">
+                            <i class="fa-solid fa-plus"></i> <span>Nueva Publicación</span>
+                        </button>
+                    </div>
 
-                <!-- Botón Configurar Webhook / Carpetas Drive -->
-                <button onclick="toggleApConfigPanel()" class="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-amber-400 rounded-xl font-bold text-xs flex items-center gap-1.5 border border-slate-800 transition" title="Configurar Webhook n8n y Carpetas de Google Drive">
-                    <i class="fa-solid fa-sliders"></i> <span class="hidden sm:inline">Conexión n8n & Drive</span>
-                </button>
+                    <!-- Fila 2: Acciones secundarias limpias -->
+                    <div class="flex items-center gap-2 flex-wrap w-full sm:w-auto sm:justify-end">
+                        <button type="button" onclick="toggleApGuideBanner()" id="btn-ap-toggle-guide" class="px-3 py-1.5 bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 rounded-xl font-bold text-xs flex items-center gap-1.5 border border-indigo-500/30 transition" title="Ver guía rápida paso a paso">
+                            <i class="fa-solid fa-circle-question"></i> <span>¿Cómo funciona?</span>
+                        </button>
+
+                        <button onclick="refreshAutopublisherData(true)" class="px-3 py-1.5 bg-slate-950/80 hover:bg-slate-800 text-emerald-300 rounded-xl font-bold text-xs flex items-center gap-1.5 border border-emerald-500/25 transition" title="Actualizar catálogo, calendario e historial">
+                            <i class="fa-solid fa-rotate" id="ap-refresh-icon"></i> <span>Actualizar</span>
+                        </button>
+
+                        <button onclick="openApLogsSection()" class="px-2.5 py-1.5 bg-slate-950/70 hover:bg-slate-800 text-slate-400 hover:text-cyan-300 rounded-xl font-semibold text-[11px] flex items-center gap-1.5 border border-slate-800 transition" title="Actividad técnica y registros del sistema">
+                            <i class="fa-solid fa-terminal text-[10px]"></i> <span>Actividad (<span id="ap-header-logs-count">0</span>)</span>
+                        </button>
+
+                        <button onclick="toggleApConfigPanel()" class="px-2.5 py-1.5 bg-slate-950/70 hover:bg-slate-800 text-slate-400 hover:text-amber-300 rounded-xl font-semibold text-[11px] flex items-center gap-1.5 border border-slate-800 transition" title="Configuración avanzada de conexiones y carpetas">
+                            <i class="fa-solid fa-sliders text-[10px]"></i> <span class="hidden sm:inline">Avanzado</span>
+                        </button>
+                    </div>
+                </div>
             </div>
         </header>
 
-        <!-- Panel Desplegable de Configuración Técnica (Webhook n8n + Links directos a Drive/Sheets) -->
-        <div id="ap-config-panel" class="hidden my-4 p-4 rounded-2xl bg-slate-900/95 border border-amber-500/30 shadow-xl space-y-4">
+        <!-- GUÍA DIDÁCTICA INTERACTIVA (3 PASOS PARA CLIENTES) -->
+        <div id="ap-guide-banner" class="rounded-3xl bg-gradient-to-r from-indigo-950/50 via-slate-900/95 to-pink-950/40 border border-indigo-500/30 p-4 sm:p-5 shadow-xl">
+            <div class="flex items-center justify-between gap-3 mb-3.5">
+                <div class="flex items-center gap-2">
+                    <span class="w-7 h-7 rounded-xl bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 flex items-center justify-center text-xs">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                    </span>
+                    <div>
+                        <h3 class="text-xs sm:text-sm font-extrabold text-white">Guía Rápida: ¿Cómo publicar en 3 pasos simples?</h3>
+                        <p class="text-[11px] text-slate-400">No necesitás saber nada técnico — el sistema hace todo el trabajo pesado por vos.</p>
+                    </div>
+                </div>
+                <button type="button" onclick="toggleApGuideBanner(false)" class="px-2.5 py-1 rounded-lg bg-slate-950/70 hover:bg-slate-800 text-slate-400 hover:text-white text-[11px] font-bold border border-slate-800 transition flex items-center gap-1 shrink-0">
+                    <i class="fa-solid fa-eye-slash text-[10px]"></i> <span>Ocultar</span>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <button type="button" onclick="scrollToApCreatorStudio()" class="text-left group p-3.5 rounded-2xl bg-slate-950/75 hover:bg-slate-900 border border-slate-800 hover:border-pink-500/40 transition flex items-start gap-3">
+                    <div class="w-8 h-8 rounded-xl bg-pink-500/15 text-pink-400 border border-pink-500/30 font-black text-xs flex items-center justify-center shrink-0 group-hover:scale-110 transition">1</div>
+                    <div>
+                        <div class="text-xs font-extrabold text-white group-hover:text-pink-300 transition">Elegí tu producto</div>
+                        <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">Buscalo en tu catálogo y el sistema completa el precio, talles y descripción automáticamente.</p>
+                    </div>
+                </button>
+
+                <button type="button" onclick="scrollToApCreatorStudio()" class="text-left group p-3.5 rounded-2xl bg-slate-950/75 hover:bg-slate-900 border border-slate-800 hover:border-cyan-500/40 transition flex items-start gap-3">
+                    <div class="w-8 h-8 rounded-xl bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 font-black text-xs flex items-center justify-center shrink-0 group-hover:scale-110 transition">2</div>
+                    <div>
+                        <div class="text-xs font-extrabold text-white group-hover:text-cyan-300 transition">Subí tus fotos o video</div>
+                        <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">Podés subir 1 foto, un carrusel o un Reel. ¡Y generar la Historia vertical 9:16 en 1 solo clic!</p>
+                    </div>
+                </button>
+
+                <button type="button" onclick="scrollToApCreatorStudio()" class="text-left group p-3.5 rounded-2xl bg-slate-950/75 hover:bg-slate-900 border border-slate-800 hover:border-emerald-500/40 transition flex items-start gap-3">
+                    <div class="w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-black text-xs flex items-center justify-center shrink-0 group-hover:scale-110 transition">3</div>
+                    <div>
+                        <div class="text-xs font-extrabold text-white group-hover:text-emerald-300 transition">Programá o publicá ya</div>
+                        <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">Elegí fecha y hora (o arrastrá tarjetas en el calendario para cambiarlas de día cuando quieras).</p>
+                    </div>
+                </button>
+            </div>
+        </div>
+
+        <!-- Panel Desplegable de Configuración Técnica (Avanzado) -->
+        <div id="ap-config-panel" class="hidden p-4 rounded-2xl bg-slate-900/95 border border-amber-500/30 shadow-xl space-y-4">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-800">
                 <div>
                     <h3 class="text-xs font-extrabold uppercase tracking-wider text-amber-400 flex items-center gap-2">
-                        <i class="fa-solid fa-plug-circle-Bolt"></i> Configuración de Conexión con n8n & Google Drive (Multi-Cliente SaaS)
+                        <i class="fa-solid fa-plug-circle-Bolt"></i> Configuración Avanzada de Conexión (n8n &amp; Google Drive)
                     </h3>
                     <p class="text-[11px] text-slate-400 mt-0.5">
-                        Cuando subís contenido desde esta página, se envía al Webhook de n8n junto con el ID de la carpeta de Drive y el nombre auto-formateado (<span class="font-mono text-emerald-300">DD-MM SKU.jpg</span> o <span class="font-mono text-emerald-300">NumXXX_DD.MM.jpg</span>).
+                        Accesos directos a tus carpetas y configuración del webhook automático (<span class="font-mono text-emerald-300">DD-MM SKU.jpg</span> / <span class="font-mono text-emerald-300">NumXXX_DD.MM.jpg</span>).
                     </p>
                 </div>
                 <button onclick="toggleApConfigPanel()" class="text-slate-400 hover:text-white text-xs self-end sm:self-auto px-2 py-1">
@@ -1115,7 +1176,7 @@
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div class="md:col-span-2">
-                    <label class="block text-[11px] font-bold text-slate-300 mb-1">URL del Webhook Receptor en n8n (Subida a Drive & Publicar Ahora):</label>
+                    <label class="block text-[11px] font-bold text-slate-300 mb-1">URL del Webhook Receptor en n8n (Subida a Drive &amp; Publicar Ahora):</label>
                     <div class="flex flex-wrap sm:flex-nowrap gap-2">
                         <input type="url" id="ap-input-webhook-url" placeholder="https://n8n.totodrilo.cloud/webhook/autopublicador-upload" class="flex-1 bg-slate-950 text-white text-xs font-mono rounded-xl px-3 py-2 border border-slate-800 focus:outline-none focus:border-amber-500">
                         <button onclick="saveApWebhookConfig()" class="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold rounded-xl transition shadow">
@@ -1153,70 +1214,95 @@
             </div>
         </div>
 
-        <!-- KPIs de Estado del Autopublicador -->
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3.5 my-5">
-            <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-lg flex items-center justify-between">
-                <div>
-                    <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Productos en Catálogo</div>
-                    <div class="text-2xl font-black text-white mt-1" id="ap-kpi-catalog-count">0</div>
-                    <div class="text-[11px] text-emerald-400 font-medium mt-0.5" id="ap-kpi-catalog-sub">Sincronizado con Sheets</div>
+        <!-- KPIs INTERACTIVOS DE ESTADO DEL AUTOPUBLICADOR -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+            <button type="button" onclick="switchApSubTab('catalog'); document.getElementById('ap-bottom-tabs-section')?.scrollIntoView({behavior:'smooth', block:'start'});" class="group text-left p-4 rounded-2xl bg-slate-900/85 hover:bg-slate-900 border border-slate-800 hover:border-emerald-500/40 shadow-lg transition flex flex-col justify-between gap-2">
+                <div class="flex items-center justify-between w-full">
+                    <div>
+                        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Tu Catálogo</div>
+                        <div class="text-2xl sm:text-3xl font-black text-white mt-0.5" id="ap-kpi-catalog-count">0</div>
+                    </div>
+                    <div class="w-11 h-11 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 text-lg group-hover:scale-110 transition">
+                        <i class="fa-solid fa-tags"></i>
+                    </div>
                 </div>
-                <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 text-lg">
-                    <i class="fa-solid fa-tags"></i>
+                <div class="flex items-center justify-between text-[11px]">
+                    <span class="text-emerald-400 font-semibold" id="ap-kpi-catalog-sub">Listos para publicar</span>
+                    <span class="text-slate-500 group-hover:text-emerald-300 transition font-bold">Ver lista &rarr;</span>
                 </div>
-            </div>
+            </button>
 
-            <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-lg flex items-center justify-between">
-                <div>
-                    <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Programados en Cola</div>
-                    <div class="text-2xl font-black text-pink-400 mt-1" id="ap-kpi-scheduled-count">0</div>
-                    <div class="text-[11px] text-slate-400 mt-0.5" id="ap-kpi-next-slot">Próximo: Hoy 18:00 hs</div>
+            <button type="button" onclick="setApPlannerFilter('scheduled'); document.getElementById('ap-planner-card-wrap')?.scrollIntoView({behavior:'smooth', block:'start'});" class="group text-left p-4 rounded-2xl bg-slate-900/85 hover:bg-slate-900 border border-slate-800 hover:border-pink-500/40 shadow-lg transition flex flex-col justify-between gap-2">
+                <div class="flex items-center justify-between w-full">
+                    <div>
+                        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Programados</div>
+                        <div class="text-2xl sm:text-3xl font-black text-pink-400 mt-0.5" id="ap-kpi-scheduled-count">0</div>
+                    </div>
+                    <div class="w-11 h-11 rounded-2xl bg-pink-500/10 border border-pink-500/20 flex items-center justify-center text-pink-400 text-lg group-hover:scale-110 transition">
+                        <i class="fa-regular fa-calendar-check"></i>
+                    </div>
                 </div>
-                <div class="w-10 h-10 rounded-xl bg-pink-500/10 border border-pink-500/20 flex items-center justify-center text-pink-400 text-lg">
-                    <i class="fa-regular fa-calendar-check"></i>
+                <div class="flex items-center justify-between text-[11px] gap-1">
+                    <span class="text-slate-400 truncate" id="ap-kpi-next-slot">Próximo: Hoy 18:00 hs</span>
+                    <span class="text-slate-500 group-hover:text-pink-300 transition font-bold shrink-0">Filtrar &rarr;</span>
                 </div>
-            </div>
+            </button>
 
-            <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-lg flex items-center justify-between">
-                <div>
-                    <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Publicados en IG</div>
-                    <div class="text-2xl font-black text-indigo-400 mt-1" id="ap-kpi-published-count">0</div>
-                    <div class="text-[11px] text-slate-400 mt-0.5" id="ap-kpi-published-sub">Historial en Contenido</div>
+            <button type="button" onclick="setApPlannerFilter('published'); document.getElementById('ap-planner-card-wrap')?.scrollIntoView({behavior:'smooth', block:'start'});" class="group text-left p-4 rounded-2xl bg-slate-900/85 hover:bg-slate-900 border border-slate-800 hover:border-indigo-500/40 shadow-lg transition flex flex-col justify-between gap-2">
+                <div class="flex items-center justify-between w-full">
+                    <div>
+                        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Ya Publicados</div>
+                        <div class="text-2xl sm:text-3xl font-black text-indigo-400 mt-0.5" id="ap-kpi-published-count">0</div>
+                    </div>
+                    <div class="w-11 h-11 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 text-lg group-hover:scale-110 transition">
+                        <i class="fa-brands fa-instagram"></i>
+                    </div>
                 </div>
-                <div class="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 text-lg">
-                    <i class="fa-brands fa-instagram"></i>
+                <div class="flex items-center justify-between text-[11px]">
+                    <span class="text-slate-400" id="ap-kpi-published-sub">Subidos a tu Instagram</span>
+                    <span class="text-slate-500 group-hover:text-indigo-300 transition font-bold">Ver &rarr;</span>
                 </div>
-            </div>
+            </button>
 
-            <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-lg flex items-center justify-between">
-                <div>
-                    <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Pendientes de Subir</div>
-                    <div class="text-2xl font-black text-amber-400 mt-1" id="ap-kpi-unposted-count">0</div>
-                    <div class="text-[11px] text-slate-400 mt-0.5">Artículos aún no publicados</div>
+            <button type="button" onclick="if(!apFilterOnlyUnposted) filterApCatalogByUnposted(); scrollToApCreatorStudio();" class="group text-left p-4 rounded-2xl bg-slate-900/85 hover:bg-slate-900 border border-slate-800 hover:border-amber-500/40 shadow-lg transition flex flex-col justify-between gap-2">
+                <div class="flex items-center justify-between w-full">
+                    <div>
+                        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Sin Publicar Aún</div>
+                        <div class="text-2xl sm:text-3xl font-black text-amber-400 mt-0.5" id="ap-kpi-unposted-count">0</div>
+                    </div>
+                    <div class="w-11 h-11 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 text-lg group-hover:scale-110 transition">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    </div>
                 </div>
-                <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 text-lg">
-                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                <div class="space-y-1.5 w-full">
+                    <div class="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                        <div id="ap-kpi-coverage-bar" class="h-full rounded-full bg-gradient-to-r from-emerald-400 to-amber-400 transition-all duration-500" style="width: 18%"></div>
+                    </div>
+                    <div class="flex items-center justify-between text-[11px]">
+                        <span class="text-slate-400" id="ap-kpi-coverage-label">Listos para estrenar</span>
+                        <span class="text-amber-300 font-bold">Publicar &rarr;</span>
+                    </div>
                 </div>
-            </div>
+            </button>
         </div>
 
         <!-- ========================================================= -->
-        <!-- PLANIFICADOR VISUAL ESTILO META BUSINESS SUITE            -->
+        <!-- PLANIFICADOR VISUAL DE CONTENIDOS                         -->
         <!-- ========================================================= -->
-        <div class="bg-slate-900/90 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl mb-8">
-            <!-- Barra Superior del Planificador (Estilo Facebook Business Suite) -->
+        <div id="ap-planner-card-wrap" class="bg-slate-900/90 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
+            <!-- Barra Superior del Planificador -->
             <div class="p-4 sm:p-5 border-b border-slate-800 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
                 <div class="flex flex-wrap items-center gap-3">
-                    <div class="flex items-center gap-2.5">
-                        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-blue-950/50">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-blue-950/50">
                             <i class="fa-regular fa-calendar-days text-base"></i>
                         </div>
                         <div>
                             <div class="flex items-center gap-2">
-                                <h2 class="text-sm sm:text-base font-extrabold text-white tracking-tight">Planificador de Contenidos</h2>
-                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-500/15 text-blue-300 border border-blue-500/30">Meta Business Style</span>
+                                <h2 class="text-sm sm:text-base font-extrabold text-white tracking-tight">Calendario de Publicaciones</h2>
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-300 border border-blue-500/30">Interactivo</span>
                             </div>
-                            <p class="text-[11px] text-slate-400">Visualizá los posteos e historias ya subidos a Instagram y los programados en cola</p>
+                            <p class="text-[11px] text-slate-400">Tocá una tarjeta para ver la foto, arrastrala para cambiarla de día o tocá <b>+</b> para sumar un post.</p>
                         </div>
                     </div>
 
@@ -1237,17 +1323,17 @@
                     </div>
                 </div>
 
-                <!-- Controles Derecha: Selector de Vista (Mes / Semana / Feed IG) + Filtros + Botón Crear -->
+                <!-- Controles Derecha: Filtros + Selector de Vista + Botón Crear -->
                 <div class="flex flex-wrap items-center justify-between xl:justify-end gap-2.5">
-                    <!-- Filtro por Estado / Formato -->
+                    <!-- Filtro por Estado -->
                     <div class="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 text-[11px] font-bold flex-wrap">
                         <button type="button" onclick="setApPlannerFilter('all')" id="btn-ap-pfilter-all" class="px-2.5 py-1.5 rounded-lg bg-slate-800 text-white transition">
                             Todos
                         </button>
-                        <button type="button" onclick="setApPlannerFilter('published')" id="btn-ap-pfilter-published" class="px-2.5 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center gap-1">
-                            <span class="w-2 h-2 rounded-full bg-emerald-400"></span> Ya Subidos
+                        <button type="button" onclick="setApPlannerFilter('published')" id="btn-ap-pfilter-published" class="px-2.5 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400"></span> Publicados
                         </button>
-                        <button type="button" onclick="setApPlannerFilter('scheduled')" id="btn-ap-pfilter-scheduled" class="px-2.5 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center gap-1">
+                        <button type="button" onclick="setApPlannerFilter('scheduled')" id="btn-ap-pfilter-scheduled" class="px-2.5 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center gap-1.5">
                             <span class="w-2 h-2 rounded-full bg-pink-400"></span> Programados
                         </button>
                     </div>
@@ -1260,8 +1346,8 @@
                         <button type="button" onclick="setApPlannerViewMode('week')" id="btn-ap-pview-week" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center gap-1.5">
                             <i class="fa-solid fa-calendar-week"></i> <span>Semana</span>
                         </button>
-                        <button type="button" onclick="setApPlannerViewMode('grid')" id="btn-ap-pview-grid" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center gap-1.5" title="Vista de Grilla de Perfil de Instagram 3x3">
-                            <i class="fa-solid fa-table-cells"></i> <span>Feed IG</span>
+                        <button type="button" onclick="setApPlannerViewMode('grid')" id="btn-ap-pview-grid" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center gap-1.5" title="Ver cómo queda tu perfil de Instagram">
+                            <i class="fa-solid fa-table-cells"></i> <span>Vista Perfil IG</span>
                         </button>
                     </div>
 
@@ -1272,21 +1358,21 @@
                 </div>
             </div>
 
-            <!-- Barra de Saltos Rápidos a Meses con Publicaciones Subidas + Leyenda -->
+            <!-- Barra de Saltos Rápidos a Meses + Leyenda Clara -->
             <div class="px-4 py-2.5 bg-slate-950/80 border-b border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px]">
                 <div class="flex items-center gap-2 flex-wrap">
                     <span class="text-slate-400 font-semibold flex items-center gap-1">
-                        <i class="fa-solid fa-clock-rotate-left text-indigo-400"></i> Meses con actividad:
+                        <i class="fa-solid fa-clock-rotate-left text-indigo-400"></i> Ir al mes:
                     </span>
                     <div id="ap-planner-months-bar" class="flex items-center gap-1.5 flex-wrap">
-                        <!-- Inyectado dinámicamente con cada mes que tiene posts subidos o programados -->
+                        <!-- Inyectado dinámicamente -->
                     </div>
                 </div>
 
                 <div class="flex items-center gap-3 text-slate-400 flex-wrap">
-                    <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span> Subido a IG (Sheets + Drive)</span>
-                    <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-pink-500 inline-block"></span> Programado en Cola</span>
-                    <span class="text-slate-500 hidden md:inline">&bull; Clic en cualquier tarjeta para ver foto y detalle</span>
+                    <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span> Publicado en IG</span>
+                    <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-pink-500 inline-block"></span> Programado</span>
+                    <span class="text-slate-500 hidden md:inline">&bull; Arrastrá para mover de fecha</span>
                 </div>
             </div>
 
@@ -1297,319 +1383,372 @@
         </div>
 
         <!-- ========================================================= -->
-        <!-- WORKSPACE PRINCIPAL: CARGA INTERACTIVA + PREVIEW IG       -->
+        <!-- WORKSPACE PRINCIPAL: CREADOR PASO A PASO + PREVIEW IG     -->
         <!-- ========================================================= -->
-        <div id="ap-creator-studio-section" class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8 scroll-mt-20">
+        <div id="ap-creator-studio-section" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start scroll-mt-20">
             
-            <!-- COLUMNA IZQUIERDA (7 cols): CREADOR Y SUBIDA A DRIVE -->
-            <div class="lg:col-span-7 bg-slate-900/80 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-2xl space-y-5">
-                <div class="flex items-center justify-between border-b border-slate-800 pb-3.5">
-                    <div class="flex items-center gap-2.5">
-                        <span class="w-7 h-7 rounded-lg bg-pink-500/20 text-pink-400 font-black text-xs flex items-center justify-center border border-pink-500/30">1</span>
-                        <h2 class="font-extrabold text-white text-base">Programar Nuevo Post / Reel / Story</h2>
+            <!-- COLUMNA IZQUIERDA (7 cols): ESTUDIO CREADOR GUIADO -->
+            <div class="lg:col-span-7 bg-slate-900/85 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-2xl space-y-5">
+                <!-- Cabecera del Creador + Barra de Progreso en Vivo -->
+                <div class="space-y-3 border-b border-slate-800 pb-4">
+                    <div class="flex items-center justify-between flex-wrap gap-2">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-8 h-8 rounded-xl bg-gradient-to-tr from-pink-500 to-fuchsia-600 text-white font-black text-xs flex items-center justify-center shadow-lg shadow-pink-500/20">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            </span>
+                            <div>
+                                <h2 class="font-extrabold text-white text-base leading-tight">Crear Nueva Publicación</h2>
+                                <p class="text-[11px] text-slate-400">Completá los 4 pasos y mirá cómo queda en el celular de la derecha.</p>
+                            </div>
+                        </div>
+                        <span id="ap-badge-rule" class="hidden text-[10px] font-mono bg-slate-950 text-emerald-400 px-2.5 py-1 rounded-lg border border-slate-800">
+                            Regla: DD-MM SKU.jpg
+                        </span>
                     </div>
-                    <span id="ap-badge-rule" class="text-[11px] font-mono bg-slate-950 text-emerald-400 px-2.5 py-1 rounded-lg border border-slate-800">
-                        Regla: DD-MM SKU.jpg
-                    </span>
+
+                    <!-- Stepper Visual de Progreso -->
+                    <div class="grid grid-cols-4 gap-2 pt-1">
+                        <div id="ap-step-pill-1" class="px-2.5 py-1.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center gap-1.5 text-[11px] font-bold text-slate-400 transition">
+                            <span class="w-4 h-4 rounded-full bg-slate-800 text-[9px] flex items-center justify-center shrink-0">1</span>
+                            <span class="truncate">Producto</span>
+                        </div>
+                        <div id="ap-step-pill-2" class="px-2.5 py-1.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center gap-1.5 text-[11px] font-bold text-slate-400 transition">
+                            <span class="w-4 h-4 rounded-full bg-slate-800 text-[9px] flex items-center justify-center shrink-0">2</span>
+                            <span class="truncate">Cuándo</span>
+                        </div>
+                        <div id="ap-step-pill-3" class="px-2.5 py-1.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center gap-1.5 text-[11px] font-bold text-slate-400 transition">
+                            <span class="w-4 h-4 rounded-full bg-slate-800 text-[9px] flex items-center justify-center shrink-0">3</span>
+                            <span class="truncate">Fotos/Video</span>
+                        </div>
+                        <div id="ap-step-pill-4" class="px-2.5 py-1.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center gap-1.5 text-[11px] font-bold text-slate-400 transition">
+                            <span class="w-4 h-4 rounded-full bg-slate-800 text-[9px] flex items-center justify-center shrink-0">4</span>
+                            <span class="truncate">Texto IG</span>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- PASO 1: BUSCADOR DE PRODUCTO / SKU DEL CATÁLOGO EN VIVO -->
-                <div class="space-y-2.5">
+                <!-- PASO 1: ELEGIR PRODUCTO DEL CATÁLOGO -->
+                <div class="p-4 rounded-2xl bg-slate-950/70 border border-slate-800/90 space-y-3">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <label class="text-xs font-bold text-slate-200 flex items-center gap-1.5">
-                            <i class="fa-solid fa-magnifying-glass text-pink-400"></i> 1. Elegí el Producto del Catálogo (Cruza Precio y Descripción solo)
+                        <label class="text-xs font-extrabold text-white flex items-center gap-2">
+                            <span class="w-5 h-5 rounded-full bg-pink-500/20 text-pink-400 border border-pink-500/30 text-[10px] font-black flex items-center justify-center">1</span>
+                            <span>Elegí el producto a promocionar</span>
                         </label>
-                        <div class="flex items-center gap-1.5">
-                            <button type="button" onclick="filterApCatalogByUnposted()" id="btn-ap-filter-unposted" class="text-[11px] px-2.5 py-1 rounded-lg bg-slate-950 hover:bg-slate-800 text-amber-300 border border-amber-500/30 font-semibold transition">
-                                ⚡ Ver solo no publicados
-                            </button>
-                        </div>
+                        <button type="button" onclick="filterApCatalogByUnposted()" id="btn-ap-filter-unposted" class="text-[11px] px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-amber-300 border border-amber-500/30 font-semibold transition self-start sm:self-auto">
+                            ✨ Ver solo sin publicar
+                        </button>
                     </div>
 
                     <!-- Buscador rápido + Selector desplegable -->
                     <div class="grid grid-cols-1 sm:grid-cols-12 gap-2.5">
                         <div class="sm:col-span-5 relative">
-                            <i class="fa-solid fa-barcode absolute left-3 top-3 text-slate-500 text-xs"></i>
-                            <input type="text" id="ap-product-search" oninput="onApProductSearchInput(this.value)" placeholder="Buscar por SKU, Num o nombre (ej: CRG-035, Binario, Ginebra)..." class="w-full bg-slate-950 text-white text-xs rounded-xl pl-8 pr-3 py-2.5 border border-slate-800 focus:outline-none focus:border-pink-500">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-500 text-xs"></i>
+                            <input type="text" id="ap-product-search" oninput="onApProductSearchInput(this.value)" placeholder="Buscar por nombre o código..." class="w-full bg-slate-900 text-white text-xs rounded-xl pl-8 pr-3 py-2.5 border border-slate-800 focus:outline-none focus:border-pink-500">
                         </div>
                         <div class="sm:col-span-7">
-                            <select id="ap-product-select" onchange="onApProductSelectChange(this.value)" class="w-full bg-slate-950 text-white text-xs font-semibold rounded-xl px-3 py-2.5 border border-slate-800 focus:outline-none focus:border-pink-500 cursor-pointer">
-                                <option value="">📦 Seleccioná un artículo del catálogo en vivo...</option>
+                            <select id="ap-product-select" onchange="onApProductSelectChange(this.value)" class="w-full bg-slate-900 text-white text-xs font-semibold rounded-xl px-3 py-2.5 border border-slate-800 focus:outline-none focus:border-pink-500 cursor-pointer">
+                                <option value="">📦 Elegí un producto de tu catálogo...</option>
                             </select>
                         </div>
                     </div>
 
-                    <!-- Ficha Resumen del Producto Seleccionado (Editable si quiere ajustar precio/detalle) -->
-                    <div id="ap-selected-product-card" class="p-3.5 rounded-2xl bg-slate-950/90 border border-slate-800/90 space-y-3">
+                    <!-- Ficha Resumen del Producto Seleccionado -->
+                    <div id="ap-selected-product-card" class="p-3.5 rounded-xl bg-slate-900/75 border border-slate-800/80 space-y-3">
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                             <div>
-                                <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Código SKU / Num (Para el archivo) *</label>
-                                <input type="text" id="ap-input-sku" oninput="onApProductFieldsManualEdit()" placeholder="Ej: TOKIO, 139131, CRG-035" class="w-full bg-slate-900 text-emerald-400 font-mono font-bold text-xs rounded-lg px-2.5 py-2 border border-slate-800 focus:outline-none focus:border-emerald-500">
+                                <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Código del Producto *</label>
+                                <input type="text" id="ap-input-sku" oninput="onApProductFieldsManualEdit()" placeholder="Ej: TOKIO, CRG-035" class="w-full bg-slate-950 text-emerald-400 font-mono font-bold text-xs rounded-lg px-2.5 py-2 border border-slate-800 focus:outline-none focus:border-emerald-500">
                             </div>
                             <div>
-                                <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Nombre del Producto *</label>
-                                <input type="text" id="ap-input-product-name" oninput="onApProductFieldsManualEdit()" placeholder="Ej: Bóxer Bross Tokio" class="w-full bg-slate-900 text-white font-semibold text-xs rounded-lg px-2.5 py-2 border border-slate-800 focus:outline-none focus:border-pink-500">
+                                <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Nombre para el Post *</label>
+                                <input type="text" id="ap-input-product-name" oninput="onApProductFieldsManualEdit()" placeholder="Ej: Bóxer Bross Tokio" class="w-full bg-slate-950 text-white font-semibold text-xs rounded-lg px-2.5 py-2 border border-slate-800 focus:outline-none focus:border-pink-500">
                             </div>
                             <div>
-                                <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Precio a Mostrar en el Post *</label>
-                                <input type="text" id="ap-input-price" oninput="onApProductFieldsManualEdit()" placeholder="Ej: $9.500" class="w-full bg-slate-900 text-amber-300 font-bold text-xs rounded-lg px-2.5 py-2 border border-slate-800 focus:outline-none focus:border-amber-500">
+                                <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Precio a Mostrar *</label>
+                                <input type="text" id="ap-input-price" oninput="onApProductFieldsManualEdit()" placeholder="Ej: $9.500" class="w-full bg-slate-950 text-amber-300 font-bold text-xs rounded-lg px-2.5 py-2 border border-slate-800 focus:outline-none focus:border-amber-500">
                             </div>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
-                                <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Medidas / Talles / Variantes</label>
-                                <input type="text" id="ap-input-variants" oninput="generateApSmartCaption()" placeholder="Ej: S al XXL / Queen y King / Acero" class="w-full bg-slate-900 text-slate-200 text-xs rounded-lg px-2.5 py-1.5 border border-slate-800 focus:outline-none focus:border-pink-500">
+                                <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Talles / Medidas / Variantes</label>
+                                <input type="text" id="ap-input-variants" oninput="generateApSmartCaption()" placeholder="Ej: S al XXL / Queen y King" class="w-full bg-slate-950 text-slate-200 text-xs rounded-lg px-2.5 py-1.5 border border-slate-800 focus:outline-none focus:border-pink-500">
                             </div>
                             <div>
-                                <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Características / Incluye</label>
-                                <input type="text" id="ap-input-features" oninput="generateApSmartCaption()" placeholder="Ej: Estantes regulables, acero al carbono..." class="w-full bg-slate-900 text-slate-200 text-xs rounded-lg px-2.5 py-1.5 border border-slate-800 focus:outline-none focus:border-pink-500">
+                                <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Destacados / Qué incluye</label>
+                                <input type="text" id="ap-input-features" oninput="generateApSmartCaption()" placeholder="Ej: Algodón premium, envío gratis..." class="w-full bg-slate-950 text-slate-200 text-xs rounded-lg px-2.5 py-1.5 border border-slate-800 focus:outline-none focus:border-pink-500">
                             </div>
                         </div>
 
-                        <!-- Si el catálogo (ej. NachaHome) ya tiene links de Drive cargados en la fila -->
+                        <!-- Si el catálogo ya tiene links de Drive cargados en la fila -->
                         <div id="ap-catalog-drive-links-box" class="hidden pt-2 border-t border-slate-800/80 flex items-center justify-between flex-wrap gap-2">
                             <span class="text-[11px] text-cyan-300 font-semibold flex items-center gap-1.5">
-                                <i class="fa-brands fa-google-drive"></i> Este producto ya tiene multimedia en el Sheets:
+                                <i class="fa-brands fa-google-drive"></i> Fotos guardadas de este producto:
                             </span>
                             <div id="ap-catalog-drive-links-list" class="flex items-center gap-1.5 flex-wrap"></div>
                         </div>
                     </div>
                 </div>
 
-                <!-- PASO 2 & 3: FECHA, DESTINO Y HORARIOS PERSONALIZADOS PARA PUBLICACIÓN (FEED/REEL) Y STORY -->
-                <div class="p-4 rounded-2xl bg-slate-950/90 border border-slate-800 space-y-3.5">
+                <!-- PASO 2: FECHA, FORMATO Y HORARIOS -->
+                <div class="p-4 rounded-2xl bg-slate-950/70 border border-slate-800/90 space-y-3.5">
+                    <div class="flex items-center justify-between flex-wrap gap-2">
+                        <div class="text-xs font-extrabold text-white flex items-center gap-2">
+                            <span class="w-5 h-5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[10px] font-black flex items-center justify-center">2</span>
+                            <span>¿Cuándo y dónde querés publicarlo?</span>
+                        </div>
+                        <button type="button" onclick="pickNextFreeApDate()" class="text-[11px] px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold flex items-center gap-1 transition">
+                            <i class="fa-solid fa-forward-step"></i> Buscar próximo día libre
+                        </button>
+                    </div>
+
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                         <div>
-                            <div class="flex items-center justify-between mb-1.5">
-                                <label class="text-xs font-bold text-slate-200 flex items-center gap-1.5">
-                                    <i class="fa-regular fa-calendar-days text-pink-400"></i> 2. Fecha de Publicación
-                                </label>
-                                <button type="button" onclick="pickNextFreeApDate()" class="text-[11px] text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1">
-                                    <i class="fa-solid fa-forward-step"></i> Próximo día libre
-                                </button>
-                            </div>
+                            <label class="block text-[11px] font-bold text-slate-300 mb-1.5">
+                                <i class="fa-regular fa-calendar-days text-pink-400 mr-1"></i> Día de publicación
+                            </label>
                             <input type="date" id="ap-input-date" onchange="updateApGeneratedFilename()" class="w-full bg-slate-900 text-white text-xs font-bold rounded-xl px-3.5 py-2.5 border border-slate-800 focus:outline-none focus:border-pink-500">
                         </div>
 
                         <div>
-                            <label class="block text-xs font-bold text-slate-200 mb-1.5 flex items-center gap-1.5">
-                                <i class="fa-solid fa-layer-group text-pink-400"></i> 3. ¿Qué querés publicar?
+                            <label class="block text-[11px] font-bold text-slate-300 mb-1.5">
+                                <i class="fa-solid fa-layer-group text-pink-400 mr-1"></i> Canales de Instagram
                             </label>
                             <select id="ap-input-target" onchange="onApTargetModeChange()" class="w-full bg-slate-900 text-white text-xs font-bold rounded-xl px-3.5 py-2.5 border border-slate-800 focus:outline-none focus:border-pink-500 cursor-pointer">
-                                <option value="both">🔥 Pack Completo: Publicación (Feed / Carrusel / Reel) + Story 9:16</option>
+                                <option value="both">🔥 Completo: Publicación (Feed / Reel) + Historia</option>
                                 <option value="feed">📸 Solo Publicación (Feed / Carrusel / Reel)</option>
-                                <option value="story">📱 Solo Story (Historia Vertical 9:16)</option>
+                                <option value="story">📱 Solo Historia Vertical (9:16)</option>
                             </select>
                         </div>
                     </div>
 
-                    <!-- SELECTORES INDEPENDIENTES DE HORARIO PARA PUBLICACIÓN Y STORY -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2 border-t border-slate-800/80">
+                    <!-- SELECTORES INDEPENDIENTES DE HORARIO -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2.5 border-t border-slate-800/80">
                         <div id="ap-feed-schedule-box">
-                            <label class="block text-[11px] font-extrabold text-pink-300 mb-1 flex items-center justify-between">
-                                <span><i class="fa-solid fa-clock mr-1"></i> Horario Publicación (Feed / Carrusel / Reel)</span>
-                                <span class="text-[9px] px-1.5 py-0.5 rounded bg-pink-500/20 text-pink-300">Post & Reels</span>
+                            <label class="block text-[11px] font-bold text-pink-300 mb-1 flex items-center justify-between">
+                                <span><i class="fa-solid fa-clock mr-1"></i> Hora del Feed / Reel</span>
+                                <span class="text-[9px] px-1.5 py-0.5 rounded bg-pink-500/20 text-pink-300">Perfil</span>
                             </label>
                             <select id="ap-input-feed-time" onchange="updateApGeneratedFilename()" class="w-full bg-slate-900 text-white text-xs font-bold rounded-xl px-3 py-2 border border-pink-500/30 focus:outline-none focus:border-pink-500 cursor-pointer">
-                                <option value="18:00" selected>🕕 18:00 hs — Horario Central NNN (Clásico)</option>
-                                <option value="12:00">🕛 12:00 hs — Mediodía (Post / Carrusel / Reel)</option>
-                                <option value="15:00">🕒 15:00 hs — Tarde (Post / Carrusel / Reel)</option>
-                                <option value="20:00">🕗 20:00 hs — Noche Prime (Post / Carrusel / Reel)</option>
-                                <option value="21:00">🕘 21:00 hs — Cierre Nocturno (Post / Carrusel / Reel)</option>
-                                <option value="09:00">🕘 09:00 hs — Mañana (Post / Carrusel / Reel)</option>
+                                <option value="18:00" selected>🕕 18:00 hs — Horario Recomendado</option>
+                                <option value="12:00">🕛 12:00 hs — Mediodía</option>
+                                <option value="15:00">🕒 15:00 hs — Tarde</option>
+                                <option value="20:00">🕗 20:00 hs — Noche Prime</option>
+                                <option value="21:00">🕘 21:00 hs — Cierre Nocturno</option>
+                                <option value="09:00">🕘 09:00 hs — Mañana</option>
                             </select>
                         </div>
 
                         <div id="ap-story-schedule-box">
-                            <label class="block text-[11px] font-extrabold text-cyan-300 mb-1 flex items-center justify-between">
-                                <span><i class="fa-solid fa-mobile-screen mr-1"></i> Horario Story (Historia 9:16)</span>
-                                <span class="text-[9px] px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300">Stories IG</span>
+                            <label class="block text-[11px] font-bold text-cyan-300 mb-1 flex items-center justify-between">
+                                <span><i class="fa-solid fa-mobile-screen mr-1"></i> Hora de la Historia</span>
+                                <span class="text-[9px] px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300">Stories</span>
                             </label>
                             <select id="ap-input-story-time" onchange="updateApGeneratedFilename()" class="w-full bg-slate-900 text-white text-xs font-bold rounded-xl px-3 py-2 border border-cyan-500/30 focus:outline-none focus:border-cyan-500 cursor-pointer">
-                                <option value="20:30" selected>🌙 20:30 hs — Turno Noche (Tag _20hs)</option>
-                                <option value="09:30">🌅 09:30 hs — Turno Mañana (Tag _09hs)</option>
-                                <option value="both_09_20">⚡ Doble Turno — 09:30 hs + 20:30 hs (Sube ambos)</option>
-                                <option value="12:30">🕛 12:30 hs — Mediodía (Tag _12hs)</option>
-                                <option value="15:30">🕒 15:30 hs — Tarde (Tag _15hs)</option>
-                                <option value="18:30">🕡 18:30 hs — Tarde/Noche (Tag _18hs)</option>
-                                <option value="with_feed">🔗 Junto con la Publicación (Mismo horario Feed)</option>
+                                <option value="20:30" selected>🌙 20:30 hs — Turno Noche</option>
+                                <option value="09:30">🌅 09:30 hs — Turno Mañana</option>
+                                <option value="both_09_20">⚡ Doble Turno — 09:30 hs + 20:30 hs</option>
+                                <option value="12:30">🕛 12:30 hs — Mediodía</option>
+                                <option value="15:30">🕒 15:30 hs — Tarde</option>
+                                <option value="18:30">🕡 18:30 hs — Tarde/Noche</option>
+                                <option value="with_feed">🔗 Mismo horario que el Feed</option>
                             </select>
                         </div>
                     </div>
                 </div>
 
-                <!-- VISTA EN VIVO DE LOS NOMBRES DE ARCHIVO QUE SE GUARDARÁN EN GOOGLE DRIVE -->
-                <div class="p-3 rounded-2xl bg-emerald-950/25 border border-emerald-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <div class="flex items-center gap-2.5">
-                        <div class="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-sm shrink-0">
-                            <i class="fa-solid fa-file-signature"></i>
-                        </div>
-                        <div class="space-y-0.5">
-                            <div class="text-[10px] uppercase tracking-wider font-extrabold text-emerald-400">Nombres Oficiales Auto-Generados para Google Drive</div>
-                            <div class="flex flex-wrap items-center gap-2 text-xs font-mono font-black text-white">
-                                <span class="px-2 py-0.5 rounded bg-pink-500/20 text-pink-200 border border-pink-500/30" id="ap-preview-filename">📸 28.10_CRG-035.jpg</span>
-                                <span class="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-200 border border-cyan-500/30" id="ap-preview-story-filename">📱 28.10_CRG-035_20hs.jpg</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="text-[11px] text-slate-400 sm:text-right" id="ap-preview-folder-label">
-                        Destino: <span class="text-emerald-300 font-semibold">NNN.Public.2026 + NNN.Story.2026</span>
-                    </div>
-                </div>
-
-                <!-- PASO 4 DIVIDIDO: ZONA 4A (PUBLICACIÓN: POST / CARRUSEL / REEL) Y ZONA 4B (STORY VERTICAL 9:16) -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- ZONA 4A: PUBLICACIÓN (FEED / CARRUSEL / REEL) -->
-                    <div id="ap-zone-feed-wrap" class="p-3.5 rounded-2xl bg-slate-950/80 border border-pink-500/30 space-y-2.5 flex flex-col justify-between">
-                        <div class="space-y-2">
-                            <div class="flex items-center justify-between gap-1">
-                                <label class="text-xs font-extrabold text-pink-300 flex items-center gap-1.5">
-                                    <i class="fa-solid fa-images"></i> 4A. Publicación (Post / Carrusel / Reel)
-                                </label>
-                                <button type="button" onclick="clearApSelectedFiles()" id="btn-ap-clear-files" class="hidden text-[10px] text-rose-400 hover:text-rose-300 font-bold">
-                                    <i class="fa-solid fa-trash-can"></i> Limpiar
-                                </button>
-                            </div>
-                            <p class="text-[10px] text-slate-400 leading-snug">
-                                Subí <b>1 foto</b> (Post), <b>2 a 10 fotos</b> (Carrusel) o un <b>video .MP4</b> (Reel). Se guarda en <span class="text-pink-300 font-mono">NNN.Public.2026</span>.
-                            </p>
-
-                            <div id="ap-dropzone" 
-                                 ondragover="handleApDragOver(event)" 
-                                 ondragleave="handleApDragLeave(event)" 
-                                 ondrop="handleApDrop(event)"
-                                 onclick="document.getElementById('ap-file-input').click()"
-                                 class="border-2 border-dashed border-slate-700 hover:border-pink-500/70 bg-slate-900/70 hover:bg-slate-900 rounded-xl p-4 text-center cursor-pointer transition group">
-                                <input type="file" id="ap-file-input" multiple accept="image/*,video/mp4,video/quicktime" onchange="handleApFileSelect(event)" class="hidden">
-                                <div class="w-10 h-10 rounded-xl bg-pink-500/10 border border-pink-500/20 text-pink-400 flex items-center justify-center mx-auto mb-1.5 group-hover:scale-110 transition">
-                                    <i class="fa-solid fa-camera-retro text-lg"></i>
-                                </div>
-                                <p class="text-xs font-bold text-white">
-                                    Subir Fotos / Carrusel / Reel <span class="text-pink-400 underline">acá</span>
-                                </p>
-                                <p class="text-[10px] text-slate-400 mt-0.5">
-                                    Formato 1:1 (1080×1080), 4:5 o Video Reel
-                                </p>
-                            </div>
-                        </div>
-
-                        <!-- Miniaturas de archivos de Feed / Carrusel / Reel -->
-                        <div id="ap-files-preview-grid" class="hidden grid grid-cols-2 gap-2 pt-1"></div>
-                    </div>
-
-                    <!-- ZONA 4B: STORY VERTICAL (FORMATO HISTORIA 9:16 - 1080x1920) -->
-                    <div id="ap-zone-story-wrap" class="p-3.5 rounded-2xl bg-slate-950/80 border border-cyan-500/30 space-y-2.5 flex flex-col justify-between">
-                        <div class="space-y-2">
-                            <div class="flex items-center justify-between gap-1">
-                                <label class="text-xs font-extrabold text-cyan-300 flex items-center gap-1.5">
-                                    <i class="fa-solid fa-mobile-screen-button"></i> 4B. Story Vertical (Formato 9:16)
-                                </label>
-                                <button type="button" onclick="clearApSelectedStoryFiles()" id="btn-ap-clear-story-files" class="hidden text-[10px] text-rose-400 hover:text-rose-300 font-bold">
-                                    <i class="fa-solid fa-trash-can"></i> Limpiar
-                                </button>
-                            </div>
-                            <p class="text-[10px] text-slate-400 leading-snug">
-                                Subí tu diseño vertical <b>9:16 (1080×1920)</b> para Historia o generalo en 1 clic desde la foto de la publicación. Se guarda en <span class="text-cyan-300 font-mono">NNN.Story.2026</span>.
-                            </p>
-
-                            <div id="ap-story-dropzone" 
-                                 ondragover="handleApStoryDragOver(event)" 
-                                 ondragleave="handleApStoryDragLeave(event)" 
-                                 ondrop="handleApStoryDrop(event)"
-                                 onclick="document.getElementById('ap-story-file-input').click()"
-                                 class="border-2 border-dashed border-slate-700 hover:border-cyan-500/70 bg-slate-900/70 hover:bg-slate-900 rounded-xl p-4 text-center cursor-pointer transition group">
-                                <input type="file" id="ap-story-file-input" multiple accept="image/*,video/mp4,video/quicktime" onchange="handleApStoryFileSelect(event)" class="hidden">
-                                <div class="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center mx-auto mb-1.5 group-hover:scale-110 transition">
-                                    <i class="fa-solid fa-wand-magic-sparkles text-lg"></i>
-                                </div>
-                                <p class="text-xs font-bold text-white">
-                                    Subir Archivo Story 9:16 <span class="text-cyan-400 underline">acá</span>
-                                </p>
-                                <p class="text-[10px] text-slate-400 mt-0.5">
-                                    Vertical 1080×1920 px (JPG, PNG o MP4)
-                                </p>
-                            </div>
-
-                            <!-- Botón Mágico para Auto-Generar Story 9:16 Vertical (1080x1920) desde la foto de Feed -->
-                            <button type="button" onclick="generateApVerticalStoryFromFeed()" class="w-full py-2 px-3 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 text-[11px] font-extrabold transition flex items-center justify-center gap-1.5 shadow">
-                                <i class="fa-solid fa-crop-simple"></i>
-                                <span>✨ Auto-Generar Story 9:16 (1080×1920) desde Foto 4A</span>
-                            </button>
-                        </div>
-
-                        <!-- Miniaturas de archivos de Story 9:16 -->
-                        <div id="ap-story-files-preview-grid" class="hidden grid grid-cols-2 gap-2 pt-1"></div>
-                    </div>
-                </div>
-
-                <!-- PASO 4: REDACCIÓN Y EDICIÓN DE COPY CON IA -->
-                <div class="space-y-2">
+                <!-- PASO 3: SUBIR FOTOS / VIDEO (FEED Y STORY) -->
+                <div class="p-4 rounded-2xl bg-slate-950/70 border border-slate-800/90 space-y-3">
                     <div class="flex items-center justify-between flex-wrap gap-2">
-                        <label class="text-xs font-bold text-slate-200 flex items-center gap-1.5">
-                            <i class="fa-solid fa-pen-nib text-pink-400"></i> 5. Copy de Instagram (Generado con las Reglas de tu Marca)
+                        <div class="text-xs font-extrabold text-white flex items-center gap-2">
+                            <span class="w-5 h-5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-[10px] font-black flex items-center justify-center">3</span>
+                            <span>Subí tus fotos o video</span>
+                        </div>
+                        <span class="text-[11px] text-slate-400">Podés arrastrar archivos o hacer clic en cada recuadro</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- ZONA FEED / CARRUSEL / REEL -->
+                        <div id="ap-zone-feed-wrap" class="p-3.5 rounded-2xl bg-slate-900/75 border border-pink-500/30 space-y-2.5 flex flex-col justify-between">
+                            <div class="space-y-2">
+                                <div class="flex items-center justify-between gap-1">
+                                    <label class="text-xs font-extrabold text-pink-300 flex items-center gap-1.5">
+                                        <i class="fa-solid fa-images"></i> Foto, Carrusel o Reel
+                                    </label>
+                                    <button type="button" onclick="clearApSelectedFiles()" id="btn-ap-clear-files" class="hidden text-[10px] text-rose-400 hover:text-rose-300 font-bold">
+                                        <i class="fa-solid fa-trash-can"></i> Limpiar
+                                    </button>
+                                </div>
+                                <p class="text-[11px] text-slate-400 leading-snug">
+                                    Subí <b>1 foto</b>, <b>2 a 10 fotos</b> para carrusel, o un <b>video .MP4</b> para Reel.
+                                </p>
+
+                                <div id="ap-dropzone" 
+                                     ondragover="handleApDragOver(event)" 
+                                     ondragleave="handleApDragLeave(event)" 
+                                     ondrop="handleApDrop(event)"
+                                     onclick="document.getElementById('ap-file-input').click()"
+                                     class="border-2 border-dashed border-slate-700 hover:border-pink-500/80 bg-slate-950/60 hover:bg-slate-950 rounded-xl p-4 text-center cursor-pointer transition group">
+                                    <input type="file" id="ap-file-input" multiple accept="image/*,video/mp4,video/quicktime" onchange="handleApFileSelect(event)" class="hidden">
+                                    <div class="w-10 h-10 rounded-xl bg-pink-500/10 border border-pink-500/20 text-pink-400 flex items-center justify-center mx-auto mb-1.5 group-hover:scale-110 transition">
+                                        <i class="fa-solid fa-cloud-arrow-up text-lg"></i>
+                                    </div>
+                                    <p class="text-xs font-bold text-white">
+                                        Elegir fotos o video <span class="text-pink-400 underline">acá</span>
+                                    </p>
+                                    <p class="text-[10px] text-slate-400 mt-0.5">
+                                        JPG, PNG o MP4 • Cuadrado o 4:5
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Miniaturas de archivos de Feed / Carrusel / Reel -->
+                            <div id="ap-files-preview-grid" class="hidden grid grid-cols-2 gap-2 pt-1"></div>
+                        </div>
+
+                        <!-- ZONA STORY VERTICAL (9:16) -->
+                        <div id="ap-zone-story-wrap" class="p-3.5 rounded-2xl bg-slate-900/75 border border-cyan-500/30 space-y-2.5 flex flex-col justify-between">
+                            <div class="space-y-2">
+                                <div class="flex items-center justify-between gap-1">
+                                    <label class="text-xs font-extrabold text-cyan-300 flex items-center gap-1.5">
+                                        <i class="fa-solid fa-mobile-screen-button"></i> Historia Vertical (9:16)
+                                    </label>
+                                    <button type="button" onclick="clearApSelectedStoryFiles()" id="btn-ap-clear-story-files" class="hidden text-[10px] text-rose-400 hover:text-rose-300 font-bold">
+                                        <i class="fa-solid fa-trash-can"></i> Limpiar
+                                    </button>
+                                </div>
+                                <p class="text-[11px] text-slate-400 leading-snug">
+                                    Subí tu diseño vertical o <b>crealo automático en 1 clic</b> a partir de tu foto de la izquierda.
+                                </p>
+
+                                <div id="ap-story-dropzone" 
+                                     ondragover="handleApStoryDragOver(event)" 
+                                     ondragleave="handleApStoryDragLeave(event)" 
+                                     ondrop="handleApStoryDrop(event)"
+                                     onclick="document.getElementById('ap-story-file-input').click()"
+                                     class="border-2 border-dashed border-slate-700 hover:border-cyan-500/80 bg-slate-950/60 hover:bg-slate-950 rounded-xl p-4 text-center cursor-pointer transition group">
+                                    <input type="file" id="ap-story-file-input" multiple accept="image/*,video/mp4,video/quicktime" onchange="handleApStoryFileSelect(event)" class="hidden">
+                                    <div class="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center mx-auto mb-1.5 group-hover:scale-110 transition">
+                                        <i class="fa-solid fa-mobile-screen text-lg"></i>
+                                    </div>
+                                    <p class="text-xs font-bold text-white">
+                                        Elegir Historia 9:16 <span class="text-cyan-400 underline">acá</span>
+                                    </p>
+                                    <p class="text-[10px] text-slate-400 mt-0.5">
+                                        Vertical 1080×1920 px (JPG, PNG o MP4)
+                                    </p>
+                                </div>
+
+                                <!-- Botón Mágico para Auto-Generar Story 9:16 -->
+                                <button type="button" onclick="generateApVerticalStoryFromFeed()" class="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-cyan-600/25 to-indigo-600/25 hover:from-cyan-600/35 hover:to-indigo-600/35 text-cyan-200 border border-cyan-500/40 text-[11px] font-extrabold transition flex items-center justify-center gap-1.5 shadow">
+                                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                                    <span>✨ Crear Historia 9:16 desde mi foto</span>
+                                </button>
+                            </div>
+
+                            <!-- Miniaturas de archivos de Story 9:16 -->
+                            <div id="ap-story-files-preview-grid" class="hidden grid grid-cols-2 gap-2 pt-1"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PASO 4: TEXTO / COPY GENERADO POR IA -->
+                <div class="p-4 rounded-2xl bg-slate-950/70 border border-slate-800/90 space-y-2.5">
+                    <div class="flex items-center justify-between flex-wrap gap-2">
+                        <label class="text-xs font-extrabold text-white flex items-center gap-2">
+                            <span class="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-black flex items-center justify-center">4</span>
+                            <span>Texto de tu publicación (redactado con IA)</span>
                         </label>
                         <div class="flex items-center gap-1.5">
                             <button type="button" onclick="generateApSmartCaption(true)" class="px-2.5 py-1 rounded-lg bg-pink-500/15 hover:bg-pink-500/25 text-pink-300 border border-pink-500/30 text-[11px] font-bold transition flex items-center gap-1">
-                                <i class="fa-solid fa-wand-magic-sparkles"></i> Regenerar Copy IA
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> Probar otro texto IA
                             </button>
-                            <button type="button" onclick="copyApCaptionToClipboard()" class="px-2.5 py-1 rounded-lg bg-slate-950 hover:bg-slate-800 text-slate-300 border border-slate-800 text-[11px] font-semibold transition flex items-center gap-1">
+                            <button type="button" onclick="copyApCaptionToClipboard()" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 text-[11px] font-semibold transition flex items-center gap-1">
                                 <i class="fa-regular fa-copy"></i> Copiar
                             </button>
                         </div>
                     </div>
-                    <textarea id="ap-input-caption" rows="5" oninput="updateApInstagramPreview()" placeholder="Seleccioná un producto arriba para generar automáticamente el copy con precio, características y hashtags..." class="w-full bg-slate-950 text-slate-100 text-xs rounded-2xl p-3.5 border border-slate-800 focus:outline-none focus:border-pink-500 leading-relaxed"></textarea>
+                    <textarea id="ap-input-caption" rows="5" oninput="updateApInstagramPreview()" placeholder="Elegí un producto arriba y la IA va a redactar el texto listo para Instagram con precio, beneficios y hashtags..." class="w-full bg-slate-900 text-slate-100 text-xs rounded-2xl p-3.5 border border-slate-800 focus:outline-none focus:border-pink-500 leading-relaxed"></textarea>
                 </div>
 
-                <!-- PASO 5: BOTONES DE ACCIÓN (SUBIR A DRIVE VIA N8N / PUBLICAR AHORA / DESCARGAR RENOMBRADO) -->
+                <!-- BOTONES FINALES DE PUBLICACIÓN -->
                 <div id="ap-upload-status-banner" class="hidden p-3.5 rounded-2xl text-xs font-bold"></div>
 
-                <div class="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
-                    <button type="button" onclick="submitAutopublisherJob(false)" id="btn-ap-submit-schedule" class="flex-1 py-3 px-4 bg-gradient-to-r from-pink-600 via-fuchsia-600 to-indigo-600 hover:from-pink-500 hover:to-indigo-500 text-white rounded-xl font-extrabold text-xs sm:text-sm shadow-lg shadow-pink-950/50 transition flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-cloud-arrow-up"></i>
-                        <span>Subir a Drive & Programar Horario</span>
+                <div class="pt-1 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+                    <button type="button" onclick="submitAutopublisherJob(false)" id="btn-ap-submit-schedule" class="flex-1 py-3.5 px-4 bg-gradient-to-r from-pink-600 via-fuchsia-600 to-indigo-600 hover:from-pink-500 hover:to-indigo-500 text-white rounded-2xl font-extrabold text-xs sm:text-sm shadow-lg shadow-pink-950/50 transition flex items-center justify-center gap-2 active:scale-[0.99]">
+                        <i class="fa-regular fa-calendar-check"></i>
+                        <span>Programar Publicación</span>
                     </button>
 
-                    <button type="button" onclick="submitAutopublisherJob(true)" id="btn-ap-submit-now" class="py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-extrabold text-xs sm:text-sm shadow-lg shadow-emerald-950/40 transition flex items-center justify-center gap-1.5" title="Sube a Drive y ejecuta la publicación inmediata en Instagram (Feed + Story)">
+                    <button type="button" onclick="submitAutopublisherJob(true)" id="btn-ap-submit-now" class="py-3.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-extrabold text-xs sm:text-sm shadow-lg shadow-emerald-950/40 transition flex items-center justify-center gap-1.5 active:scale-[0.99]" title="Publica inmediatamente en Instagram (Feed + Historia)">
                         <i class="fa-solid fa-bolt"></i>
                         <span>Publicar Ahora</span>
                     </button>
 
-                    <button type="button" onclick="downloadApRenamedFiles()" class="py-3 px-3.5 bg-slate-950 hover:bg-slate-800 text-slate-300 rounded-xl font-bold text-xs border border-slate-800 transition flex items-center justify-center gap-1.5" title="Descarga los archivos ya renombrados con el formato exacto por si querés subirlos manualmente a Drive">
+                    <button type="button" onclick="downloadApRenamedFiles()" class="py-3.5 px-3.5 bg-slate-950 hover:bg-slate-800 text-slate-300 rounded-2xl font-bold text-xs border border-slate-800 transition flex items-center justify-center gap-1.5" title="Descargar las fotos listas con su nombre automático">
                         <i class="fa-solid fa-download"></i>
-                        <span class="sm:hidden lg:inline">Bajar Renombrado</span>
+                        <span class="sm:hidden lg:inline">Descargar</span>
                     </button>
                 </div>
 
-                <!-- MINI-CONSOLA DE REGISTRO DE LOGS EN VIVO (ÚLTIMAS EJECUCIONES N8N / META API) -->
-                <div class="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-2.5">
-                    <div class="flex items-center justify-between">
-                        <div class="text-xs font-extrabold text-cyan-300 flex items-center gap-1.5">
-                            <i class="fa-solid fa-terminal"></i> Registro de Actividad en Vivo (n8n & Meta API)
+                <!-- DETALLES TÉCNICOS COLAPSABLES (PARA NO ABRUMAR AL CLIENTE) -->
+                <details class="rounded-2xl bg-slate-950/70 border border-slate-800/80 overflow-hidden group">
+                    <summary class="px-4 py-2.5 text-[11px] font-bold text-slate-400 hover:text-slate-200 cursor-pointer flex items-center justify-between select-none list-none">
+                        <span class="flex items-center gap-2">
+                            <i class="fa-solid fa-gear text-slate-500"></i>
+                            <span>Detalle técnico automático (nombre de archivo y actividad en vivo)</span>
+                        </span>
+                        <i class="fa-solid fa-chevron-down text-[10px] transition-transform group-open:rotate-180"></i>
+                    </summary>
+                    <div class="px-4 pb-4 pt-2 border-t border-slate-800/70 space-y-3">
+                        <div class="p-3 rounded-xl bg-emerald-950/20 border border-emerald-500/25 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div class="space-y-1">
+                                <div class="text-[10px] uppercase tracking-wider font-extrabold text-emerald-400">Archivos Auto-Nombrados en Google Drive</div>
+                                <div class="flex flex-wrap items-center gap-2 text-[11px] font-mono font-bold text-white">
+                                    <span class="px-2 py-0.5 rounded bg-pink-500/20 text-pink-200 border border-pink-500/30" id="ap-preview-filename">📸 28.10_CRG-035.jpg</span>
+                                    <span class="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-200 border border-cyan-500/30" id="ap-preview-story-filename">📱 28.10_CRG-035_20hs.jpg</span>
+                                </div>
+                            </div>
+                            <div class="text-[10px] text-slate-400 sm:text-right" id="ap-preview-folder-label">
+                                Destino: <span class="text-emerald-300 font-semibold">NNN.Public.2026 + NNN.Story.2026</span>
+                            </div>
                         </div>
-                        <button type="button" onclick="openApLogsSection()" class="text-[11px] text-cyan-400 hover:text-cyan-300 font-bold underline">
-                            Ver historial completo de logs &rarr;
-                        </button>
+
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between">
+                                <div class="text-[11px] font-bold text-cyan-300 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-terminal"></i> Últimas ejecuciones del sistema
+                                </div>
+                                <button type="button" onclick="openApLogsSection()" class="text-[11px] text-cyan-400 hover:text-cyan-300 font-bold underline">
+                                    Ver historial completo &rarr;
+                                </button>
+                            </div>
+                            <div id="ap-mini-logs-container" class="space-y-2 max-h-44 overflow-y-auto pr-1 text-[11px]">
+                                <div class="text-slate-500 text-center py-3">Sin ejecuciones registradas todavía.</div>
+                            </div>
+                        </div>
                     </div>
-                    <div id="ap-mini-logs-container" class="space-y-2 max-h-52 overflow-y-auto pr-1 text-[11px]">
-                        <div class="text-slate-500 text-center py-3">Sin ejecuciones registradas todavía.</div>
-                    </div>
-                </div>
+                </details>
             </div>
 
-            <!-- COLUMNA DERECHA (5 cols): SIMULADOR DE INSTAGRAM EN VIVO -->
-            <div class="lg:col-span-5 flex flex-col gap-5">
-                <div class="bg-slate-900/80 border border-slate-800 rounded-3xl p-5 shadow-2xl flex-1 flex flex-col">
+            <!-- COLUMNA DERECHA (5 cols): SIMULADOR DE INSTAGRAM STICKY EN VIVO -->
+            <div class="lg:col-span-5 lg:sticky lg:top-6 flex flex-col gap-5">
+                <div class="bg-slate-900/85 border border-slate-800 rounded-3xl p-5 shadow-2xl flex-1 flex flex-col">
                     <div class="flex items-center justify-between pb-3.5 mb-4 border-b border-slate-800">
                         <div class="flex items-center gap-2">
-                            <i class="fa-solid fa-mobile-screen-button text-pink-400"></i>
-                            <h3 class="font-extrabold text-white text-sm">Vista Previa en Vivo (Instagram)</h3>
+                            <span class="w-7 h-7 rounded-lg bg-pink-500/15 text-pink-400 border border-pink-500/30 flex items-center justify-center text-xs">
+                                <i class="fa-solid fa-mobile-screen-button"></i>
+                            </span>
+                            <div>
+                                <h3 class="font-extrabold text-white text-sm leading-tight">Así se verá en tu Instagram</h3>
+                                <p class="text-[10px] text-slate-400">Vista previa en tiempo real</p>
+                            </div>
                         </div>
                         <div class="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 text-[11px] font-bold">
                             <button type="button" onclick="setApPreviewMode('feed')" id="btn-ap-prev-feed" class="px-2.5 py-1 rounded-lg bg-pink-600 text-white transition">
-                                Feed / Carrusel
+                                Feed / Reel
                             </button>
                             <button type="button" onclick="setApPreviewMode('story')" id="btn-ap-prev-story" class="px-2.5 py-1 rounded-lg text-slate-400 hover:text-white transition">
-                                Story 9:16
+                                Historia
                             </button>
                         </div>
                     </div>
@@ -1762,32 +1901,32 @@
         </div>
 
         <!-- ========================================================= -->
-        <!-- PESTAÑAS INFERIORES: COLA | HISTORIAL | CATÁLOGO | LOGS   -->
+        <!-- PESTAÑAS INFERIORES: PRÓXIMOS | PUBLICADOS | CATÁLOGO     -->
         <!-- ========================================================= -->
-        <div id="ap-bottom-tabs-section" class="bg-slate-900/80 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl scroll-mt-20">
+        <div id="ap-bottom-tabs-section" class="bg-slate-900/85 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl scroll-mt-20">
             <div class="p-4 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900/60">
                 <div class="flex items-center gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800 flex-wrap">
                     <button type="button" onclick="switchApSubTab('queue')" id="btn-aptab-queue" class="px-3.5 py-2 rounded-lg text-xs font-bold bg-pink-600 text-white transition flex items-center gap-1.5 shadow">
                         <i class="fa-regular fa-calendar-check"></i>
-                        <span>Cola Programada (<span id="ap-tab-count-queue">0</span>)</span>
+                        <span>Próximos a Publicar (<span id="ap-tab-count-queue">0</span>)</span>
                     </button>
                     <button type="button" onclick="switchApSubTab('history')" id="btn-aptab-history" class="px-3.5 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5">
                         <i class="fa-brands fa-instagram"></i>
-                        <span>Historial Publicado en Sheets (<span id="ap-tab-count-history">0</span>)</span>
+                        <span>Ya Publicados (<span id="ap-tab-count-history">0</span>)</span>
                     </button>
                     <button type="button" onclick="switchApSubTab('catalog')" id="btn-aptab-catalog" class="px-3.5 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5">
                         <i class="fa-solid fa-boxes-stacked"></i>
-                        <span>Semáforo de Catálogo (<span id="ap-tab-count-catalog">0</span>)</span>
+                        <span>Catálogo de Productos (<span id="ap-tab-count-catalog">0</span>)</span>
                     </button>
                     <button type="button" onclick="switchApSubTab('logs')" id="btn-aptab-logs" class="px-3.5 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5">
                         <i class="fa-solid fa-terminal text-cyan-400"></i>
-                        <span>Registro de Logs &amp; Auditoría (<span id="ap-tab-count-logs">0</span>)</span>
+                        <span>Actividad Técnica (<span id="ap-tab-count-logs">0</span>)</span>
                     </button>
                 </div>
 
                 <div class="text-xs text-slate-400 flex items-center gap-2">
                     <i class="fa-solid fa-circle-info text-pink-400"></i>
-                    <span id="ap-subtab-helper-text">El bot de n8n revisa las carpetas de Drive en cada horario programado y publica automáticamente Feed, Reels y Stories.</span>
+                    <span id="ap-subtab-helper-text">Tu asistente publica automáticamente en tu Instagram en cada día y horario programado.</span>
                 </div>
             </div>
 
@@ -8508,7 +8647,7 @@
                 catalogUrlEdit: 'https://docs.google.com/spreadsheets/d/1dlWKIScKbKtwNcU0ETTbR06VerGG-OPpAgYQCwRzyMA/edit#gid=1859150881',
                 ruleBadge: 'Regla: DD-MM SKU.jpg',
                 nextSlotLabel: 'Hoy 18:00 hs (Feed) • 09:30 / 20:30 hs (Stories)',
-                subtitle: 'Cruza tus fotos de Drive con BrossPrecios y Catálogo Bazar NNN por código SKU. Arma Carruseles, Reels y Stories automáticas.'
+                subtitle: 'Elegí un producto de tu catálogo, subí tus fotos o video y elegí la fecha: la IA redacta el texto con tus precios reales y publica automáticamente en Feed, Reels e Historias.'
             },
             nacha: {
                 key: 'nacha',
@@ -8527,7 +8666,7 @@
                 catalogUrlEdit: 'https://docs.google.com/spreadsheets/d/1dlWKIScKbKtwNcU0ETTbR06VerGG-OPpAgYQCwRzyMA/edit#gid=1407261418',
                 ruleBadge: 'Regla: NumXXX_DD.MM.jpg',
                 nextSlotLabel: 'Todos los días 12:00 hs (Feed + Story)',
-                subtitle: 'Cruza el código NumXXX y la fecha DD.MM del archivo con tu hoja JeanCartier_stock (Medidas, Precios, Colores y Diseño).'
+                subtitle: 'Elegí tu producto del catálogo de blanquería, subí tus fotos o video y programá tu grilla: el sistema completa medidas, precios y publica solo en tu Instagram.'
             },
             crocscale: {
                 key: 'crocscale',
@@ -8546,7 +8685,7 @@
                 catalogUrlEdit: 'https://docs.google.com/spreadsheets/d/158FAtKUpVWkicRCvjtNE3faj5ZCK8fGhwbAC3B9Ptfk/edit#gid=1047978530',
                 ruleBadge: 'Regla: DD-MM Reels.mp4',
                 nextSlotLabel: 'Todos los días 12:00 hs (Feed + Story)',
-                subtitle: 'Automatización de ventas con IA multimodal, agentes y CRM. Publicación de Reels y Stories de alta conversión.'
+                subtitle: 'Programá tus Reels, carruseles e Historias de CrocScale IA en minutos y mantené tu Instagram siempre activo.'
             }
         };
 
@@ -8996,6 +9135,8 @@
             }
 
             applyApStoreUI();
+            initApGuideBannerState();
+            updateApCreatorStepsUI();
 
             if (!apInitialized) {
                 apInitialized = true;
@@ -9003,6 +9144,61 @@
             } else {
                 renderAutopublisherDashboard();
             }
+        }
+
+        function initApGuideBannerState() {
+            const banner = document.getElementById('ap-guide-banner');
+            if (!banner) return;
+            const dismissed = localStorage.getItem('croc_ap_guide_dismissed_v1') === 'true';
+            if (dismissed) banner.classList.add('hidden');
+            else banner.classList.remove('hidden');
+        }
+
+        function toggleApGuideBanner(forceShow) {
+            const banner = document.getElementById('ap-guide-banner');
+            if (!banner) return;
+            const shouldShow = typeof forceShow === 'boolean' ? forceShow : banner.classList.contains('hidden');
+            if (shouldShow) {
+                banner.classList.remove('hidden');
+                localStorage.setItem('croc_ap_guide_dismissed_v1', 'false');
+            } else {
+                banner.classList.add('hidden');
+                localStorage.setItem('croc_ap_guide_dismissed_v1', 'true');
+            }
+        }
+
+        function updateApCreatorStepsUI() {
+            const sku = (document.getElementById('ap-input-sku')?.value || '').trim();
+            const prodName = (document.getElementById('ap-input-product-name')?.value || '').trim();
+            const dateVal = (document.getElementById('ap-input-date')?.value || '').trim();
+            const captionVal = (document.getElementById('ap-input-caption')?.value || '').trim();
+            const hasMedia = (apSelectedFiles && apSelectedFiles.length > 0) || (apSelectedStoryFiles && apSelectedStoryFiles.length > 0);
+
+            const states = [
+                { id: 'ap-step-pill-1', done: Boolean(sku || prodName), num: '1' },
+                { id: 'ap-step-pill-2', done: Boolean(dateVal), num: '2' },
+                { id: 'ap-step-pill-3', done: hasMedia, num: '3' },
+                { id: 'ap-step-pill-4', done: captionVal.length >= 10, num: '4' }
+            ];
+
+            states.forEach(s => {
+                const el = document.getElementById(s.id);
+                if (!el) return;
+                const badge = el.querySelector('span:first-child');
+                if (s.done) {
+                    el.className = 'px-2.5 py-1.5 rounded-xl bg-emerald-500/15 border border-emerald-500/40 flex items-center gap-1.5 text-[11px] font-extrabold text-emerald-300 transition';
+                    if (badge) {
+                        badge.className = 'w-4 h-4 rounded-full bg-emerald-500 text-slate-950 text-[9px] font-black flex items-center justify-center shrink-0';
+                        badge.innerHTML = '<i class="fa-solid fa-check"></i>';
+                    }
+                } else {
+                    el.className = 'px-2.5 py-1.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center gap-1.5 text-[11px] font-bold text-slate-400 transition';
+                    if (badge) {
+                        badge.className = 'w-4 h-4 rounded-full bg-slate-800 text-slate-300 text-[9px] flex items-center justify-center shrink-0';
+                        badge.innerText = s.num;
+                    }
+                }
+            });
         }
 
         function toggleApConfigPanel() {
@@ -10699,6 +10895,7 @@
         }
 
         function updateApInstagramPreview() {
+            if (typeof updateApCreatorStepsUI === 'function') updateApCreatorStepsUI();
             const captionVal = document.getElementById('ap-input-caption')?.value || '';
             const capEl = document.getElementById('ap-ig-caption-text');
             if (capEl) {
@@ -12287,7 +12484,7 @@
                 return true;
             });
 
-            // Construir píldoras de meses con actividad para saltar en 1 clic
+            // Construir píldoras de meses (con actividad + 4 meses hacia adelante para programar)
             if (monthsBar) {
                 const monthCounts = new Map();
                 allEvents.forEach(ev => {
@@ -12296,10 +12493,16 @@
                     monthCounts.set(ym, (monthCounts.get(ym) || 0) + 1);
                 });
                 const now = new Date();
-                const todayYm = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-                if (!monthCounts.has(todayYm)) monthCounts.set(todayYm, 0);
+                // Asegurar el mes actual y los próximos 4 meses futuros
+                for (let offset = 0; offset <= 4; offset++) {
+                    const futureDate = new Date(now.getFullYear(), now.getMonth() + offset, 1);
+                    const fYm = `${futureDate.getFullYear()}-${String(futureDate.getMonth() + 1).padStart(2, '0')}`;
+                    if (!monthCounts.has(fYm)) monthCounts.set(fYm, 0);
+                }
 
                 const activeYm = `${apPlannerCursorDate.getFullYear()}-${String(apPlannerCursorDate.getMonth() + 1).padStart(2, '0')}`;
+                if (!monthCounts.has(activeYm)) monthCounts.set(activeYm, 0);
+
                 const monthNamesShort = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
                 const sortedYms = Array.from(monthCounts.keys()).sort();
@@ -12308,15 +12511,20 @@
                     const count = monthCounts.get(ym) || 0;
                     const isSelected = ym === activeYm;
                     const label = `${monthNamesShort[(m || 1) - 1]} ${y}`;
+                    const countBadgeClass = isSelected
+                        ? 'bg-blue-800 text-white'
+                        : (count > 0 ? 'bg-slate-950 text-emerald-400' : 'bg-slate-950 text-slate-500');
                     return `
                         <button type="button" onclick="jumpApPlannerToMonth('${ym}')"
                                 class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition flex items-center gap-1.5 ${
                                     isSelected
                                         ? 'bg-blue-600 text-white shadow'
-                                        : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800'
+                                        : (count > 0
+                                            ? 'bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-800'
+                                            : 'bg-slate-900/50 hover:bg-slate-800 text-slate-400 border border-slate-800/70 border-dashed')
                                 }">
                             <span>${label}</span>
-                            <span class="px-1.5 py-0.2 rounded-full text-[10px] ${isSelected ? 'bg-blue-800 text-white' : 'bg-slate-950 text-emerald-400'}">${count}</span>
+                            <span class="px-1.5 py-0.2 rounded-full text-[10px] ${countBadgeClass}">${count}</span>
                         </button>
                     `;
                 }).join('');
@@ -12748,6 +12956,17 @@
             if (elSchedCount) elSchedCount.innerText = scheduledEvents.length;
             if (elPubCount) elPubCount.innerText = publishedEvents.length || history.length;
             if (elUnpostedCount) elUnpostedCount.innerText = unpostedCount;
+
+            // Actualizar barra de cobertura del catálogo
+            const covBar = document.getElementById('ap-kpi-coverage-bar');
+            const covLbl = document.getElementById('ap-kpi-coverage-label');
+            if (covBar && covLbl) {
+                const totalCat = catalog.length;
+                const covered = Math.max(0, totalCat - unpostedCount);
+                const pct = totalCat > 0 ? Math.min(100, Math.round((covered / totalCat) * 100)) : 0;
+                covBar.style.width = `${pct}%`;
+                covLbl.innerText = totalCat > 0 ? `${pct}% de tu catálogo publicado` : 'Listos para estrenar';
+            }
 
             const tQueue = document.getElementById('ap-tab-count-queue');
             const tHist = document.getElementById('ap-tab-count-history');
