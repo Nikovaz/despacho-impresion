@@ -12484,7 +12484,7 @@
                 return true;
             });
 
-            // Construir píldoras de meses (con actividad + 4 meses hacia adelante para programar)
+            // Construir píldoras de meses con actividad para saltar en 1 clic
             if (monthsBar) {
                 const monthCounts = new Map();
                 allEvents.forEach(ev => {
@@ -12493,15 +12493,24 @@
                     monthCounts.set(ym, (monthCounts.get(ym) || 0) + 1);
                 });
                 const now = new Date();
-                // Asegurar el mes actual y los próximos 4 meses futuros
-                for (let offset = 0; offset <= 4; offset++) {
-                    const futureDate = new Date(now.getFullYear(), now.getMonth() + offset, 1);
-                    const fYm = `${futureDate.getFullYear()}-${String(futureDate.getMonth() + 1).padStart(2, '0')}`;
-                    if (!monthCounts.has(fYm)) monthCounts.set(fYm, 0);
-                }
-
                 const activeYm = `${apPlannerCursorDate.getFullYear()}-${String(apPlannerCursorDate.getMonth() + 1).padStart(2, '0')}`;
+                // Garantizar el mes actual, el mes activo y al menos 4 meses hacia adelante para planificar
+                let maxBaseDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                monthCounts.forEach((_, ym) => {
+                    const [ey, em] = ym.split('-').map(Number);
+                    if (ey && em) {
+                        const d = new Date(ey, em - 1, 1);
+                        if (d > maxBaseDate) maxBaseDate = d;
+                    }
+                });
+                const todayYm = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+                if (!monthCounts.has(todayYm)) monthCounts.set(todayYm, 0);
                 if (!monthCounts.has(activeYm)) monthCounts.set(activeYm, 0);
+                for (let offset = 1; offset <= 4; offset++) {
+                    const fut = new Date(maxBaseDate.getFullYear(), maxBaseDate.getMonth() + offset, 1);
+                    const futYm = `${fut.getFullYear()}-${String(fut.getMonth() + 1).padStart(2, '0')}`;
+                    if (!monthCounts.has(futYm)) monthCounts.set(futYm, 0);
+                }
 
                 const monthNamesShort = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
@@ -12519,9 +12528,7 @@
                                 class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition flex items-center gap-1.5 ${
                                     isSelected
                                         ? 'bg-blue-600 text-white shadow'
-                                        : (count > 0
-                                            ? 'bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-800'
-                                            : 'bg-slate-900/50 hover:bg-slate-800 text-slate-400 border border-slate-800/70 border-dashed')
+                                        : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800'
                                 }">
                             <span>${label}</span>
                             <span class="px-1.5 py-0.2 rounded-full text-[10px] ${countBadgeClass}">${count}</span>
